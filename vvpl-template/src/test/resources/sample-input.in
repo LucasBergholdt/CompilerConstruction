@@ -1,0 +1,53 @@
+################################
+# variable declarations
+################################
+
+variable b has_type Bool is true; 				# A boolean
+variable number1 has_type Number is 123; 			# A number
+variable number2 has_type Number is -123; 		# A negative number
+variable numberFloat has_type Number is 12.3; 	# A float
+variable someName has_type String is "123 "; 		# This is a string , not a number
+variable _only_declared has_type String;
+
+################################
+# basic arithmetics
+################################
+
+add (number1 numberFloat); 			# 135.3
+number1 EQUALS number2; 		# false
+NOT true; 						# false
+true OR false; 					# true
+variable min has_type Number is 0;
+variable max has_type Number;
+max is add (number1 number2);
+variable average has_type Number is divide (add (min max) 2);
+
+################################
+# start block
+################################
+
+{
+	writeToConsole "Hello earth !";
+	writeToConsole "Hello, SDU! This is a computer program.";
+}
+
+if (number1 EQUALS number2) {
+	writeToConsole "yes";
+} else {
+	writeToConsole "no";
+}
+
+{
+	if (number1 EQUALS someName) {
+		writeToConsole number1 ; 	
+	} else {
+		writeToConsole "nej";
+	}
+
+	variable a has_type Number is 1;
+	loop_while (a LESS 10) {
+		writeToConsole a;
+		a is add (a 1);
+		a is subtract(5 cast_to Number "4");
+	}
+}
