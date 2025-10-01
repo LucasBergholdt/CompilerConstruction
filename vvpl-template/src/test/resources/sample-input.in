@@ -27,26 +27,26 @@ variable average has_type Number is divide (add (min max) 2);
 ################################
 
 {
-	writeToConsole "Hello earth !";
-	writeToConsole "Hello, SDU! This is a computer program.";
+	write_to_console "Hello earth !";
+	write_to_console "Hello, SDU! This is a computer program.";
 }
 
 if (number1 EQUALS number2) {
-	writeToConsole "yes";
+	write_to_console "yes";
 } else {
-	writeToConsole "no";
+	write_to_console "no";
 }
 
 {
 	if (number1 EQUALS someName) {
-		writeToConsole number1 ; 	
+		write_to_console number1 ; 	
 	} else {
-		writeToConsole "nej";
+		write_to_console "nej";
 	}
 
 	variable a has_type Number is 1;
 	loop_while (a LESS 10) {
-		writeToConsole a;
+		write_to_console a;
 		a is add (a 1);
 		a is subtract(5 cast_to Number "4");
 	}

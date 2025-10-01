@@ -39,7 +39,7 @@ public class Scanner {
         keywords.put("LESS", TokenType.LESS);
         keywords.put("LESS_EQUAL", TokenType.LESS_EQUAL);
 
-        keywords.put("writeToConsole", TokenType.PRINT);
+        keywords.put("write_to_console", TokenType.PRINT);
         keywords.put("loop_while", TokenType.WHILE);
         keywords.put("if", TokenType.IF);
         keywords.put("else", TokenType.ELSE);
