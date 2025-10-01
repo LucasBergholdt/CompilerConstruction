@@ -12,7 +12,7 @@ public abstract class Expr {
 
     
     // --------- Nested Expr Classes -------------
-    public class Assign extends Expr {
+    public static class Assign extends Expr {
         public final Token ID;
         public final Expr expr;
 
@@ -27,7 +27,7 @@ public abstract class Expr {
         }
     }
 
-    public class Binary extends Expr {
+    public static class Binary extends Expr {
         public final Expr left;
         public final Token operator;
         public final Expr right;
@@ -44,7 +44,7 @@ public abstract class Expr {
         }
     }
 
-    public class Logical extends Expr {
+    public static class Logical extends Expr {
         public final Expr left;
         public final Token operator;
         public final Expr right;
@@ -62,7 +62,7 @@ public abstract class Expr {
     }
 
 
-    public class Unary extends Expr {
+    public static class Unary extends Expr {
         public final Token operator;
         public final Expr expr;
 
@@ -77,16 +77,16 @@ public abstract class Expr {
         }
     }
 
-    public class Literals extends Expr {
+    public static class Literal extends Expr {
         public final Token token;
 
-        public Literals(Token token) {
+        public Literal(Token token) {
             this.token = token;
         }
 
         @Override
         public <T> T accept(ExprVisitor<T> v) {
-            return v.visitLiteralsExpr(this);
+            return v.visitLiteralExpr(this);
         }
     }
 
@@ -94,7 +94,7 @@ public abstract class Expr {
 
 
     // C-E: what is this? Skal den ikke i Literal? Jeg har blot taget fra øvelsestimen.
-    public class Identifier extends Expr {
+    public static class Identifier extends Expr {
         public final Token id;
 
         public Identifier(Token id) {

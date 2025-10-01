@@ -21,7 +21,7 @@ public interface ExprVisitor<T> {
 
     T visitUnaryExpr(Unary unary);
 
-    T visitLiteralsExpr(Literals literals);
+    T visitLiteralExpr(Literal literal);
 
     T visitIdentifierExpr(Identifier identifier);
  

@@ -16,7 +16,7 @@ public abstract class Stmt {
 
 
     // --------- Nested Stmt Classes -------------
-    public class ExprStmt extends Stmt {
+    public static class ExprStmt extends Stmt {
         public final Expr expr;
 
         public ExprStmt(Expr expr) {
@@ -29,7 +29,7 @@ public abstract class Stmt {
         }
     }
 
-    public class IfStmt extends Stmt {
+    public static class IfStmt extends Stmt {
         public final Expr cond;
         public final Stmt thenBlock;
         public final Stmt elseBlock;
@@ -46,7 +46,7 @@ public abstract class Stmt {
         }
     }
 
-    public class WhileStmt extends Stmt {
+    public static class WhileStmt extends Stmt {
         public final Expr conditional;
         public final Stmt body;
 
@@ -61,7 +61,7 @@ public abstract class Stmt {
         }
     }
 
-    public class PrintStmt extends Stmt {
+    public static class PrintStmt extends Stmt {
         public final Expr expr;
 
         public PrintStmt(Expr expr) {
@@ -74,7 +74,7 @@ public abstract class Stmt {
         }
     }
 
-    public class BlockStmt extends Stmt {
+    public static class BlockStmt extends Stmt {
         public final List<Stmt> stmts;
 
         public BlockStmt(List<Stmt> stmts) {
