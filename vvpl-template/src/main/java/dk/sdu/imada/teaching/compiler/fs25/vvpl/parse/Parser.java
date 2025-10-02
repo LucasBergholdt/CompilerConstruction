@@ -158,7 +158,7 @@ public class Parser {
                 // throw error
             } else {
                 // Case: Identifier = ... 
-                Token id = previous();
+                Token id = ((Identifier)expr).id;
                 expr = assignment();
 
                 return new Expr.Assign(id, expr);
