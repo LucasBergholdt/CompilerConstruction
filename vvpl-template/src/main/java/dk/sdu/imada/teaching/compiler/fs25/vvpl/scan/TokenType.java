@@ -32,12 +32,12 @@ public enum TokenType {
     NUMBER_TYPE, STRING_TYPE, BOOL_TYPE, // variable types
 
     // 'Functional' keywords: TODO: (idk hvad det skal hedde)
-    IF,
+    IF, // "if"
     ELSE,
-    WHILE,
-    PRINT,
-    RETURN,
-    FUNCTION,
+    WHILE, // "loop_while"
+    PRINT, // "write_to_console""
+    RETURN, // "return"
+    FUNCTION, // "function"
 
     // Literals
     IDENTIFIER, // User given names

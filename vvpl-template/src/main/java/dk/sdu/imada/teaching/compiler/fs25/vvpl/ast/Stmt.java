@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.function.Function;
 
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.visitors.StmtVisitor;
+import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.Token;
 
 /**
  * @author Sandra Greiner
@@ -85,8 +86,26 @@ public abstract class Stmt {
         public <T> T accept(StmtVisitor<T> v) {
             return v.visitBlockStmt(this);
         }
+    }
 
+
+    public static class VarDecl extends Stmt {
+        public final Token id;
+        public final Expr expr;
+
+        public VarDecl(Token id, Expr expr) {
+            this.id = id;
+            this.expr = expr;
         }
+
+        @Override
+        public <T> T accept(StmtVisitor<T> v) {
+            return v.visitVarDecl(this);
+        }
+    }
+
+
+        
 }
 
 

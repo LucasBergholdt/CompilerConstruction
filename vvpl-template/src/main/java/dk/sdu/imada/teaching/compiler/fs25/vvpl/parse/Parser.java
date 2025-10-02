@@ -1,6 +1,7 @@
 package dk.sdu.imada.teaching.compiler.fs25.vvpl.parse;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Expr;
@@ -8,7 +9,10 @@ import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Expr.Assign;
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Expr.Identifier;
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Expr.Unary;
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Stmt;
+import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Stmt.BlockStmt;
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Stmt.ExprStmt;
+import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Stmt.IfStmt;
+import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Stmt.PrintStmt;
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.Token;
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.TokenType;
 
@@ -23,23 +27,114 @@ public class Parser {
 
     private List<Token> tokens;
     int current = 0;
-   
+    List<Stmt> program = new LinkedList<>();    /* C-E: gammel? skal måske fjernes */
+
     public Parser(List<Token> tokens) {
         this.tokens = tokens;
     }
 
+
+
     public List<Stmt> parse() {
         List<Stmt> statements = new ArrayList<>();
-       
+        
+        // C-E: Her version fra bog. Niels-Erik lavede den anderledes. Jeg synes bogen giver mere mening
+        while (!isAtEnd()) {    //tjekker for EOF
+            statements.add(decl());
+        }
         return statements;
     }
 
-    // VVPL Expression:
 
 
+    // ------------------ decl: VarStmt | Statement | FuncDecl --------------------
+
+    private Stmt decl() {
+
+        if(match(VAR)) {
+            // Case: "variable ____ 'has_type' ____
+            consume(IDENTIFIER, "expected Identifier");
+            Token id = previous();
+            Expr expr = null;
+            consume(TYPE_DEF, "expected 'has_type'");
+            if (!match(GREATER, GREATER_EQUAL, LESS, LESS_EQUAL)) {
+                // return error...
+            }
+            if (match(ASSIGN)) {
+                // Case: "variable ____ 'has_type' ____ 'is' expression()
+                expr = expression();
+            }
+            consume(SEMICOLON, "expected semicolon");
+            return new Stmt.VarDecl(id, expr);
+        }
+
+        // Hvis ikke en VarDecl, så er case statement(). funcDecl er ikke supported endnu.
+        return statement();
+    }
 
 
+        // ------------------ All statements in statement except exprStmt -----------------------
 
+        //Taget fra øvelsestimen. Matcher fint.
+    private Stmt statement() {
+        if (match(PRINT))
+            return print();
+
+        if (match(IF))
+            return ifStmt();
+
+        if (match(WHILE))
+            return whileStmt();
+
+        if (match(LEFT_BRACE))
+            return block();
+
+        return exprStmt();
+    }
+
+     // Taget fra øvelsestimen. Matcher fint.
+    private Stmt print() {
+        Expr value = expression();
+        consume(SEMICOLON, "");
+        return new PrintStmt(value);
+    }
+
+    // Taget fra øvelsestimen. Matcher fint.
+    private Stmt ifStmt() {
+        consume(LEFT_PAREN, "");
+        Expr cond = expression();
+        consume(RIGHT_PAREN, "");
+
+        Stmt thenBranch = statement();
+        Stmt elseBranch = null;
+        if (match(ELSE)) {
+            elseBranch = statement();
+        }
+        return new IfStmt(cond, thenBranch, elseBranch);
+    }
+
+    private Stmt whileStmt() {
+        consume(LEFT_PAREN,"");
+        Expr cond = expression();
+        consume(RIGHT_PAREN,"");
+        Stmt body = statement();
+        return new Stmt.WhileStmt(cond, body);
+    }
+
+
+    // C-E: Fra øvelsestimen med en lille undtagelse (left_brace er allerede matchet)
+    private Stmt block() { // todo: allow syncs in blocks (Niels-Note)
+
+        List<Stmt> statements = new LinkedList<>();
+        while (!match(RIGHT_BRACE) && !isAtEnd()) {
+            statements.add(decl());
+        }
+        consume(RIGHT_BRACE, "");
+        return new BlockStmt(statements);
+    }
+
+
+    // C-E: ------------ ExprStmt and nested functions -----------------
     private Stmt exprStmt() {
         Expr expr = expression();
         consume(SEMICOLON, null);
@@ -107,7 +202,6 @@ public class Parser {
         return expr;
     }
 
-
     private Expr compr () {
         Expr expr = term();
 
@@ -119,7 +213,6 @@ public class Parser {
 
         return expr;
     }
-
 
     private Expr term () {
         if (match(MINUS, PLUS, MULT, DIV)) {
@@ -183,11 +276,6 @@ public class Parser {
 
 
 
-
-
-
-
-
     /* Fra øvelses time. Copy-pasted for nu */
 
 /*
@@ -212,27 +300,6 @@ public class Parser {
             current++;
         }
     }
-
-
-   private Stmt decl() {
-        if (match(VAR)) {
-            // return vardecl
-            consume(IDENTIFIER, "expected Identifier");
-            Token id = previous();
-            Expr expr = null;
-
-            if (match(ASSIGN)) {
-                expr = expr();
-
-            }
-            consume(SEMICOLON, "expected semicolon");
-
-            return new VarDecl(id, expr);
-        }
-
-        return stmt();
-    }
-
      */
 
 
@@ -259,6 +326,12 @@ public class Parser {
     }
 
     */
+
+
+    // C-E: isAtEnd taget fra bog.
+    private boolean isAtEnd() {
+    return peek().type == EOF; // ser om næste token er EOF.
+  }
 
 
     /* C-E: Taget fra bogen og ændret lidt for ikke at anvende check() og advance(). */

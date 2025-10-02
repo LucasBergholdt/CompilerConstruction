@@ -24,6 +24,6 @@ public interface StmtVisitor<T> {
 
     T visitBlockStmt(BlockStmt blockStmt);
 
-    /* T visitVarDecl(VarDecl varDecl); */
+    T visitVarDecl(VarDecl varDecl); 
 
 }
