@@ -6,6 +6,7 @@ import java.util.function.Function;
 
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.visitors.StmtVisitor;
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.Token;
+import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.TokenType;
 
 /**
  * @author Sandra Greiner
@@ -92,9 +93,11 @@ public abstract class Stmt {
     public static class VarDecl extends Stmt {
         public final Token id;
         public final Expr expr;
+        public final TokenType type;
 
-        public VarDecl(Token id, Expr expr) {
+        public VarDecl(Token id, TokenType type, Expr expr) {
             this.id = id;
+            this.type = type;
             this.expr = expr;
         }
 

@@ -27,14 +27,14 @@ public class Parser {
 
     private List<Token> tokens;
     int current = 0;
-    List<Stmt> program = new LinkedList<>();    /* C-E: gammel? skal måske fjernes */
+    // List<Stmt> program = new LinkedList<>();    /* C-E: gammel? skal måske fjernes */
 
     public Parser(List<Token> tokens) {
         this.tokens = tokens;
     }
 
 
-
+        // program := decl* EOF
     public List<Stmt> parse() {
         List<Stmt> statements = new ArrayList<>();
         
@@ -46,8 +46,7 @@ public class Parser {
     }
 
 
-
-    // ------------------ decl: VarStmt | Statement | FuncDecl --------------------
+    // ------------------ decl := VarStmt | Statement | FuncDecl --------------------
 
     private Stmt decl() {
 
@@ -55,17 +54,21 @@ public class Parser {
             // Case: "variable ____ 'has_type' ____
             consume(IDENTIFIER, "expected Identifier");
             Token id = previous();
+            TokenType type = null;
             Expr expr = null;
+            
             consume(TYPE_DEF, "expected 'has_type'");
-            if (!match(GREATER, GREATER_EQUAL, LESS, LESS_EQUAL)) {
-                // return error...
+            if (match(NUMBER_TYPE, STRING_TYPE, BOOL_TYPE)) {
+                type = previous().type;
+            } else {
+                //return error...
             }
             if (match(ASSIGN)) {
                 // Case: "variable ____ 'has_type' ____ 'is' expression()
                 expr = expression();
             }
             consume(SEMICOLON, "expected semicolon");
-            return new Stmt.VarDecl(id, expr);
+            return new Stmt.VarDecl(id, type, expr);
         }
 
         // Hvis ikke en VarDecl, så er case statement(). funcDecl er ikke supported endnu.
@@ -96,7 +99,7 @@ public class Parser {
     private Stmt print() {
         Expr value = expression();
         consume(SEMICOLON, "");
-        return new PrintStmt(value);
+        return new Stmt.PrintStmt(value);
     }
 
     // Taget fra øvelsestimen. Matcher fint.
@@ -110,7 +113,7 @@ public class Parser {
         if (match(ELSE)) {
             elseBranch = statement();
         }
-        return new IfStmt(cond, thenBranch, elseBranch);
+        return new Stmt.IfStmt(cond, thenBranch, elseBranch);
     }
 
     private Stmt whileStmt() {
@@ -130,7 +133,7 @@ public class Parser {
             statements.add(decl());
         }
         consume(RIGHT_BRACE, "");
-        return new BlockStmt(statements);
+        return new Stmt.BlockStmt(statements);
     }
 
 
@@ -154,7 +157,7 @@ public class Parser {
             if (!(expr instanceof Identifier)) {
                 // throw error
             } else {
-                // Case: Identifier = ...   assignment er right-associative. 
+                // Case: Identifier = ... 
                 Token id = previous();
                 expr = assignment();
 
@@ -328,7 +331,7 @@ public class Parser {
     */
 
 
-    // C-E: isAtEnd taget fra bog.
+    // C-E: Taget fra bogen.
     private boolean isAtEnd() {
     return peek().type == EOF; // ser om næste token er EOF.
   }

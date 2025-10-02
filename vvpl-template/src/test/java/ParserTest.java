@@ -29,6 +29,7 @@ public class ParserTest {
     @BeforeAll
     public static void prepareFiles() {
         inputFile = "src/test/resources/sample-input.in";
+        //inputFile = "src/test/resources/sample-input-CE.in";
         expectedFile = "src/test/resources/sample-ast-expected.out";
         try {
             sampleInputString = new String(Files.readAllBytes(Paths.get(inputFile)));
@@ -53,6 +54,8 @@ public class ParserTest {
         return builder.toString();
     }
 
+
+    // C-E: Sammenligner linje for linje. (sample-input.in og sample-ast-expected.out)
     @Test
     public void testEquivalenceOfEachLine() {
         Scanner scanner = new Scanner(sampleInputString);

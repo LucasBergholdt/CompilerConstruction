@@ -51,7 +51,7 @@ public class ScannerTest {
         String fileActual = builder.toString();
         List<String> fileActualLines = Arrays.asList(fileActual.split("\\R"));
 
-        // C-E: Sammenligner linje for linje. HVIS fejl: "line ... of source and target mismatch"
+        // C-E: Sammenligner linje for linje. (sample-input.in og sample-input-scan.out) HVIS fejl: "line ... of source and target mismatch"
         try {
             List<String> fileExpectedLines = Files.readAllLines(Paths.get(expectedFile));
             for (int i = 0; i < fileExpectedLines.size(); i++) {
