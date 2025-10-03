@@ -24,5 +24,9 @@ public interface ExprVisitor<T> {
     T visitLiteralExpr(Literal literal);
 
     T visitIdentifierExpr(Identifier identifier);
+
+    T visitCallExpr(Call call);
+
+    T visitCastExpr(Cast cast);
  
 }

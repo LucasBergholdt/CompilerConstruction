@@ -13,6 +13,7 @@ import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Stmt.BlockStmt;
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Stmt.ExprStmt;
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Stmt.IfStmt;
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Stmt.PrintStmt;
+import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Stmt.VarDecl;
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.Token;
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.TokenType;
 
@@ -49,31 +50,45 @@ public class Parser {
     // ------------------ decl := VarStmt | Statement | FuncDecl --------------------
 
     private Stmt decl() {
+        if (match(VAR)) {
+            return varDecl();
+        /*} else if (match(FUNCTION)) {
+            return function(); */
+        } else {
+            return statement();
+        }
+    }
 
-        if(match(VAR)) {
-            // Case: "variable ____ 'has_type' ____
-            consume(IDENTIFIER, "expected Identifier");
-            Token id = previous();
-            TokenType type = null;
-            Expr expr = null;
-            
-            consume(TYPE_DEF, "expected 'has_type'");
-            if (match(NUMBER_TYPE, STRING_TYPE, BOOL_TYPE)) {
-                type = previous().type;
-            } else {
-                //return error...
-            }
-            if (match(ASSIGN)) {
-                // Case: "variable ____ 'has_type' ____ 'is' expression()
-                expr = expression();
-            }
-            consume(SEMICOLON, "expected semicolon");
-            return new Stmt.VarDecl(id, type, expr);
+    private Stmt varDecl() {
+        // When entering this method "variable" has already been consumed by match in decl()
+        
+        // Case: "variable ____ 'has_type' ____
+        // We expect an ID (name of variable):
+        Token id = consume(IDENTIFIER, "Expected identifier");
+
+        // We expect "has_type":
+        consume(TYPE_DEF, "Expected 'has_type'");
+        
+        // Expecting a NumberType, StringType or BoolType:
+        TokenType type = null; // TODO: Måske skal det her være hele token vi gemmer og ikke bare dens type?
+        if (match(NUMBER_TYPE, STRING_TYPE, BOOL_TYPE)) {
+            type = previous().type;
+        } else {
+            throw new ParseError();
         }
 
-        // Hvis ikke en VarDecl, så er case statement(). funcDecl er ikke supported endnu.
-        return statement();
+        // Optional "is" expr:
+        Expr expr = null;
+        if (match(ASSIGN)) {
+            // Case: "variable ____ 'has_type' ____ 'is' expression()
+            expr = expression();
+        }
+
+        // Expecting semicolon at end:
+        consume(SEMICOLON, "Expected semicolon");
+        return new Stmt.VarDecl(id, type, expr);
     }
+
 
 
         // ------------------ All statements in statement except exprStmt -----------------------
@@ -155,7 +170,7 @@ public class Parser {
         if (match(ASSIGN)) {
             // Case: Man kan ikke assigne 5+2 = ...
             if (!(expr instanceof Identifier)) {
-                // throw error
+                // TODO: kald error funktion (bogen siger man ikke skal throw error her)
             } else {
                 // Case: Identifier = ... 
                 Token id = ((Identifier)expr).id;
@@ -197,21 +212,21 @@ public class Parser {
         Expr expr = compr();
 
         while (match(NOT_EQUALS, EQUALS)) {
-        Token operator = previous();
-        Expr right = compr();
-        expr = new Expr.Binary(expr, operator, right);
+            Token operator = previous();
+            Expr right = compr();
+            expr = new Expr.Binary(expr, operator, right);
         }
 
         return expr;
     }
 
-    private Expr compr () {
+    private Expr compr() {
         Expr expr = term();
 
         while (match(GREATER, GREATER_EQUAL, LESS, LESS_EQUAL)) {
-        Token operator = previous();
-        Expr right = term();
-        expr = new Expr.Binary(expr, operator, right);
+            Token operator = previous();
+            Expr right = term();
+            expr = new Expr.Binary(expr, operator, right); 
         }
 
         return expr;
@@ -220,13 +235,14 @@ public class Parser {
     private Expr term () {
         if (match(MINUS, PLUS, MULT, DIV)) {
             Token operator = previous();
-            consume(LEFT_PAREN, null);
+            consume(LEFT_PAREN, "Expected '('");
             Expr left = term(); 
             Expr right = term();
-            consume(RIGHT_PAREN, null);
-            return new Expr.Binary(left,operator,right);
+            consume(RIGHT_PAREN, "Expected ')'");
+            return new Expr.Binary(left, operator, right);
+        } else {
+            return unary();
         }
-        return unary();
     }
 
     /*  term() i bogen for reference. Assignment1's er dog væsentligt anderledes
@@ -242,16 +258,68 @@ public class Parser {
 
     private Expr unary () {
         /*Tillader muligheden for flere fortegn foran unarys, fx. ---5 */
-        if (match(NOT) || match(MINUS)) {
-            Token op = previous();
+        if (match(NOT, MINUS)) {
+            Token operator = previous();
             Expr expr = unary();
-            return new Unary(op, expr);
+            return new Expr.Unary(operator, expr);
+        } else {
+            return call();
         }
-        return primary();
+    }
+
+    private Expr call() {
+        Expr expr = primary();
+
+        if (match(LEFT_PAREN)) {
+            List<Expr> arguments;
+            if (peek().type == RIGHT_PAREN) {
+                arguments = new ArrayList<>(); // Empty list
+            } else {
+                arguments = args();
+            }
+            // Book stores right paren token to use it for reporting rumtime errors caused by a function call
+            Token paren = consume(RIGHT_PAREN, "Expected ')'");
+            
+            return new Expr.Call(expr, paren, arguments);
+        }
+
+        return expr;
+    }
+
+    private List<Expr> args() {
+        List<Expr> arguments = new ArrayList<>();
+        arguments.add(expression()); // handling first "expr" in grammar
+
+        // Handling ("," expr)*:
+        while (match(COMMA)) { 
+            arguments.add(expression());
+        }
+        return arguments;
+    }
+
+    // Handle the cast that might appear
+    private Expr primary() {
+        // Check if cast is specified
+        if (match(CAST)) {
+            // Expecting a NumberType, StringType or BoolType:
+            Token typeToken = null;
+            if (match(NUMBER_TYPE, STRING_TYPE, BOOL_TYPE)) {
+                typeToken = previous();
+            } else {
+                throw new ParseError();
+            }
+
+            // Create new Expr.Cast:
+            Expr expr = primaryNoCast();
+            return new Expr.Cast(typeToken, expr);
+
+        } else { // Otherwise just parse the primary (literal / identifier / grouping)
+            return primaryNoCast();
+        }
     }
 
     // C-E: Kan også laves med Match (gøres i bogen). For nu tages Niels Erik's løsning.
-    private Expr primary() {
+    private Expr primaryNoCast() {
         Expr expr;
         switch (peek().type) {
             case FALSE:
@@ -269,9 +337,9 @@ public class Parser {
 
             /* Ellers regner vi med en grouping. Gøres lidt anderledes i bogen. */
             default:
-                consume(LEFT_PAREN, null);
+                consume(LEFT_PAREN, "Expected '('");
                 expr = expression();
-                consume(RIGHT_PAREN, null);
+                consume(RIGHT_PAREN, "Expected ')'");
                 return expr;
         }
     }
@@ -338,24 +406,38 @@ public class Parser {
 
 
     /* C-E: Taget fra bogen og ændret lidt for ikke at anvende check() og advance(). */
+    // Checks if current token has any of the given types. If so consume it and return true. Otherwise return false.
     private boolean match(TokenType... types) {
-        for (TokenType t : types) {
-            if (peek().type.equals(t)) {
-                    current++;
-                    return true;
+        for (TokenType type : types) {
+            if (check(type)) {
+                advance();
+                return true;
             }
         }
+
         return false;
     }
 
 
     /* Consumes if given token matches current token, otherwise throws error. */
-    void consume(TokenType t, String message) {
-        if (peek().type.equals(t)) {
-            current++;
-            return;
+    private boolean check(TokenType type) {
+        if (isAtEnd()) {
+            return false;
         } else {
-            // Spl.error(current, message); // assume we change this to be correct
+            return peek().type == type;
+        }
+    }
+
+    // Consume current token and return it
+    private Token advance() {
+        if (!isAtEnd()) current++;
+        return previous();
+    }
+
+    private Token consume(TokenType type, String message) {
+        if (check(type)) {
+            return advance();
+        } else {
             throw new ParseError();
         }
     }
