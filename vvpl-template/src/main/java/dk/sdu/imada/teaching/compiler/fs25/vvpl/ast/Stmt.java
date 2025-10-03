@@ -107,6 +107,40 @@ public abstract class Stmt {
         }
     }
 
+    public static class ReturnStmt extends Stmt {
+        public final Token returnKeyword;
+        public final Expr returnValue;
+
+        public ReturnStmt(Token returnKeyword, Expr returnValue) {
+            this.returnKeyword = returnKeyword;
+            this.returnValue = returnValue;
+        }
+
+        @Override
+        public <T> T accept(StmtVisitor<T> v) {
+            return v.visitReturnStmt(this);
+        }
+    }
+
+    public static class FunctionStmt extends Stmt {
+        public final Token name;
+        public final List<Token> params;
+        public final Token type;
+        public final List<Stmt> body;
+
+        public FunctionStmt(Token name, List<Token> params, Token type, List<Stmt> body) {
+            this.name = name;
+            this.params = params;
+            this.type = type;
+            this.body = body;
+        }
+
+        @Override
+        public <T> T accept(StmtVisitor<T> v) {
+            return v.visitFunctionStmt(this);
+        }
+    }
+
 
         
 }

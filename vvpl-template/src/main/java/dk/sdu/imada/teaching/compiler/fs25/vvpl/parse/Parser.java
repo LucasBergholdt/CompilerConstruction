@@ -50,10 +50,10 @@ public class Parser {
     // ------------------ decl := VarStmt | Statement | FuncDecl --------------------
 
     private Stmt decl() {
-        if (match(VAR)) {
+        if (match(FUNCTION)) {
+            return function();
+        } else if (match(VAR)) {
             return varDecl();
-        /*} else if (match(FUNCTION)) {
-            return function(); */
         } else {
             return statement();
         }
@@ -85,7 +85,7 @@ public class Parser {
         }
 
         // Expecting semicolon at end:
-        consume(SEMICOLON, "Expected semicolon");
+        consume(SEMICOLON, "Expected ';'");
         return new Stmt.VarDecl(id, type, expr);
     }
 
@@ -96,7 +96,7 @@ public class Parser {
         //Taget fra øvelsestimen. Matcher fint.
     private Stmt statement() {
         if (match(PRINT))
-            return print();
+            return printStmt();
 
         if (match(IF))
             return ifStmt();
@@ -105,13 +105,16 @@ public class Parser {
             return whileStmt();
 
         if (match(LEFT_BRACE))
-            return block();
+            return new Stmt.BlockStmt(block()); // Lucas: Står nu for at wrappe resultat af block() i en Stmt.BlockStmt.
+
+        if (match(RETURN))
+            return returnStmt();
 
         return exprStmt();
     }
 
      // Taget fra øvelsestimen. Matcher fint.
-    private Stmt print() {
+    private Stmt printStmt() {
         Expr value = expression();
         consume(SEMICOLON, "");
         return new Stmt.PrintStmt(value);
@@ -119,9 +122,9 @@ public class Parser {
 
     // Taget fra øvelsestimen. Matcher fint.
     private Stmt ifStmt() {
-        consume(LEFT_PAREN, "");
+        consume(LEFT_PAREN, "Expected '('");
         Expr cond = expression();
-        consume(RIGHT_PAREN, "");
+        consume(RIGHT_PAREN, "Expected ')'");
 
         Stmt thenBranch = statement();
         Stmt elseBranch = null;
@@ -132,23 +135,39 @@ public class Parser {
     }
 
     private Stmt whileStmt() {
-        consume(LEFT_PAREN,"");
+        consume(LEFT_PAREN, "Expected '('");
         Expr cond = expression();
-        consume(RIGHT_PAREN,"");
+        consume(RIGHT_PAREN, "Expected ')'");
         Stmt body = statement();
         return new Stmt.WhileStmt(cond, body);
     }
 
 
     // C-E: Fra øvelsestimen med en lille undtagelse (left_brace er allerede matchet)
-    private Stmt block() { // todo: allow syncs in blocks (Niels-Note)
-
+    /* Lucas: Har ændret så den her returner List<Stmt> i stedet. Det er for at den kan bruges i function().
+              Det er nu i stedet statement(), der wrapper den her liste ind i en Stmt.Block. 
+              Det er sådan bogen gør det, men de noterer dog også at det ser lidt underligt ud at gøre det sådan her.
+              Men det er altså for at man kan bruge block() i function().*/
+    private List<Stmt> block() { // todo: allow syncs in blocks (Niels-Note)
         List<Stmt> statements = new LinkedList<>();
-        while (!match(RIGHT_BRACE) && !isAtEnd()) {
+        
+        while (!check(RIGHT_BRACE) && !isAtEnd()) {
             statements.add(decl());
         }
-        consume(RIGHT_BRACE, "");
-        return new Stmt.BlockStmt(statements);
+
+        consume(RIGHT_BRACE, "Expected '}'");
+        return statements;
+    }
+
+    private Stmt returnStmt() {
+        Token returnKeyword = previous(); // Kept for error reporting
+        Expr value = null;
+        if (!check(SEMICOLON)) {
+            value = expression();
+        }
+
+        consume(SEMICOLON, "Expected ';'");
+        return new Stmt.ReturnStmt(returnKeyword, value);
     }
 
 
@@ -265,6 +284,57 @@ public class Parser {
         } else {
             return call();
         }
+    }
+
+    private Stmt function() {
+        Token name = consume(IDENTIFIER, "Expected function name");
+        consume(LEFT_PAREN, "Expected '('");
+        // If we don't have a closing ')' right after we have params:
+        List<Token> params = new ArrayList<>();
+        if (!check(RIGHT_PAREN)) {
+            params = params();
+        }
+
+        consume(RIGHT_PAREN, "Expected ')'");
+        // Check if function "has_type" and handle it:
+        Token type = null;
+        if (match(TYPE_DEF)) {
+            if (match(NUMBER_TYPE, STRING_TYPE, BOOL_TYPE)) {
+                type = previous();
+            } else {
+                throw new ParseError();
+            }
+        }
+
+        consume(LEFT_BRACE, "Expected '{'"); // block() assumes { has already been consumed
+        List<Stmt> body = block();
+        return new Stmt.FunctionStmt(name, params, type, body);
+    }
+
+    // TODO: Virker ikke lige nu. Skal have valgt hvordan vi opbevarer params.
+    private List<Token> params() {
+        List<Token> params = new ArrayList<>();
+
+        Token id = consume(IDENTIFIER, "Expected identifier");
+        consume(TYPE_DEF, "Expected 'has_type'");
+        Token type = null;
+        if (match(NUMBER_TYPE, STRING_TYPE, BOOL_TYPE)) {
+            type = previous();
+        } else {
+            throw new ParseError();
+        }
+
+        while(match(COMMA)) {
+            Token id2 = consume(IDENTIFIER, "Expected identifier");
+            consume(TYPE_DEF, "Expected 'has_type'");
+            Token type2 = null;
+            if (match(NUMBER_TYPE, STRING_TYPE, BOOL_TYPE)) {
+                type = previous();
+            } else {
+                throw new ParseError();
+            }
+        }
+        return null;
     }
 
     private Expr call() {

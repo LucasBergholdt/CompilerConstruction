@@ -26,4 +26,8 @@ public interface StmtVisitor<T> {
 
     T visitVarDecl(VarDecl varDecl); 
 
+    T visitReturnStmt(ReturnStmt returnStmt);
+
+    T visitFunctionStmt(FunctionStmt functionStmt);
+
 }
