@@ -13,6 +13,7 @@ import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.Scanner;
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.Token;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * @author Sandra Greiner
@@ -45,8 +46,8 @@ public class ParserTest {
      * file
      * sample-ast-expected.out in the test resources
      */
-    protected String getASTString(List<?> statements) {
-        StringBuilder builder = new StringBuilder();
+    protected String getASTString(List<?> statements) {        // LA: List<?> - does not care about the kind of object stored.
+        StringBuilder builder = new StringBuilder();        
         ASTPrinter printer = new ASTPrinter();
         for (var stmt : statements) {
             builder.append(printer.print((Stmt) stmt));
@@ -61,11 +62,16 @@ public class ParserTest {
         Scanner scanner = new Scanner(sampleInputString);
         List<Token> tokens = scanner.scanTokens();
 
+        // FOR DEBUGGING ONLY //
+        // fail("About to parse: " + tokens);
+
         Parser parser = new Parser(tokens);
         List<?> statements = parser.parse();
 
         String fileActual = getASTString(statements);
         List<String> fileActualLines = Arrays.asList(fileActual.split(System.lineSeparator()));
+
+
 
         try {
             List<String> fileExpectedLines = Files.readAllLines(Paths.get(expectedFile));

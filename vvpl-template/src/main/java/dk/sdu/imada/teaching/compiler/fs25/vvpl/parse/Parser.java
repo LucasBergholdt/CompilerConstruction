@@ -18,6 +18,7 @@ import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.Token;
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.TokenType;
 
 import static dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.TokenType.*;
+import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * @author Sandra Greiner
@@ -41,7 +42,12 @@ public class Parser {
         
         // C-E: Her version fra bog. Niels-Erik lavede den anderledes. Jeg synes bogen giver mere mening
         while (!isAtEnd()) {    //tjekker for EOF
-            statements.add(decl());
+            try {
+                statements.add(decl());
+            } catch (ParseError e) {
+                // synchronise();
+            }
+
         }
         return statements;
     }
@@ -59,6 +65,10 @@ public class Parser {
         }
     }
 
+
+    // --------- Lasse: Muligvis her min error optræder. Evt. brug min "fail(...)" til at undersøge det --------- //
+    // Hvis i bruger denne, kan i se, at den formår at detektere en literal i ".expr". Derfor burde den ikke evaluere til null?
+
     private Stmt varDecl() {
         // When entering this method "variable" has already been consumed by match in decl()
         
@@ -70,7 +80,8 @@ public class Parser {
         consume(TYPE_DEF, "Expected 'has_type'");
         
         // Expecting a NumberType, StringType or BoolType:
-        TokenType type = null; // TODO: Måske skal det her være hele token vi gemmer og ikke bare dens type?
+        TokenType type = null;       // TODO: Måske skal det her være hele token vi gemmer og ikke bare dens type?
+
         if (match(NUMBER_TYPE, STRING_TYPE, BOOL_TYPE)) {
             type = previous().type;
         } else {
@@ -78,6 +89,7 @@ public class Parser {
         }
 
         // Optional "is" expr:
+
         Expr expr = null;
         if (match(ASSIGN)) {
             // Case: "variable ____ 'has_type' ____ 'is' expression()
@@ -86,6 +98,10 @@ public class Parser {
 
         // Expecting semicolon at end:
         consume(SEMICOLON, "Expected ';'");
+
+        // FOR DEBUGGING ONLY //
+        // fail(id.toString() + " " + type.toString() + " " + expr.toString());
+
         return new Stmt.VarDecl(id, type, expr);
     }
 
@@ -116,7 +132,7 @@ public class Parser {
      // Taget fra øvelsestimen. Matcher fint.
     private Stmt printStmt() {
         Expr value = expression();
-        consume(SEMICOLON, "");
+        consume(SEMICOLON, "Expected semicolon");
         return new Stmt.PrintStmt(value);
     }
 
@@ -171,7 +187,7 @@ public class Parser {
     }
 
 
-    // C-E: ------------ ExprStmt and nested functions -----------------
+    // ------------ ExprStmt and nested functions -----------------
     private Stmt exprStmt() {
         Expr expr = expression();
         consume(SEMICOLON, null);
@@ -252,7 +268,7 @@ public class Parser {
     }
 
     private Expr term () {
-        if (match(MINUS, PLUS, MULT, DIV)) {
+        if (match(SUB, PLUS, MULT, DIV)) {
             Token operator = previous();
             consume(LEFT_PAREN, "Expected '('");
             Expr left = term(); 
@@ -419,29 +435,29 @@ public class Parser {
 
     /* Fra øvelses time. Copy-pasted for nu */
 
-/*
-    private void synchronise() {
-        // todo: what happens with end of file
-        while (true) {
-            switch (peek().type) {
-                case IF:
-                case WHILE:
-                case PRINT:
-                case LEFT_BRACE:
-                case VAR:
-                    return;
 
-                case SEMICOLON:
-                    current++;
-                    return;
+    // private void synchronise() {
+    //     // todo: what happens with end of file
+    //     while (true) {
+    //         switch (peek().type) {
+    //             case IF:
+    //             case WHILE:
+    //             case PRINT:
+    //             case LEFT_BRACE:
+    //             case VAR:
+    //                 return;
 
-                default:
-                    break;
-            }
-            current++;
-        }
-    }
-     */
+    //             case SEMICOLON:
+    //                 current++;
+    //                 return;
+
+    //             default:
+    //                 break;
+    //         }
+    //         current++;
+    //     }
+    // }
+     
 
 
 
@@ -505,9 +521,10 @@ public class Parser {
     }
 
     private Token consume(TokenType type, String message) {
-        if (check(type)) {
+        if (check(type)) { // If we recieve the token type we expect, move on. 
             return advance();
         } else {
+            System.out.println(message);
             throw new ParseError();
         }
     }
