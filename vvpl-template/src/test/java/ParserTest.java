@@ -32,6 +32,7 @@ public class ParserTest {
         inputFile = "src/test/resources/sample-input.in";
         //inputFile = "src/test/resources/sample-input-CE.in";
         expectedFile = "src/test/resources/sample-ast-expected.out";
+        //expectedFile = "src/test/resources/sample-ast-expected-LU.out";
         try {
             sampleInputString = new String(Files.readAllBytes(Paths.get(inputFile)));
         } catch (IOException e) {

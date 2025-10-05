@@ -133,6 +133,35 @@ import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.TokenType.*;
 
   }
 
+  public String visitVarDecl2(VarDecl varDecl) {
+    StringBuilder sb = new StringBuilder();
+
+    sb.append(indentString("VarDecl"));
+    indent++;
+    sb.append(indentString(varDecl.id.lexeme));
+
+    sb.append(indentString(varDecl.type.toString()));
+
+    if (varDecl.expr != null) {
+      varDecl.expr.accept(this);
+    }
+
+    indent--;
+    return sb.toString();
+
+  }
+
+  private String indentString(String text) {
+    StringBuilder sb = new StringBuilder();
+    for (int i = 0; i < indent; i++) {
+      sb.append("  ");
+    }
+    sb.append(text).append(System.lineSeparator()); // System.lineSeperator = \n men specifik for brugerens OS system.
+    return sb.toString();
+  }
+
+
+
   @Override
   public String visitAssignExpr(Assign assign) {
     System.out.println("  ".repeat(indent) + "AssignExpr");

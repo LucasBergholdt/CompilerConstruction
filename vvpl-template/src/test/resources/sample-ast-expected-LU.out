@@ -1,0 +1,10 @@
+VarDecl
+  b
+  BOOL_TYPE
+  LiteralExpr
+    true
+VarDecl
+  number1
+  NUMBER_TYPE
+  LiteralExpr
+    123
