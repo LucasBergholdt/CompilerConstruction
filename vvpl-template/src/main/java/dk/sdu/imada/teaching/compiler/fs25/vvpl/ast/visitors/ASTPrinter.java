@@ -143,7 +143,7 @@ import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.TokenType.*;
     sb.append(indentString(varDecl.type.toString()));
 
     if (varDecl.expr != null) {
-      varDecl.expr.accept(this);
+      sb.append(varDecl.expr.accept(this));
     }
 
     indent--;
