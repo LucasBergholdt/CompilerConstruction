@@ -18,7 +18,7 @@ import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.Token;
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.TokenType;
 
 import static dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.TokenType.*;
-import static org.junit.jupiter.api.Assertions.fail;
+
 
 /**
  * @author Sandra Greiner
@@ -98,9 +98,6 @@ public class Parser {
 
         // Expecting semicolon at end:
         consume(SEMICOLON, "Expected ';'");
-
-        // FOR DEBUGGING ONLY //
-        // fail(id.toString() + " " + type.toString() + " " + expr.toString());
 
         return new Stmt.VarDecl(id, type, expr);
     }
@@ -394,6 +391,7 @@ public class Parser {
             } else {
                 throw new ParseError();
             }
+
 
             // Create new Expr.Cast:
             Expr expr = primaryNoCast();
