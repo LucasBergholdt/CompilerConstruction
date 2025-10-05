@@ -8,6 +8,10 @@ import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Expr.Identifier;
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Expr.Literal;
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Expr.Logical;
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Expr.Unary;
+
+import java.util.HashMap;
+import java.util.Map;
+
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Stmt;
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Stmt.BlockStmt;
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Stmt.ExprStmt;
@@ -28,18 +32,36 @@ import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.TokenType.*;
 
  /* C-E note: Denne implementerer funktionaliteten af Visitor Interfaces. */
 
-/*Lasse: Skal vi sørge for alle tal implementeres som doubles? jf. Sandras besked på ItsLearning */
 // LA: Overvej desuden om alle optionals er tilstrækkeligt opfyldt. 
 // Eksempel på dette i visitVarDecl.
 
 // Problemer:
 // 1. Fra "BOOL_TYPE" TIL "Bool". Se mine noter til dette i visitVarDecl.
+    // LA: Burde være løst.
+
 // 2. At få den rigtige rækkefølge ift. Cast_To og LiteralExpression.
-// 3. Lave alle tal til doubels? E.g "123.0".
+
+// 3. Lave alle tal til doubles. E.g "123.0".
+      // LA: Burde være løst.
+
+// Se gerne, om i er enige i mine løsninger til hhv. 1 og 3.
+// 2 mangler jeg at løse. 
 
 
  public class ASTPrinter implements ExprVisitor<String>, StmtVisitor<String> {
   private int indent = 0;
+
+
+  // LA: Bruges til at løse "BOOL_TYPE" problemet.
+    private static final Map<TokenType, String> reverse_keywords;
+      static {
+		reverse_keywords = new HashMap<>();
+        reverse_keywords.put(TokenType.BOOL_TYPE, "Bool");
+        reverse_keywords.put(TokenType.NUMBER_TYPE, "Number");
+        reverse_keywords.put(TokenType.STRING_TYPE, "String");        
+	}
+
+
 
   public String print(Stmt stmt) {
     return stmt.accept(this);
@@ -48,99 +70,82 @@ import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.TokenType.*;
 
   @Override
   public String visitExprStmt(ExprStmt exprStmt) {
-    System.out.println("  ".repeat(indent) + "ExprStmt");
-    indent++;
-    exprStmt.expr.accept(this);
-    indent--;
-    return null;
+    StringBuilder sb = new StringBuilder();
 
+    sb.append(indentString("ExprStmt"));
+    indent++;
+    sb.append(exprStmt.expr.accept(this));
+    indent--;
+    return sb.toString();
   }
 
   @Override
   public String visitWhileStmt(WhileStmt whileStmt) {
-    System.out.println("  ".repeat(indent) + "WhileExpr");
+    StringBuilder sb = new StringBuilder();
+
+    sb.append(indentString("WhileStmt"));
+
     indent++;
-    whileStmt.conditional.accept(this);
-    whileStmt.body.accept(this);
+    sb.append(whileStmt.conditional.accept(this));
+    sb.append(whileStmt.body.accept(this));
     indent--;
 
-    return null;
+    return sb.toString();
   }
 
   @Override
   public String visitIfStmt(IfStmt ifStmt) {
+    StringBuilder sb = new StringBuilder();
 
-    System.out.println("  ".repeat(indent) + "IfStmt");
+    sb.append(indentString("IfStmt"));
+
     indent++;
-    ifStmt.cond.accept(this);
-    // indent--;
-    // indent++;
-    ifStmt.thenBlock.accept(this);
-    // indent--;
-    // indent++;
+    sb.append(ifStmt.cond.accept(this));
+
+    sb.append(ifStmt.thenBlock.accept(this));
+
     if (ifStmt.elseBlock != null) {
-      ifStmt.elseBlock.accept(this);
+      sb.append(ifStmt.elseBlock.accept(this));
     }
-
-
     indent--;
 
-    return null;
+    return sb.toString();
   }
 
   @Override
   public String visitPrintStmt(PrintStmt printStmt) {
-    System.out.println("  ".repeat(indent) + "PrintStmt");
+    StringBuilder sb = new StringBuilder();
+
+    sb.append(indentString("PrintStmt"));
     indent++;
-    printStmt.expr.accept(this);
+    sb.append(printStmt.expr.accept(this));
     indent--;
-    return null;
+    return sb.toString();
   }
 
   @Override
   public String visitBlockStmt(BlockStmt blockStmt) {
-    System.out.println("  ".repeat(indent) + "BlockStmt");
+    StringBuilder sb = new StringBuilder();
+
+    sb.append(indentString("BlockStmt"));
+
     indent++;
     for (Stmt stmt : blockStmt.stmts) {
-      stmt.accept(this);
+      sb.append(stmt.accept(this));
     }
     indent--;
-    return null;
+    return sb.toString();
   }
 
-  @Override
+
   public String visitVarDecl(VarDecl varDecl) {
-    System.out.println("  ".repeat(indent) + "VarDecl");
-    indent++;
-    System.out.println("  ".repeat(indent) + varDecl.id.lexeme);
-    // TODO: Finde en måde, hvorpå den reelle type som fx "BOOL_TYPE", kan
-    // repræsenteres som "Bool".
-
-    // Idé: Lave en hjælpefunktion, som kan "mappe tilbage" fra value til key.
-    // Kræver vi importerer keywords til denne fil, og laver en funktion, e.g "getKeyByValue(E value)".
-    // Denne skal så bruges i alle tilfælde, hvor vi skal vise "typen".
-
-    //La: Nogen bedre bud? :)
-
-    System.out.println("  ".repeat(indent) + varDecl.type);
-
-    if (varDecl.expr != null) {
-      varDecl.expr.accept(this);
-    }
-
-    indent--;
-    return null;
-
-  }
-
-  public String visitVarDecl2(VarDecl varDecl) {
     StringBuilder sb = new StringBuilder();
 
     sb.append(indentString("VarDecl"));
     indent++;
     sb.append(indentString(varDecl.id.lexeme));
 
-    sb.append(indentString(varDecl.type.toString()));
+    sb.append(indentString(reverse_keywords.get(varDecl.type)));
 
     if (varDecl.expr != null) {
       sb.append(varDecl.expr.accept(this));
@@ -151,6 +156,8 @@ import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.TokenType.*;
 
   }
 
+  /*Prepends the appropriate amount of indentation to strings.
+   */
   private String indentString(String text) {
     StringBuilder sb = new StringBuilder();
     for (int i = 0; i < indent; i++) {
@@ -164,93 +171,125 @@ import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.TokenType.*;
 
   @Override
   public String visitAssignExpr(Assign assign) {
-    System.out.println("  ".repeat(indent) + "AssignExpr");
+      StringBuilder sb = new StringBuilder();
+
+    sb.append(indentString("AssignExpr"));
+    
     indent++;
-    System.out.println("  ".repeat(indent) + assign.ID.lexeme);
-    assign.expr.accept(this);
+
+    sb.append(indentString(assign.ID.lexeme));
+    sb.append(assign.expr.accept(this));
     indent--;
-    return null;
+    return sb.toString();
   }
 
   @Override
   public String visitLogicalExpr(Logical logical) {
-    System.out.println("  ".repeat(indent) + "LogicalExpr");
+
+    StringBuilder sb = new StringBuilder();
+
+    sb.append(indentString("LogicalExpr"));
+
     indent++;
-    logical.left.accept(this);
-    // indent--;
+    sb.append(logical.left.accept(this));
 
-    System.out.println("  ".repeat(indent) + logical.operator.lexeme);
+    sb.append(indentString(logical.operator.lexeme));
 
-    // indent++;
-    logical.right.accept(this);
+    sb.append(logical.right.accept(this));
     indent--;
-    return null;
+    return sb.toString();
   }
 
   @Override
   public String visitBinaryExpr(Binary binary) {
-    System.out.println("  ".repeat(indent) + "BinaryExpr");
+    StringBuilder sb = new StringBuilder();
+
+    sb.append(indentString("BinaryExpr"));
     indent++;
-    binary.left.accept(this);
-    // indent--;
+    sb.append(binary.left.accept(this));
 
-    System.out.println("  ".repeat(indent) + binary.operator.lexeme);
+    sb.append(indentString(binary.operator.lexeme));
+    
+    sb.append(binary.right.accept(this));
 
-    // indent++;
-    binary.right.accept(this);
     indent--;
-    return null;
+    return sb.toString();
   }
 
   @Override
   public String visitUnaryExpr(Unary unary) {
-    System.out.println("  ".repeat(indent) + "UnaryExpr");
+    StringBuilder sb = new StringBuilder();
+    
+    sb.append(indentString("UnaryExpr"));
     indent++;
-    System.out.println("  ".repeat(indent) + unary.operator.lexeme);
-    unary.expr.accept(this);
+    sb.append(indentString(unary.operator.lexeme));
+
+    sb.append(unary.expr.accept(this));
+
     indent--;
-    return null;
+
+    return sb.toString();
   }
   
   // Leaf.
 
  // Der er måske en bug i rækkefølgen hvorpå vi modtager hhv. casts og literals?
  // Men så ville der også være en fejl i vores eksempel, så nok ikke.
-// Det er som om, at Cast_To bliver kaldt inden Literal.
+// Det er som om, at Cast_To bliver kaldt inden Literal, hvilket volder mig problemer.
 
   @Override
   public String visitLiteralExpr(Literal literal) {
+    StringBuilder sb = new StringBuilder();
 
-    System.out.println("  ".repeat(indent) + "LiteralExpr");
+    sb.append(indentString("LiteralExpr"));
+
     indent++;
 
-    // HER BURDE CAST_TO PRINTE FØR VORES LEXEME
+    // HER BURDE CAST_TO PRINTE FØR VORES LEXEME //
 
-    System.out.println("  ".repeat(indent) + literal.token.lexeme);
-  
+    String lexeme = literal.token.lexeme;
+
+    // Converts to double if digit. (And back to string).
+    // System.out.println(lexeme); // For debugging
+
+    if (isDigit(lexeme.charAt(0))) {
+      double newNum = Double.parseDouble(lexeme);
+      sb.append(indentString(newNum+""));
+      // System.out.println(newNum); // For debugging
+    } else {
+      sb.append(indentString(lexeme));
+    }
+
     indent--;
-    return null;
+
+    return sb.toString();
   }
 
   // Leaf.
   @Override
   public String visitIdentifierExpr(Identifier identifier) {
-    System.out.println("  ".repeat(indent) + "VariableExpr");
+    StringBuilder sb = new StringBuilder();
+
+    sb.append(indentString("VariableExpr"));
+
     indent++;
-    System.out.println("  ".repeat(indent) + identifier.id.lexeme);
+
+    sb.append(indentString(identifier.id.lexeme));
     indent--;
-    return null;
+    return sb.toString();
   }
 
   // ---Lasse: Problematisk ift. rækkefølgen vi modtager tokens på, og printe det rigtigt? ---.
   @Override
   public String visitCastExpr(Cast cast) {
+    StringBuilder sb = new StringBuilder();
+
+    sb.append(indentString("Cast_To " + cast.type.lexeme));    
     // indent++;
-    System.out.println("  ".repeat(indent) + "Cast_To " + cast.type.lexeme);
-    cast.expr.accept(this);
+    sb.append(cast.expr.accept(this));
 
     // indent--;
-    return null;
+    return sb.toString();
 
   }
 
@@ -271,5 +310,12 @@ import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.TokenType.*;
     // TODO Auto-generated method stub
     throw new UnsupportedOperationException("Unimplemented method 'visitFunctionStmt'");
   }
+
+ /*Helpers */
+
+  // Checks if string is a digit (via first digit).
+    private boolean isDigit(char c) {
+        return (c >= '0' && c <= '9');
+    }
 
 }
