@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import static dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.TokenType.*;
 
 /**
  * @author Sandra Greiner
@@ -14,42 +15,43 @@ public class Scanner {
     private static final Map<String, TokenType> keywords;
     	static {
 		keywords = new HashMap<>();
-        keywords.put("variable", TokenType.VAR);
-        keywords.put("has_type", TokenType.TYPE_DEF);
-        keywords.put("String", TokenType.STRING_TYPE);
-        keywords.put("Number", TokenType.NUMBER_TYPE);
-        keywords.put("Bool", TokenType.BOOL_TYPE);
-        keywords.put("is", TokenType.ASSIGN);
+        keywords.put("variable", VAR);
+        keywords.put("has_type", TYPE_DEF);
+        keywords.put("String", STRING_TYPE);
+        keywords.put("Number", NUMBER_TYPE);
+        keywords.put("Bool", BOOL_TYPE);
+        keywords.put("is", ASSIGN);
 
-        keywords.put("true", TokenType.TRUE);
-        keywords.put("false", TokenType.FALSE);
-        keywords.put("AND", TokenType.AND);
-        keywords.put("OR", TokenType.OR);
-        keywords.put("NOT", TokenType.NOT);
-        keywords.put("EQUALS", TokenType.EQUALS);
-        keywords.put("NOT_EQUALS", TokenType.NOT_EQUALS);
+        keywords.put("true", TRUE);
+        keywords.put("false", FALSE);
+        keywords.put("AND", AND);
+        keywords.put("OR", OR);
+        keywords.put("NOT", NOT);
+        keywords.put("EQUALS", EQUALS);
+        keywords.put("NOT_EQUALS", NOT_EQUALS);
 
-        keywords.put("add", TokenType.PLUS);
-        keywords.put("subtract", TokenType.SUB);
-        keywords.put("divide", TokenType.DIV);
-        keywords.put("multiply", TokenType.MULT);
+        keywords.put("add", PLUS);
+        keywords.put("subtract", SUB);
+        keywords.put("divide", DIV);
+        keywords.put("multiply", MULT);
 
-        keywords.put("GREATER", TokenType.GREATER);
-        keywords.put("GREATER_EQUAL", TokenType.GREATER_EQUAL);
-        keywords.put("LESS", TokenType.LESS);
-        keywords.put("LESS_EQUAL", TokenType.LESS_EQUAL);
+        keywords.put("GREATER", GREATER);
+        keywords.put("GREATER_EQUAL", GREATER_EQUAL);
+        keywords.put("LESS", LESS);
+        keywords.put("LESS_EQUAL", LESS_EQUAL);
 
-        keywords.put("write_to_console", TokenType.PRINT);
-        keywords.put("loop_while", TokenType.WHILE);
-        keywords.put("if", TokenType.IF);
-        keywords.put("else", TokenType.ELSE);
-        keywords.put("cast_to", TokenType.CAST);
+        keywords.put("write_to_console", PRINT);
+        keywords.put("loop_while", WHILE);
+        keywords.put("if", IF);
+        keywords.put("else", ELSE);
+        keywords.put("cast_to", CAST);
 
-        keywords.put("function", TokenType.FUNCTION);
-        keywords.put("return", TokenType.RETURN);
+        keywords.put("function", FUNCTION);
+        keywords.put("return", RETURN);
         
 	}
 
+    private final List<Token> scannedTokens =  new LinkedList<>();
     private final String inputString;
     // Scanning state
     private int start = 0;
@@ -61,29 +63,26 @@ public class Scanner {
     }
 
     public List<Token> scanTokens() {
-        //TODO: Jeg ved ikke hvorfor hun har instantiated den her scannedTokens liste her. Ville være nemmere hvis den var attribut som i exercises --Lucas.
-        List<Token> scannedTokens =  new LinkedList<>();
-
 		while (!isAtEnd()) {
 			// We are at the beginning of the next lexeme.
 			start = current;
-			scanToken(scannedTokens);
+			scanToken();
 		}
 
-		scannedTokens.add(new Token(TokenType.EOF, "", null, line));
+		scannedTokens.add(new Token(EOF, "", null, line));
 		return scannedTokens;
 	}
 
-    private void scanToken(List<Token> scannedTokens) {
+    private void scanToken() {
         char c = advance();
         switch (c) {
-            case '(': addToken(scannedTokens, TokenType.LEFT_PAREN); break;
-            case ')': addToken(scannedTokens, TokenType.RIGHT_PAREN); break;
-            case '{': addToken(scannedTokens, TokenType.LEFT_BRACE); break;
-            case '}': addToken(scannedTokens, TokenType.RIGHT_BRACE); break;
-            case ',': addToken(scannedTokens, TokenType.COMMA); break;
-            case ';': addToken(scannedTokens, TokenType.SEMICOLON); break;
-            case '-': addToken(scannedTokens, TokenType.MINUS); break;
+            case '(': addToken(LEFT_PAREN); break;
+            case ')': addToken(RIGHT_PAREN); break;
+            case '{': addToken(LEFT_BRACE); break;
+            case '}': addToken(RIGHT_BRACE); break;
+            case ',': addToken(COMMA); break;
+            case ';': addToken(SEMICOLON); break;
+            case '-': addToken(MINUS); break;
 
             case '#':
                 while (peek() != '\n' && !isAtEnd()) advance();
@@ -100,29 +99,29 @@ public class Scanner {
                 break;
 
             case '"':
-                string(scannedTokens);
+                string();
                 break;
 
 
 
             default:
                 if (isDigit(c)) {
-                    number(scannedTokens);
+                    number();
                 } else if (isAlpha(c)) {
-                    identifier(scannedTokens);
+                    identifier();
                 } else {
                     error(line, "Unexpected character.");
                 }
         }
     }
 
-    private void addToken(List<Token> tokenList, TokenType type) {
-        addToken(tokenList, type, null);
+    private void addToken(TokenType type) {
+        addToken(type, null);
     }
 
-    private void addToken(List<Token> tokenList, TokenType type, Object literal) {
+    private void addToken(TokenType type, Object literal) {
         String text = inputString.substring(start, current);
-        tokenList.add(new Token(type, text, literal, line));
+        scannedTokens.add(new Token(type, text, literal, line));
     }
 
     // TODO: handle error --Lucas
@@ -130,7 +129,7 @@ public class Scanner {
         System.err.println("[line " + line + "] Error: " + message);
     }
 
-    private void string(List<Token> tokenList) {
+    private void string() {
         int newlineCount = 0;
         
         while (peek() != '"' && !isAtEnd()) {
@@ -163,10 +162,10 @@ public class Scanner {
         advance();
 
         String value = inputString.substring(start + 1, current - 1);
-        addToken(tokenList, TokenType.STRING, value);
+        addToken(STRING, value);
     }
 
-    private void number(List<Token> tokenList) {
+    private void number() {
         while (isDigit(peek())) advance();
 
         if (peek() == '.' && isDigit(peekNext())) {
@@ -175,16 +174,16 @@ public class Scanner {
             while (isDigit(peek())) advance(); // consume rest of number
         }
 
-        addToken(tokenList, TokenType.NUMBER, Double.parseDouble(inputString.substring(start, current)));
+        addToken(NUMBER, Double.parseDouble(inputString.substring(start, current)));
     }
 
-    private void identifier(List<Token> tokenList) {
+    private void identifier() {
         while (isAlphaNumeric(peek())) advance();
 
         String text = inputString.substring(start, current);
         TokenType type = keywords.get(text); // returns keyword if in map or null otherwise
-        if (type == null) type = TokenType.IDENTIFIER;
-        addToken(tokenList, type);
+        if (type == null) type = IDENTIFIER;
+        addToken(type);
     } 
 
     //////////////////////////////////////////////////////////////////////
