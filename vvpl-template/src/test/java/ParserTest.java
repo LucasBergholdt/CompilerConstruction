@@ -13,7 +13,6 @@ import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.Scanner;
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.Token;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * @author Sandra Greiner

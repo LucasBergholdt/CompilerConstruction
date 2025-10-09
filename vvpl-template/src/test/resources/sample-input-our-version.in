@@ -1,0 +1,34 @@
+################################
+# variable declarations
+################################
+
+variable a has_type Number is 3.14;
+variable b has_type Number is 42;
+
+
+################################
+# basic arithmetics
+################################
+
+# Hun tester ikke multiply.
+
+variable res has_type Number is mult(a b);
+
+################################
+# start block
+################################
+
+write_to_console res;
+write_to_console res NOT_EQUALS 1;
+
+################################
+# Logical evaluation
+################################
+
+# Måske en god idé at teste nogle logiske udtryk?
+
+variable t has_type Bool is true;
+variable f has_type Bool is false;
+
+variable logic_res has_type Bool is (t AND f);
+write_to_console logic_res;

@@ -1,6 +1,0 @@
-################################
-# variable declarations
-################################
-
-variable b has_type Bool is true; 				# A boolean
-variable number1 has_type Number is 123; 			# A number
