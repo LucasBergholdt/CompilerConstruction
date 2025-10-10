@@ -10,7 +10,7 @@ import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.Token;
 public class Main {
     public static void main(String[] args) {
         String inputByteString;
-        String inputFile  =    "src/test/resources/sample-input-our-version.in";
+        String inputFile  =  "/home/lasse/Datalogi/5. semester/Compilerkonstruktion/Assignment_1/vvpl-interpreter/vvpl-template/src/test/resources/sample-input-our-version.in";
         // String expectedFile  = "src/test/resources/sample-input-scan.out";
         try {
             inputByteString = new String(Files.readAllBytes(Paths.get(inputFile)));

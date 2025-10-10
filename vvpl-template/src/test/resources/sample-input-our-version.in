@@ -30,5 +30,6 @@ write_to_console res NOT_EQUALS 1;
 variable t has_type Bool is true;
 variable f has_type Bool is false;
 
-variable logic_res has_type Bool is (t AND f);
-write_to_console logic_res;
+variable logic_res has_type Bool is (NOT (NOT t AND NOT f)); 
+variable logic_res2 has_type Bool is (t OR f);
+write_to_console (logic_res EQUAL logic_res2); # Should be true. 
