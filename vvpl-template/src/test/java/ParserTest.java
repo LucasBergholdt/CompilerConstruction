@@ -55,8 +55,6 @@ public class ParserTest {
         return builder.toString();
     }
 
-
-    // C-E: Sammenligner linje for linje. (sample-input.in og sample-ast-expected.out)
     @Test
     public void testEquivalenceOfEachLine() {
         Scanner scanner = new Scanner(sampleInputString);

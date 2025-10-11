@@ -113,7 +113,7 @@ public abstract class Expr {
         }
     }
 
-    /* Author: Lucas Bergholdt Hansen */ 
+    /** @author: Lucas Bergholdt Hansen */
     public static class Call extends Expr {
         public final Expr callee;
         public final Token paren;
@@ -131,7 +131,7 @@ public abstract class Expr {
         }
     }
 
-    /* Author: Lucas Bergholdt Hansen */ 
+    /** @author: Lucas Bergholdt Hansen */ 
     public static class Cast extends Expr {
         public final Token type;
         public final Expr expr;

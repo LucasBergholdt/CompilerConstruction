@@ -66,7 +66,7 @@ public class Parser {
         }
     }
 
-    /* Author: Carl-Emil Dons Christensen, Lucas Bergholdt Hansen */ 
+    /** @author: Carl-Emil Dons Christensen, Lucas Bergholdt Hansen */
     private Stmt varDecl() {
         // When entering this method "variable" has already been consumed by match in decl()
         
@@ -152,7 +152,7 @@ public class Parser {
         return new Stmt.WhileStmt(cond, body);
     }
 
-    /* Author: Carl-Emil Dons Christensen, Lucas Bergholdt Hansen */
+    /** @author: Carl-Emil Dons Christensen, Lucas Bergholdt Hansen */
     private List<Stmt> block() { // TODO: allow syncs in blocks
         List<Stmt> statements = new LinkedList<>();
         
@@ -164,7 +164,7 @@ public class Parser {
         return statements;
     }
 
-    /* Author: Lucas Bergholdt Hansen */
+    /** @author: Lucas Bergholdt Hansen */
     private Stmt returnStmt() {
         Token returnKeyword = previous(); // Kept for later error reporting
         Expr value = null;
@@ -286,7 +286,7 @@ public class Parser {
         }
     }
 
-    /* Author: Lucas Bergholdt Hansen */
+    /** @author: Lucas Bergholdt Hansen */
     private Stmt function() {
         Token name = consume(IDENTIFIER, "Expected function name");
         consume(LEFT_PAREN, "Expected '('");
@@ -312,7 +312,7 @@ public class Parser {
         return new Stmt.FunctionStmt(name, params, type, body);
     }
 
-    /* Author: Lucas Bergholdt Hansen */
+    /** @author: Lucas Bergholdt Hansen */
     // unfinished
     private List<Token> params() {
         List<Token> params = new ArrayList<>();
@@ -339,7 +339,7 @@ public class Parser {
         return null;
     }
 
-    /* Author: Lucas Bergholdt Hansen */
+    /** @author: Lucas Bergholdt Hansen */
     private Expr call() {
         Expr expr = primary();
 
@@ -359,7 +359,7 @@ public class Parser {
         return expr;
     }
 
-    /* Author: Lucas Bergholdt Hansen */
+    /** @author: Lucas Bergholdt Hansen */
     private List<Expr> args() {
         List<Expr> arguments = new ArrayList<>();
         arguments.add(expression()); // handling first "expr" in grammar
@@ -371,7 +371,7 @@ public class Parser {
         return arguments;
     }
 
-    /* Author: Lucas Bergholdt Hansen */
+    /** @author: Lucas Bergholdt Hansen */
     // Handles the cast that might appear
     private Expr primary() {
         // Check if cast is specified
@@ -421,9 +421,8 @@ public class Parser {
         }
     }
 
-
     // -------------------------- Helper Functions -------------------------
-    /* Author: Carl-Emil Dons Christensen, Lucas Bergholdt Hansen */
+    /** @author: Carl-Emil Dons Christensen, Lucas Bergholdt Hansen */
 
     Token peek() {
         return tokens.get(current);

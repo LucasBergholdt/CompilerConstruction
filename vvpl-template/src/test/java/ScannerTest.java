@@ -21,7 +21,7 @@ public class ScannerTest {
 
     private static String inputFile;
     private static String inputByteString;
-    private static String expectedFile; // C-E: Hvad vi forventer at få printet. Givet på forhånd.
+    private static String expectedFile;
    
 
     @BeforeAll
@@ -41,7 +41,7 @@ public class ScannerTest {
         List<Token> tokens = lexer.scanTokens();
 
 
-        // C-E: Her bygger Scanner sin egen string
+        
         StringBuilder builder = new StringBuilder();
         for (Token token : tokens) {
             builder.append(token + System.lineSeparator());
@@ -51,7 +51,7 @@ public class ScannerTest {
         String fileActual = builder.toString();
         List<String> fileActualLines = Arrays.asList(fileActual.split("\\R"));
 
-        // C-E: Sammenligner linje for linje. (sample-input.in og sample-input-scan.out) HVIS fejl: "line ... of source and target mismatch"
+        
         try {
             List<String> fileExpectedLines = Files.readAllLines(Paths.get(expectedFile));
             for (int i = 0; i < fileExpectedLines.size(); i++) {

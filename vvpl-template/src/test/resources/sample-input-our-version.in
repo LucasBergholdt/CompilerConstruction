@@ -12,7 +12,13 @@ variable b has_type Number is 42;
 
 # Hun tester ikke multiply.
 
+add (10, a);    # 13.14
+add (b, 20);    # 62
+a NOT_EQUALS b; #true
+
+
 variable res has_type Number is mult(a b);
+
 
 ################################
 # start block
