@@ -107,7 +107,7 @@ public abstract class Stmt {
         }
     }
 
-    /* Lucas Bergholdt Hansen */ 
+    /* Author: Lucas Bergholdt Hansen */ 
     public static class ReturnStmt extends Stmt {
         public final Token returnKeyword;
         public final Expr returnValue;
