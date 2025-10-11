@@ -18,6 +18,9 @@ public abstract class Stmt {
 
 
     // --------- Nested Stmt Classes -------------
+
+
+    /** @author: Carl-Emil Dons Christensen */
     public static class ExprStmt extends Stmt {
         public final Expr expr;
 
@@ -31,6 +34,7 @@ public abstract class Stmt {
         }
     }
 
+    /** @author: Carl-Emil Dons Christensen */
     public static class IfStmt extends Stmt {
         public final Expr cond;
         public final Stmt thenBlock;
@@ -48,6 +52,7 @@ public abstract class Stmt {
         }
     }
 
+    /** @author: Carl-Emil Dons Christensen */
     public static class WhileStmt extends Stmt {
         public final Expr conditional;
         public final Stmt body;
@@ -63,6 +68,7 @@ public abstract class Stmt {
         }
     }
 
+    /** @author: Carl-Emil Dons Christensen */
     public static class PrintStmt extends Stmt {
         public final Expr expr;
 
@@ -76,6 +82,7 @@ public abstract class Stmt {
         }
     }
 
+    /** @author: Carl-Emil Dons Christensen */
     public static class BlockStmt extends Stmt {
         public final List<Stmt> stmts;
 
@@ -89,7 +96,7 @@ public abstract class Stmt {
         }
     }
 
-
+    /** @author: Carl-Emil Dons Christensen */
     public static class VarDecl extends Stmt {
         public final Token id;
         public final Expr expr;

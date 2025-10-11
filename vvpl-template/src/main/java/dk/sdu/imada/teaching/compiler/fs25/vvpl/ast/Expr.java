@@ -14,6 +14,10 @@ public abstract class Expr {
 
     
     // --------- Nested Expr Classes -------------
+
+
+
+    /** @author: Carl-Emil Dons Christensen */
     public static class Assign extends Expr {
         public final Token ID;
         public final Expr expr;
@@ -29,6 +33,7 @@ public abstract class Expr {
         }
     }
 
+    /** @author: Carl-Emil Dons Christensen */
     public static class Binary extends Expr {
         public final Expr left;
         public final Token operator;
@@ -46,6 +51,7 @@ public abstract class Expr {
         }
     }
 
+    /** @author: Carl-Emil Dons Christensen */
     public static class Logical extends Expr {
         public final Expr left;
         public final Token operator;
@@ -63,7 +69,7 @@ public abstract class Expr {
         }
     }
 
-
+    /** @author: Carl-Emil Dons Christensen */
     public static class Unary extends Expr {
         public final Token operator;
         public final Expr expr;
@@ -79,6 +85,7 @@ public abstract class Expr {
         }
     }
 
+    /** @author: Carl-Emil Dons Christensen */
     public static class Literal extends Expr {
         public final Token token;
 
@@ -92,6 +99,7 @@ public abstract class Expr {
         }
     }
 
+    /** @author: Carl-Emil Dons Christensen */
     public static class Identifier extends Expr {
         public final Token id;
 

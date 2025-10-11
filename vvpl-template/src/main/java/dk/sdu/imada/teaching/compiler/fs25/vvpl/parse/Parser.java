@@ -36,6 +36,8 @@ public class Parser {
 
 
     // program := decl* EOF
+
+    /** @author: Carl-Emil Dons Christensen */
     public List<Stmt> parse() {
         List<Stmt> statements = new ArrayList<>();
         
@@ -53,6 +55,7 @@ public class Parser {
 
     // ------------------ decl := funcDecl | varDecl | statement --------------------
 
+    /** @author: Carl-Emil Dons Christensen */
     private Stmt decl() {
         if (match(FUNCTION)) {
             return function();
@@ -96,10 +99,9 @@ public class Parser {
         return new Stmt.VarDecl(id, type, expr);
     }
 
-
-
     // ------------------ All statements in statement except exprStmt -----------------------
 
+    /** @author: Carl-Emil Dons Christensen */
     private Stmt statement() {
         if (match(PRINT))
             return printStmt();
@@ -119,12 +121,15 @@ public class Parser {
         return exprStmt();
     }
 
+    /** @author: Carl-Emil Dons Christensen */
     private Stmt printStmt() {
         Expr value = expression();
         consume(SEMICOLON, "Expected semicolon");
         return new Stmt.PrintStmt(value);
     }
 
+
+    /** @author: Carl-Emil Dons Christensen */
     private Stmt ifStmt() {
         consume(LEFT_PAREN, "Expected '('");
         Expr cond = expression();
@@ -138,6 +143,7 @@ public class Parser {
         return new Stmt.IfStmt(cond, thenBranch, elseBranch);
     }
 
+    /** @author: Carl-Emil Dons Christensen */
     private Stmt whileStmt() {
         consume(LEFT_PAREN, "Expected '('");
         Expr cond = expression();
@@ -172,6 +178,9 @@ public class Parser {
 
 
     // ------------ ExprStmt and nested functions -----------------
+
+
+    /** @author: Carl-Emil Dons Christensen */
     private Stmt exprStmt() {
         Expr expr = expression();
         consume(SEMICOLON, null);
@@ -179,10 +188,12 @@ public class Parser {
         return new Stmt.ExprStmt(expr);
     }
 
+    /** @author: Carl-Emil Dons Christensen */
     private Expr expression() {
         return assignment();
     }
 
+    /** @author: Carl-Emil Dons Christensen */
     private Expr assignment() {
         Expr expr = logicalOr();
 
@@ -200,6 +211,7 @@ public class Parser {
     }
 
 
+    /** @author: Carl-Emil Dons Christensen */
     private Expr logicalOr() {
         Expr expr = logicalAnd();
 
@@ -211,7 +223,7 @@ public class Parser {
         return expr;
     }
 
-
+    /** @author: Carl-Emil Dons Christensen */
     private Expr logicalAnd() {
         Expr expr = equality();
 
@@ -223,7 +235,7 @@ public class Parser {
         return expr;
     }
 
-
+    /** @author: Carl-Emil Dons Christensen */
     private Expr equality() {
         Expr expr = compr();
 
@@ -236,6 +248,7 @@ public class Parser {
         return expr;
     }
 
+    /** @author: Carl-Emil Dons Christensen */
     private Expr compr() {
         Expr expr = term();
 
@@ -248,6 +261,7 @@ public class Parser {
         return expr;
     }
 
+    /** @author: Carl-Emil Dons Christensen */
     private Expr term () {
         if (match(SUB, PLUS, MULT, DIV)) {
             Token operator = previous();
@@ -261,7 +275,7 @@ public class Parser {
         }
     }
 
-
+    /** @author: Carl-Emil Dons Christensen */
     private Expr unary () {
         if (match(NOT, MINUS)) {
             Token operator = previous();
@@ -380,6 +394,7 @@ public class Parser {
         }
     }
 
+    /** @author: Carl-Emil Dons Christensen, Lucas Bergholdt Hansen */
     // Handles the rest of primary
     private Expr primaryNoCast() {
         Expr expr;
