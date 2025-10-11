@@ -12,8 +12,6 @@ import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Stmt.*;
 
 public interface StmtVisitor<T> {
 
-    /* C-E: Copy pasted fra Øvelseshold. LOX har herudover: Return, Function, Class */
-
     T visitExprStmt(ExprStmt exprStmt);
 
     T visitWhileStmt(WhileStmt whileStmt);
