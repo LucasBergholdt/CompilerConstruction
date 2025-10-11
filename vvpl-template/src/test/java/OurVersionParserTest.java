@@ -18,7 +18,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * @author Sandra Greiner
  * @version Compiler Construction FT 2025
  */
-public class ParserTest1 {
+public class OurVersionParserTest {
 
     private static String inputFile;
     /** input file contents as a string of bytes (all in one line) */
@@ -29,9 +29,8 @@ public class ParserTest1 {
     @BeforeAll
     public static void prepareFiles() {
         inputFile = "src/test/resources/sample-input-our-version.in";
-        //inputFile = "src/test/resources/sample-input-CE.in";
-        // expectedFile = "src/test/resources/sample-ast-expected.out";
-        // expectedFile = "src/test/resources/sample-ast-expected-LU.out";
+        expectedFile = "src/test/resources/sample-ast-expected-our-version.out";
+
         try {
             sampleInputString = new String(Files.readAllBytes(Paths.get(inputFile)));
         } catch (IOException e) {
@@ -46,7 +45,7 @@ public class ParserTest1 {
      * file
      * sample-ast-expected.out in the test resources
      */
-    protected String getASTString(List<?> statements) {        // LA: List<?> - does not care about the kind of object stored.
+    protected String getASTString(List<?> statements) {       
         StringBuilder builder = new StringBuilder();        
         ASTPrinter printer = new ASTPrinter();
         for (var stmt : statements) {

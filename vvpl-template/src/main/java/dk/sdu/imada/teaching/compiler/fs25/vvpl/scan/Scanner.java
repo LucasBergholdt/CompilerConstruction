@@ -11,7 +11,7 @@ import static dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.TokenType.*;
  * @version CompilerConstruction FT 2025
  */
 
-/* Author: Lucas Bergholdt Hansen */ 
+/** @author Lucas Bergholdt Hansen */ 
 public class Scanner {
     private static final Map<String, TokenType> keywords;
     	static {

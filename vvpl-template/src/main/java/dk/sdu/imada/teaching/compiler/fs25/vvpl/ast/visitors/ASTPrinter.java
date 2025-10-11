@@ -30,9 +30,10 @@ import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.TokenType.*;
  * @version CompilerConstruction FT 2025
  */
 
+
+ /**@author Lasse Arpe Kristensen*/
  public class ASTPrinter implements ExprVisitor<String>, StmtVisitor<String> {
   private int indent = 0;
-
 
     private static final Map<TokenType, String> reverse_keywords;
       static {
@@ -42,11 +43,8 @@ import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.TokenType.*;
         reverse_keywords.put(TokenType.STRING_TYPE, "String");        
 	}
 
-
-
   public String print(Stmt stmt) {
     return stmt.accept(this);
-    // return "";
   }
 
   @Override
@@ -154,12 +152,11 @@ import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.TokenType.*;
       StringBuilder sb = new StringBuilder();
 
     sb.append(indentString("AssignExpr"));
-    
     indent++;
-
     sb.append(indentString(assign.ID.lexeme));
     sb.append(assign.expr.accept(this));
     indent--;
+
     return sb.toString();
   }
 
@@ -203,9 +200,7 @@ import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.TokenType.*;
     sb.append(indentString("UnaryExpr"));
     indent++;
     sb.append(indentString(unary.operator.lexeme));
-
     sb.append(unary.expr.accept(this));
-
     indent--;
 
     return sb.toString();
@@ -258,8 +253,8 @@ import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.TokenType.*;
     sb.append(indentString("Cast_To " + cast.type.lexeme));    
     indent++;
     sb.append(cast.expr.accept(this));
-
     indent--;
+
     return sb.toString();
 
   }

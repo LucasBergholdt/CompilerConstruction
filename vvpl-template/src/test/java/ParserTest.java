@@ -46,7 +46,7 @@ public class ParserTest {
      * file
      * sample-ast-expected.out in the test resources
      */
-    protected String getASTString(List<?> statements) {        // LA: List<?> - does not care about the kind of object stored.
+    protected String getASTString(List<?> statements) {
         StringBuilder builder = new StringBuilder();        
         ASTPrinter printer = new ASTPrinter();
         for (var stmt : statements) {

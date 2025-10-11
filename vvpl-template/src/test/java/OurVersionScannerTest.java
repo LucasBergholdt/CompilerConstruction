@@ -17,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.fail;
  * @version CompilerConstruction FT 2025
  */
 
-public class ScannerTest1 {
+public class OurVersionScannerTest {
 
     private static String inputFile;
     private static String inputByteString;
@@ -26,8 +26,8 @@ public class ScannerTest1 {
 
     @BeforeAll
     public static void prepareFiles() {
-        inputFile  =    "src/test/resources/sample-input_our_version.in";
-        expectedFile  = "src/test/resources/sample-input-scan.out";
+        inputFile  =    "src/test/resources/sample-input-our-version.in";
+        expectedFile  = "src/test/resources/sample-input-scan-our-version.out";
         try {
             inputByteString = new String(Files.readAllBytes(Paths.get(inputFile)));
         } catch (IOException e) {
@@ -40,8 +40,6 @@ public class ScannerTest1 {
         Scanner lexer = new Scanner(inputByteString);
         List<Token> tokens = lexer.scanTokens();
 
-
-       
         StringBuilder builder = new StringBuilder();
         for (Token token : tokens) {
             builder.append(token + System.lineSeparator());
@@ -51,21 +49,18 @@ public class ScannerTest1 {
         String fileActual = builder.toString();
         List<String> fileActualLines = Arrays.asList(fileActual.split("\\R"));
 
-        for (String line: fileActualLines) {
-            System.out.println(line);
+        try {
+            List<String> fileExpectedLines = Files.readAllLines(Paths.get(expectedFile));
+            for (int i = 0; i < fileExpectedLines.size(); i++) {
+                String actualLine = fileActualLines.get(i);
+                String expectedLine = fileExpectedLines.get(i);
+                assertTrue(actualLine.equals(expectedLine), 
+                "line " + i + " of source and target mismatch. " + System.lineSeparator() + 
+                "expected: " + expectedLine + System.lineSeparator() + 
+                " got: " + actualLine);            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            fail();
         }
-        // try {
-        //     List<String> fileExpectedLines = Files.readAllLines(Paths.get(expectedFile));
-        //     for (int i = 0; i < fileExpectedLines.size(); i++) {
-        //         String actualLine = fileActualLines.get(i);
-        //         String expectedLine = fileExpectedLines.get(i);
-        //         assertTrue(actualLine.equals(expectedLine), 
-        //         "line " + i + " of source and target mismatch. " + System.lineSeparator() + 
-        //         "expected: " + expectedLine + System.lineSeparator() + 
-        //         " got: " + actualLine);            }
-        // } catch (IOException e) {
-        //     e.printStackTrace();
-        //     fail();
-        // }
     }
 }
