@@ -5,6 +5,7 @@ package dk.sdu.imada.teaching.compiler.fs25.vvpl.scan;
  * @version CompilerConstruction FT 2025
  */
 
+/* Author: Lucas Bergholdt Hansen */ 
 public enum TokenType {
     // Single-character tokens
     LEFT_PAREN, RIGHT_PAREN, 
@@ -31,7 +32,7 @@ public enum TokenType {
     MINUS, // negative number
     NUMBER_TYPE, STRING_TYPE, BOOL_TYPE, // variable types
 
-    // 'Functional' keywords: TODO: (idk hvad det skal hedde)
+    // 'Functional' keywords:
     IF, // "if"
     ELSE,
     WHILE, // "loop_while"
@@ -44,7 +45,6 @@ public enum TokenType {
     NUMBER, // Some numeric value
     STRING, // Some string
 
-    // TODO add the token types
     // End-of-file
     EOF
 }

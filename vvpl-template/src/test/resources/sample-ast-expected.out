@@ -154,7 +154,6 @@ BlockStmt
             LiteralExpr
               5.0
             subtract
-            LiteralExpr
-              Cast_To Number
-              "4"
-              
+            Cast_To Number
+              LiteralExpr
+                "4"

@@ -29,19 +29,17 @@ public class Parser {
 
     private List<Token> tokens;
     int current = 0;
-    // List<Stmt> program = new LinkedList<>();    /* C-E: gammel? skal måske fjernes */
 
     public Parser(List<Token> tokens) {
         this.tokens = tokens;
     }
 
 
-        // program := decl* EOF
+    // program := decl* EOF
     public List<Stmt> parse() {
         List<Stmt> statements = new ArrayList<>();
         
-        // C-E: Her version fra bog. Niels-Erik lavede den anderledes. Jeg synes bogen giver mere mening
-        while (!isAtEnd()) {    //tjekker for EOF
+        while (!isAtEnd()) {
             try {
                 statements.add(decl());
             } catch (ParseError e) {
@@ -53,7 +51,7 @@ public class Parser {
     }
 
 
-    // ------------------ decl := VarStmt | Statement | FuncDecl --------------------
+    // ------------------ decl := funcDecl | varDecl | statement --------------------
 
     private Stmt decl() {
         if (match(FUNCTION)) {
@@ -65,10 +63,7 @@ public class Parser {
         }
     }
 
-
-    // --------- Lasse: Muligvis her min error optræder. Evt. brug min "fail(...)" til at undersøge det --------- //
-    // Hvis i bruger denne, kan i se, at den formår at detektere en literal i ".expr". Derfor burde den ikke evaluere til null?
-
+    /* Author: Carl-Emil Dons Christensen, Lucas Bergholdt Hansen */ 
     private Stmt varDecl() {
         // When entering this method "variable" has already been consumed by match in decl()
         
@@ -80,7 +75,7 @@ public class Parser {
         consume(TYPE_DEF, "Expected 'has_type'");
         
         // Expecting a NumberType, StringType or BoolType:
-        TokenType type = null;       // TODO: Måske skal det her være hele token vi gemmer og ikke bare dens type?
+        TokenType type = null;
 
         if (match(NUMBER_TYPE, STRING_TYPE, BOOL_TYPE)) {
             type = previous().type;
@@ -89,7 +84,6 @@ public class Parser {
         }
 
         // Optional "is" expr:
-
         Expr expr = null;
         if (match(ASSIGN)) {
             // Case: "variable ____ 'has_type' ____ 'is' expression()
@@ -104,9 +98,8 @@ public class Parser {
 
 
 
-        // ------------------ All statements in statement except exprStmt -----------------------
+    // ------------------ All statements in statement except exprStmt -----------------------
 
-        //Taget fra øvelsestimen. Matcher fint.
     private Stmt statement() {
         if (match(PRINT))
             return printStmt();
@@ -118,7 +111,7 @@ public class Parser {
             return whileStmt();
 
         if (match(LEFT_BRACE))
-            return new Stmt.BlockStmt(block()); // Lucas: Står nu for at wrappe resultat af block() i en Stmt.BlockStmt.
+            return new Stmt.BlockStmt(block()); // Wraps result of block() in Stmt.BlockStmt
 
         if (match(RETURN))
             return returnStmt();
@@ -126,14 +119,12 @@ public class Parser {
         return exprStmt();
     }
 
-     // Taget fra øvelsestimen. Matcher fint.
     private Stmt printStmt() {
         Expr value = expression();
         consume(SEMICOLON, "Expected semicolon");
         return new Stmt.PrintStmt(value);
     }
 
-    // Taget fra øvelsestimen. Matcher fint.
     private Stmt ifStmt() {
         consume(LEFT_PAREN, "Expected '('");
         Expr cond = expression();
@@ -155,13 +146,8 @@ public class Parser {
         return new Stmt.WhileStmt(cond, body);
     }
 
-
-    // C-E: Fra øvelsestimen med en lille undtagelse (left_brace er allerede matchet)
-    /* Lucas: Har ændret så den her returner List<Stmt> i stedet. Det er for at den kan bruges i function().
-              Det er nu i stedet statement(), der wrapper den her liste ind i en Stmt.Block. 
-              Det er sådan bogen gør det, men de noterer dog også at det ser lidt underligt ud at gøre det sådan her.
-              Men det er altså for at man kan bruge block() i function().*/
-    private List<Stmt> block() { // todo: allow syncs in blocks (Niels-Note)
+    /* Author: Carl-Emil Dons Christensen, Lucas Bergholdt Hansen */
+    private List<Stmt> block() { // TODO: allow syncs in blocks
         List<Stmt> statements = new LinkedList<>();
         
         while (!check(RIGHT_BRACE) && !isAtEnd()) {
@@ -172,8 +158,9 @@ public class Parser {
         return statements;
     }
 
+    /* Author: Lucas Bergholdt Hansen */
     private Stmt returnStmt() {
-        Token returnKeyword = previous(); // Kept for error reporting
+        Token returnKeyword = previous(); // Kept for later error reporting
         Expr value = null;
         if (!check(SEMICOLON)) {
             value = expression();
@@ -200,11 +187,9 @@ public class Parser {
         Expr expr = logicalOr();
 
         if (match(ASSIGN)) {
-            // Case: Man kan ikke assigne 5+2 = ...
             if (!(expr instanceof Identifier)) {
-                // TODO: kald error funktion (bogen siger man ikke skal throw error her)
+                // TODO: call error function (don't throw)
             } else {
-                // Case: Identifier = ... 
                 Token id = ((Identifier)expr).id;
                 expr = assignment();
 
@@ -215,7 +200,7 @@ public class Parser {
     }
 
 
-    private Expr logicalOr() { {
+    private Expr logicalOr() {
         Expr expr = logicalAnd();
 
         while (match(OR)) {
@@ -226,7 +211,6 @@ public class Parser {
         return expr;
     }
 
-    }
 
     private Expr logicalAnd() {
         Expr expr = equality();
@@ -277,19 +261,8 @@ public class Parser {
         }
     }
 
-    /*  term() i bogen for reference. Assignment1's er dog væsentligt anderledes
-        Expr expr = unary();
-        while (match(MINUS, PLUS, MULT, DIV)) {
-        Token operator = previous();
-        Expr right = unary();
-        expr = new Expr.Binary(expr, operator, right);
-        }
-        return expr;
-    }
-    */
 
     private Expr unary () {
-        /*Tillader muligheden for flere fortegn foran unarys, fx. ---5 */
         if (match(NOT, MINUS)) {
             Token operator = previous();
             Expr expr = unary();
@@ -299,6 +272,7 @@ public class Parser {
         }
     }
 
+    /* Author: Lucas Bergholdt Hansen */
     private Stmt function() {
         Token name = consume(IDENTIFIER, "Expected function name");
         consume(LEFT_PAREN, "Expected '('");
@@ -324,7 +298,8 @@ public class Parser {
         return new Stmt.FunctionStmt(name, params, type, body);
     }
 
-    // TODO: Virker ikke lige nu. Skal have valgt hvordan vi opbevarer params.
+    /* Author: Lucas Bergholdt Hansen */
+    // unfinished
     private List<Token> params() {
         List<Token> params = new ArrayList<>();
 
@@ -350,6 +325,7 @@ public class Parser {
         return null;
     }
 
+    /* Author: Lucas Bergholdt Hansen */
     private Expr call() {
         Expr expr = primary();
 
@@ -360,7 +336,7 @@ public class Parser {
             } else {
                 arguments = args();
             }
-            // Book stores right paren token to use it for reporting rumtime errors caused by a function call
+            // Storing right paren token to use it for reporting rumtime errors caused by a function call
             Token paren = consume(RIGHT_PAREN, "Expected ')'");
             
             return new Expr.Call(expr, paren, arguments);
@@ -369,6 +345,7 @@ public class Parser {
         return expr;
     }
 
+    /* Author: Lucas Bergholdt Hansen */
     private List<Expr> args() {
         List<Expr> arguments = new ArrayList<>();
         arguments.add(expression()); // handling first "expr" in grammar
@@ -380,7 +357,8 @@ public class Parser {
         return arguments;
     }
 
-    // Handle the cast that might appear
+    /* Author: Lucas Bergholdt Hansen */
+    // Handles the cast that might appear
     private Expr primary() {
         // Check if cast is specified
         if (match(CAST)) {
@@ -402,7 +380,7 @@ public class Parser {
         }
     }
 
-    // C-E: Kan også laves med Match (gøres i bogen). For nu tages Niels Erik's løsning.
+    // Handles the rest of primary
     private Expr primaryNoCast() {
         Expr expr;
         switch (peek().type) {
@@ -419,7 +397,7 @@ public class Parser {
                 current++;
                 return expr;
 
-            /* Ellers regner vi med en grouping. Gøres lidt anderledes i bogen. */
+            // Else we expect a grouping
             default:
                 consume(LEFT_PAREN, "Expected '('");
                 expr = expression();
@@ -429,67 +407,17 @@ public class Parser {
     }
 
 
-
-
-    /* Fra øvelses time. Copy-pasted for nu */
-
-
-    // private void synchronise() {
-    //     // todo: what happens with end of file
-    //     while (true) {
-    //         switch (peek().type) {
-    //             case IF:
-    //             case WHILE:
-    //             case PRINT:
-    //             case LEFT_BRACE:
-    //             case VAR:
-    //                 return;
-
-    //             case SEMICOLON:
-    //                 current++;
-    //                 return;
-
-    //             default:
-    //                 break;
-    //         }
-    //         current++;
-    //     }
-    // }
-     
-
-
-
-
-
-
-
-
-
     // -------------------------- Helper Functions -------------------------
+    /* Author: Carl-Emil Dons Christensen, Lucas Bergholdt Hansen */
+
     Token peek() {
         return tokens.get(current);
     }
 
-
-    /* C-E: Gamle Match
-    Boolean match(TokenType t) {
-        if (peek().type.equals(t)) {
-            current++;
-            return true;
-        }
-        return false;
+    private boolean isAtEnd() {
+        return peek().type == EOF;
     }
 
-    */
-
-
-    // C-E: Taget fra bogen.
-    private boolean isAtEnd() {
-    return peek().type == EOF; // ser om næste token er EOF.
-  }
-
-
-    /* C-E: Taget fra bogen og ændret lidt for ikke at anvende check() og advance(). */
     // Checks if current token has any of the given types. If so consume it and return true. Otherwise return false.
     private boolean match(TokenType... types) {
         for (TokenType type : types) {
@@ -502,8 +430,7 @@ public class Parser {
         return false;
     }
 
-
-    /* Consumes if given token matches current token, otherwise throws error. */
+    // Consumes if given token matches current token, otherwise throws error
     private boolean check(TokenType type) {
         if (isAtEnd()) {
             return false;
@@ -531,9 +458,9 @@ public class Parser {
         return tokens.get(current - 1);
     }
 
+    // Temporary empty ParseError class
     private class ParseError extends RuntimeException {
     }
-
 
 
 }

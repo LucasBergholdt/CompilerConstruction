@@ -30,24 +30,6 @@ import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.TokenType.*;
  * @version CompilerConstruction FT 2025
  */
 
- /* C-E note: Denne implementerer funktionaliteten af Visitor Interfaces. */
-
-// LA: Overvej desuden om alle optionals er tilstrækkeligt opfyldt. 
-// Eksempel på dette i visitVarDecl.
-
-// Problemer:
-// 1. Fra "BOOL_TYPE" TIL "Bool". Se mine noter til dette i visitVarDecl.
-    // LA: Burde være løst.
-
-// 2. At få den rigtige rækkefølge ift. Cast_To og LiteralExpression.
-
-// 3. Lave alle tal til doubles. E.g "123.0".
-      // LA: Burde være løst.
-
-// Se gerne, om i er enige i mine løsninger til hhv. 1 og 3.
-// 2 mangler jeg at løse. 
-
-
  public class ASTPrinter implements ExprVisitor<String>, StmtVisitor<String> {
   private int indent = 0;
 
@@ -156,14 +138,13 @@ import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.TokenType.*;
 
   }
 
-  /*Prepends the appropriate amount of indentation to strings.
-   */
+  /*Prepends the appropriate amount of indentation to strings.*/
   private String indentString(String text) {
     StringBuilder sb = new StringBuilder();
     for (int i = 0; i < indent; i++) {
       sb.append("  ");
     }
-    sb.append(text).append(System.lineSeparator()); // System.lineSeperator = \n men specifik for brugerens OS system.
+    sb.append(text).append(System.lineSeparator());
     return sb.toString();
   }
 
@@ -231,12 +212,8 @@ import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.TokenType.*;
     return sb.toString();
   }
   
+
   // Leaf.
-
- // Der er måske en bug i rækkefølgen hvorpå vi modtager hhv. casts og literals?
- // Men så ville der også være en fejl i vores eksempel, så nok ikke.
-// Det er som om, at Cast_To bliver kaldt inden Literal, hvilket volder mig problemer.
-
   @Override
   public String visitLiteralExpr(Literal literal) {
     StringBuilder sb = new StringBuilder();
@@ -245,17 +222,12 @@ import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.TokenType.*;
 
     indent++;
 
-    // HER BURDE CAST_TO PRINTE FØR VORES LEXEME //
-
     String lexeme = literal.token.lexeme;
 
     // Converts to double if digit. (And back to string).
-    // System.out.println(lexeme); // For debugging
-
     if (isDigit(lexeme.charAt(0))) {
       double newNum = Double.parseDouble(lexeme);
       sb.append(indentString(newNum+""));
-      // System.out.println(newNum); // For debugging
     } else {
       sb.append(indentString(lexeme));
     }
@@ -279,16 +251,16 @@ import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.TokenType.*;
     return sb.toString();
   }
 
-  // ---Lasse: Problematisk ift. rækkefølgen vi modtager tokens på, og printe det rigtigt? ---.
+  
   @Override
   public String visitCastExpr(Cast cast) {
     StringBuilder sb = new StringBuilder();
 
     sb.append(indentString("Cast_To " + cast.type.lexeme));    
-    // indent++;
+    indent++;
     sb.append(cast.expr.accept(this));
 
-    // indent--;
+    indent--;
     return sb.toString();
 
   }

@@ -11,6 +11,7 @@ import static dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.TokenType.*;
  * @version CompilerConstruction FT 2025
  */
 
+/* Author: Lucas Bergholdt Hansen */ 
 public class Scanner {
     private static final Map<String, TokenType> keywords;
     	static {
@@ -124,7 +125,7 @@ public class Scanner {
         scannedTokens.add(new Token(type, text, literal, line));
     }
 
-    // TODO: handle error --Lucas
+    // Basic error method for now
     private void error(int line, String message) {
         System.err.println("[line " + line + "] Error: " + message);
     }
@@ -145,7 +146,7 @@ public class Scanner {
                         advance();
                     }
 
-                    // When exiting loop we either reached closing " or reach EOF. If reason is we reached closing " we need to consume it.
+                    // When exiting loop we either reached closing " or EOF. If reason is we reached closing " we need to consume it.
                     if (!isAtEnd()) advance();
                     return;
                 }

@@ -107,6 +107,7 @@ public abstract class Stmt {
         }
     }
 
+    /* Lucas Bergholdt Hansen */ 
     public static class ReturnStmt extends Stmt {
         public final Token returnKeyword;
         public final Expr returnValue;
@@ -122,6 +123,7 @@ public abstract class Stmt {
         }
     }
 
+    /* Author: Lucas Bergholdt Hansen */ 
     public static class FunctionStmt extends Stmt {
         public final Token name;
         public final List<Token> params;
@@ -141,8 +143,6 @@ public abstract class Stmt {
         }
     }
 
-
-        
 }
 
 
