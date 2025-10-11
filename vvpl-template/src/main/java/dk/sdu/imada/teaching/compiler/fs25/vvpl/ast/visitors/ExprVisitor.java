@@ -12,7 +12,6 @@ import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Expr.*;
 
 public interface ExprVisitor<T> {
 
-    /* Copy pasted fra lektion */
     T visitAssignExpr(Assign assign);
 
     T visitLogicalExpr(Logical logical);

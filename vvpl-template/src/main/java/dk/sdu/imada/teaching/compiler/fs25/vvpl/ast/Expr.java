@@ -92,16 +92,6 @@ public abstract class Expr {
         }
     }
 
-
-
-
-
-
-
-    // C-E: what is this? Skal den ikke i Literal? Jeg har blot taget fra øvelsestimen.
-    // LA: Som jeg ser det, bruger vi begge i parseren, hvor Identifier så er navnet på variablen (ID), og Literal selve værdien (false,true,string,int).
-    
-    // LAS: Vores VariableExpr, right?
     public static class Identifier extends Expr {
         public final Token id;
 
@@ -115,6 +105,7 @@ public abstract class Expr {
         }
     }
 
+    /* Author: Lucas Bergholdt Hansen */ 
     public static class Call extends Expr {
         public final Expr callee;
         public final Token paren;
@@ -132,6 +123,7 @@ public abstract class Expr {
         }
     }
 
+    /* Author: Lucas Bergholdt Hansen */ 
     public static class Cast extends Expr {
         public final Token type;
         public final Expr expr;
