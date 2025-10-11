@@ -34,7 +34,6 @@ import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.TokenType.*;
   private int indent = 0;
 
 
-  // LA: Bruges til at løse "BOOL_TYPE" problemet.
     private static final Map<TokenType, String> reverse_keywords;
       static {
 		reverse_keywords = new HashMap<>();
