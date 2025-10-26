@@ -1,0 +1,18 @@
+{
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Spl",
+            "request": "launch",
+            "mainClass": "dk.sdu.teaching.compiler.fs24.spl.Spl",
+            "projectName": "verbose-pl"
+        },
+        {
+            "type": "java",
+            "name": "Launch with Arguments Prompt",
+            "request": "launch",
+            "mainClass": "",
+            "args": "inputs/sample-cf.spl"
+        }
+    ]
+}
