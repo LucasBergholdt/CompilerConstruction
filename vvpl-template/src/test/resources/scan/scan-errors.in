@@ -1,0 +1,8 @@
+variable a type Number is 123; 		
+variable b type String = "123 "; 	# symbol is not allowed for identifiers nor a number
+variable c type String is "123 ; 		
+                                    # String is not closed
+
+c is ,;
+a is bla<;                          # < is not an alphanumeric character  
+$ is also not OK;                   # multiple non-tokens but only $ is a scan-error

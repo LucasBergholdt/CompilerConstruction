@@ -1,0 +1,18 @@
+################################
+# variableiable declarations
+################################
+
+variable b has_type Bool is 5 LESS_EQUAL 4;
+b is 4 EQUALS 4;
+b is 3 LESS_EQUAL 4;
+b is 3 GREATER_EQUAL 4;
+
+variable number1 has_type Bool is true;
+variable number2 has_type Bool is 3 EQUALS 3;
+if (number1 EQUALS number2) {
+	write_to_console "yes";
+}
+
+if (number1 NOT_EQUALS false) {
+	write_to_console "yes";
+}

@@ -1,0 +1,16 @@
+variable a has_type String is "10";
+variable b has_type Number is 5;
+variable c has_type Bool is add(true  b); 	# no computation between number and bool
+
+
+if (a) {							# no boolean
+	variable d has_type String is 5;		# 5 is not a string
+}
+
+variable e has_type String is true;		# no implicit conversions
+
+
+loop_while (b EQUALS true) {
+	variable x has_type Number is 1;
+	x is true;						# x remains to be a number
+}

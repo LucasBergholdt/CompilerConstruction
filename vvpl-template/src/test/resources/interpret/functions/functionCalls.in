@@ -1,0 +1,29 @@
+
+
+#######################################
+# Computation
+#######################################
+
+function noParam() {
+	write_to_console "noparam";
+}
+
+noParam();
+
+function returnParamNumber() has_type Number {
+	return 1;
+}
+
+write_to_console returnParamNumber();
+
+function returnParamBool() has_type Bool {
+	return true;
+}
+
+write_to_console returnParamBool();
+
+function returnParamString() has_type String {
+	return "somestring";
+}
+
+write_to_console returnParamString();

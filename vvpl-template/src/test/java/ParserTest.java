@@ -1,3 +1,11 @@
+/*
+import dk.sdu.imada.teaching.compiler.fs24.verbosepl.ast.Stmt;
+import dk.sdu.imada.teaching.compiler.fs24.verbosepl.ast.visitors.ASTPrinter;
+import dk.sdu.imada.teaching.compiler.fs24.verbosepl.parse.Parser;
+import dk.sdu.imada.teaching.compiler.fs24.verbosepl.scan.Scanner;
+import dk.sdu.imada.teaching.compiler.fs24.verbosepl.scan.Token;
+
+*/
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -5,12 +13,6 @@ import java.util.Arrays;
 import java.util.List;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-
-import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Stmt;
-import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.visitors.ASTPrinter;
-import dk.sdu.imada.teaching.compiler.fs25.vvpl.parse.Parser;
-import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.Scanner;
-import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.Token;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -29,9 +31,7 @@ public class ParserTest {
     @BeforeAll
     public static void prepareFiles() {
         inputFile = "src/test/resources/sample-input.in";
-
         expectedFile = "src/test/resources/sample-ast-expected.out";
-
         try {
             sampleInputString = new String(Files.readAllBytes(Paths.get(inputFile)));
         } catch (IOException e) {
@@ -47,7 +47,7 @@ public class ParserTest {
      * sample-ast-expected.out in the test resources
      */
     protected String getASTString(List<?> statements) {
-        StringBuilder builder = new StringBuilder();        
+        StringBuilder builder = new StringBuilder();
         ASTPrinter printer = new ASTPrinter();
         for (var stmt : statements) {
             builder.append(printer.print((Stmt) stmt));
@@ -59,9 +59,6 @@ public class ParserTest {
     public void testEquivalenceOfEachLine() {
         Scanner scanner = new Scanner(sampleInputString);
         List<Token> tokens = scanner.scanTokens();
-
-        // FOR DEBUGGING ONLY //
-        // fail("About to parse: " + tokens);
 
         Parser parser = new Parser(tokens);
         List<?> statements = parser.parse();

@@ -1,0 +1,22 @@
+variable a has_type Bool is true;
+variable b has_type Number is 123;
+variable c has_type  is -123; 		# type missing
+variable 1 has_type String is "123 "; # wrong identifier
+variable e has_type String;
+a is true false;					# operator missing
+
+
+NOT ; 								# missing operand
+variable a2 of_type Bool is true 	# missing semicolon
+
+a is add(b,c);
+
+if ( ) 							#condition missing
+	a is add(b,c);
+
+
+variable x String;			# type-keyword missing
+
+if (true)	# statement missing
+else
+x is add (x,1);

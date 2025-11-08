@@ -1,0 +1,13 @@
+function foo(a has_type Number, b has_type Number) has_type Number {
+	write_to_console a;
+	write_to_console b;
+	return 5;
+}
+
+variable a has_type Number is 4;
+foo(a, a is 5);
+variable x has_type Number is 0;
+foo(x is divide(15 5), add (x 5));
+
+variable b has_type Number is add(a foo(5,4));
+write_to_console b;

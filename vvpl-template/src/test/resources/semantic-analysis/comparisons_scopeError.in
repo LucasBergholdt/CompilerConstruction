@@ -1,0 +1,13 @@
+################################
+# variable declarations
+################################
+
+variable b has_type Bool is 5 LESS 4;
+b is 4 EQUALS 4;
+a is 3 LESS_EQUAL 4;   # a is not defined
+b is 3 GREATER_EQUAL 4;
+
+
+if (number1 EQUALS number2) {   # number1 is not defined, number2 is not defined
+    write_to_console "yes";
+}

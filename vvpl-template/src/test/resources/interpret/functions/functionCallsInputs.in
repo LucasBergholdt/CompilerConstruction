@@ -1,0 +1,37 @@
+
+
+#######################################
+# Computation
+#######################################
+
+function numberParam(x has_type Number) {
+	write_to_console x;
+}
+
+numberParam(1);
+numberParam(add(1 1));
+numberParam( add(1 multiply(1 2)) );
+
+function stringParam(x has_type String) {
+	write_to_console x;
+}
+
+stringParam("4");
+
+function boolParam(x has_type Bool) {
+	write_to_console x;
+}
+
+boolParam(true);
+boolParam(false);
+boolParam( 1 EQUALS 1 );
+boolParam( 1 EQUALS 2 );
+
+function stringParam2(x has_type String, y has_type String) {
+	write_to_console x;
+	write_to_console y;
+}
+
+stringParam2("." , ",");
+variable y has_type String is "x";
+stringParam2(y, y is "hej world");

@@ -1,0 +1,24 @@
+variable b has_type Number is 5;
+variable c has_type Number is add(a b); # a is not defined
+
+b is add(b 1); # no error
+
+variable a has_type Number is 10;
+
+write_to_console x;
+if (x EQUALS 4) {
+	write_to_console 4;
+}
+
+variable a has_type Number is 5; # redefinition is not allowed
+variable a has_type String is 5; # redefinition is also not allowed if it is a different type
+
+
+loop_while (b LESS 10) {
+	variable a has_type Number is 5; 	# redefintion not allowed in block 
+	b is add(b 1);
+	if (b EQUALS 5) {
+		variable a has_type Number is 5; 	# redefintion still not allowed in block 	
+	}
+
+}

@@ -1,0 +1,10 @@
+variable a has_type Bool is true EQUA false;
+a is 1 GREATER 2;
+
+variable x has_type Number is subtract 1, 5; # brackets
+x is subtract(1 5); 						
+x is subtract(x 5; 						# missing closing bracket
+x is divide(x, 5); 						# unnecessary comma
+x is divide(x 5); 						# everything good
+
+

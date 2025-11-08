@@ -1,0 +1,32 @@
+function returnParamNumber() has_type Number {
+	write_to_console "noparam";
+}
+
+# type error
+variable x has_type String is returnParamNumber();
+
+function numberParam(x has_type Number) {
+	write_to_console x;
+}
+
+numberParam("1");	# type error
+
+function numberParam2(x has_type Number) {
+	write_to_console subtract (x 1) ;
+}
+
+numberParam2(true); 		# wrong type
+
+
+function boolParam(x has_type Bool) {
+	write_to_console x;
+}
+
+boolParam("true");	# wrong type
+boolParam(353);		# wrong type
+
+function stringParam(x has_type String) {
+	write_to_console x;
+}
+stringParam(true);	# wrong type
+stringParam(353);		# wrong type
