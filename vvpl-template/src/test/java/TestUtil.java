@@ -9,7 +9,10 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import dk.sdu.imada.teaching.compiler.fs24.verbosepl.VVPLController;
+// import dk.sdu.imada.teaching.compiler.fs24.verbosepl.VVPLController;
+import dk.sdu.imada.teaching.compiler.fs25.vvpl.VVPLController;
+
+
 
 /**
  * @author Sandra Greiner

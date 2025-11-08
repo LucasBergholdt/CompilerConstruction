@@ -1,5 +1,5 @@
-import dk.sdu.imada.teaching.compiler.fs24.verbosepl.scan.Scanner;
-import dk.sdu.imada.teaching.compiler.fs24.verbosepl.scan.Token;
+import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.Scanner;
+import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.Token;
 
 import java.io.IOException;
 import java.nio.file.Files;
