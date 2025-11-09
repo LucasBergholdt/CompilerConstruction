@@ -34,95 +34,41 @@ public class TypeAnalyzer implements ExprVisitor<Void>, StmtVisitor<Void> {
         expr.accept(this);
     }
 
+    @Override
     public Void visitExprStmt(ExprStmt exprStmt) {
-        analyse(exprStmt.expr);
-        return null;
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'visitExprStmt'");
     }
-    
+
+    @Override
     public Void visitWhileStmt(WhileStmt whileStmt) {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'visit'");
+        throw new UnsupportedOperationException("Unimplemented method 'visitWhileStmt'");
     }
 
-    
+    @Override
     public Void visitIfStmt(IfStmt ifStmt) {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'visit'");
+        throw new UnsupportedOperationException("Unimplemented method 'visitIfStmt'");
     }
 
-    
+    @Override
     public Void visitPrintStmt(PrintStmt printStmt) {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'visit'");
+        throw new UnsupportedOperationException("Unimplemented method 'visitPrintStmt'");
     }
 
-    
+    @Override
     public Void visitBlockStmt(BlockStmt blockStmt) {
-        SymbolTable oldTable = currentEnviroment;
-        currentEnviroment = new SymbolTable(currentEnviroment);
-
-        for (Stmt stmt : blockStmt.stmts) {
-            analyse(stmt);
-        }
-        currentEnviroment = oldTable;
-        return null;
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'visitBlockStmt'");
     }
 
-    public Void visitAssignExpr(Assign assign) {
-        if (!currentEnviroment.contains(assign.ID.lexeme)) {
-            typeErrors.add(ErrorTypeStrings.TYPE_ERROR + ", line " + assign.ID.line
-                    + ": variable [insert name here] does not exist in type or any parent types.");
-        }
-        analyse(assign.expr);
-
-        return null;
-    }
-
+    @Override
     public Void visitVarDecl(VarDecl varDecl) {
-        try {
-            currentEnviroment.define(varDecl.id.lexeme, varDecl.id);
-        } catch (SymbolTableException e) {
-            typeErrors.add(ErrorTypeStrings.TYPE_ERROR + ", line " + varDecl.id.line
-                    + ": variable [insert name here] already exist in type.");
-        }
-        if (varDecl.expr != null) {
-            analyse(varDecl.expr);
-        }
-
-        return null;
-}
-
-    // C-E: Strongly Typed language. VarDecl must have happened.
-    public Void visitIdentifierExpr(Identifier identifier) {
-        if (!currentEnviroment.contains(identifier.id.lexeme)) {
-            typeErrors.add(ErrorTypeStrings.TYPE_ERROR + ", line " + identifier.id.line
-                    + ": variable [insert name here] does not exist in type or any parent types.");
-        }
-        return null;
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'visitVarDecl'");
     }
-
-    
-    public Void visitLogicalExpr(Logical logical) {
-        analyse(logical.left);
-        analyse(logical.right);
-        return null;
-    }
-
-    public Void visitBinaryExpr(Binary binary) {
-        analyse(binary.left);
-        analyse(binary.right);
-        return null;
-    }
-    
-    public Void visitUnaryExpr(Unary unary) {
-        analyse(unary.expr);
-        return null;
-    }
-    
-    public Void visitLiteralExpr(Literal literals) {
-        return null;
-    }
-
 
     @Override
     public Void visitReturnStmt(ReturnStmt returnStmt) {
@@ -137,6 +83,42 @@ public class TypeAnalyzer implements ExprVisitor<Void>, StmtVisitor<Void> {
     }
 
     @Override
+    public Void visitAssignExpr(Assign assign) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'visitAssignExpr'");
+    }
+
+    @Override
+    public Void visitLogicalExpr(Logical logical) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'visitLogicalExpr'");
+    }
+
+    @Override
+    public Void visitBinaryExpr(Binary binary) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'visitBinaryExpr'");
+    }
+
+    @Override
+    public Void visitUnaryExpr(Unary unary) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'visitUnaryExpr'");
+    }
+
+    @Override
+    public Void visitLiteralExpr(Literal literal) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'visitLiteralExpr'");
+    }
+
+    @Override
+    public Void visitIdentifierExpr(Identifier identifier) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'visitIdentifierExpr'");
+    }
+
+    @Override
     public Void visitCallExpr(Call call) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'visitCallExpr'");
@@ -148,4 +130,5 @@ public class TypeAnalyzer implements ExprVisitor<Void>, StmtVisitor<Void> {
         throw new UnsupportedOperationException("Unimplemented method 'visitCastExpr'");
     }
 
+    
 }

@@ -7,7 +7,6 @@ import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Stmt.*;
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Expr;
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Expr.*;
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.visitors.*;
-import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.Token;
 
 public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
 
@@ -41,6 +40,12 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
         return value;
     }
 
+    // C-E: Skal returnere den Expr som assignment er bundet til.
+    @Override
+    public Object visitIdentifierExpr(Identifier identifier) {
+        return env.get(identifier.id.lexeme);
+
+    }
 
     @Override
     public Object visitLiteralExpr(Literal literal) {
@@ -60,18 +65,13 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
             case EQUALS: 
                 return isEqual(left, right);
             case GREATER:
-                checkOpNum(logical.operator, left, right);
                 return (double) left > (double) right;
             default:
                 break;
         }
-        throw new RuntimeException();   
-    }
 
-    // C-E: Er dette nødvendigt eller checker vi dette i TypeAnalysis?
-    private void checkOpNum(Token operator, Object left, Object right) {
-        if (!(left instanceof Double && right instanceof Double))
-            throw new RuntimeException(" RUNTIME_ERROR: Operands have to be numbers");
+        // Unreachable
+        return null;
     }
 
     private boolean isEqual(Object left, Object right) {
@@ -91,18 +91,11 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
             case MINUS:
                 return (double)left - (double)right;
             case PLUS:
-                if (left instanceof Double && right instanceof Double) {
-                    return (double)left + (double)right;
-                } 
-                if (left instanceof String && right instanceof String) {
-                    return (String)left + (String)right;
-                }
-                break;
+                return (double)left + (double)right;
             case DIV:
                 return (double)left / (double)right;
             case MULT:
                 return (double)left * (double)right;
-
         }
         return null;
     }
@@ -130,14 +123,6 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
         return true;
     }
 
-
-    // C-E: Skal returnere den Expr som assignment er bundet til.
-    @Override
-    public Object visitIdentifierExpr(Identifier identifier) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'visitIdentifierExpr'");
-    }
-
     @Override
     public Void visitBlockStmt(BlockStmt blockStmt) {
         Environment prev = env;
@@ -156,15 +141,8 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
         if (varDecl.expr != null) {
             value = evaluate(varDecl.expr);
         }
-        /* Kom variable ind i Environment. Error hvis det allerede findes. */
-        try {
-            env.define(varDecl.id.lexeme, value);
-        } catch (SymbolTableException e) {
-            e.printStackTrace();
-        }
+        env.define(varDecl.id.lexeme, value);
         return null;
-    }
-
     }
 
     @Override
