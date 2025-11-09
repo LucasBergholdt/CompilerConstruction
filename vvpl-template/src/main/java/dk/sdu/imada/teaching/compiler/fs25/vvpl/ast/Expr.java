@@ -88,6 +88,7 @@ public abstract class Expr {
     /** @author: Carl-Emil Dons Christensen */
     public static class Literal extends Expr {
         public final Token token;
+        
 
         public Literal(Token token) {
             this.token = token;
