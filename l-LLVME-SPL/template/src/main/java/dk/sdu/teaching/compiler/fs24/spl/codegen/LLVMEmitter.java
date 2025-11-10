@@ -22,6 +22,20 @@ import dk.sdu.teaching.compiler.fs24.spl.ast.stmt.While;
 
 // Tager vores parsede statements.  
 
+
+/////// KENDTE BUGS /////////// -Lasse
+/// 
+/// Problem med sampillet mellem VarStmt "var x =..." og BinaryExpr.
+/// Dette betyder, at De virker hver for sig "var x = 2;" og "b=b+2"/"b+2", men lige nu virker "var b = 2+2" ikke korrekt. 
+/// 
+/// Output er SSA og 3AC, men indeholder desværre en del redundans. 
+/// Dette skyldes, at binaryExpression både skal kunne virke ifm. 2+2+2 og bare 2+2. 
+/// Lige nu resulterer den per default en temp, som er godt ifm. nested expression (2+2+2), men 
+/// giver redundant kode ifm. ikke-nested (2+2).
+/// 
+/// Jeg ved ikke, om man kan detektere hvorvidt binary er en 2+2 eller 2+2+2 før en temp variabel skabes, men det virker ikke sådan.
+/// 
+
 public class LLVMEmitter {
     private StringBuilder sb = new StringBuilder();
 
