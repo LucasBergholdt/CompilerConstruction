@@ -21,9 +21,7 @@ import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Stmt.PrintStmt;
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Stmt.ReturnStmt;
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Stmt.VarDecl;
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Stmt.WhileStmt;
-import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.Token;
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.TokenType;
-import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.TokenType.*;
 
 /**
  * @author Sandra Greiner

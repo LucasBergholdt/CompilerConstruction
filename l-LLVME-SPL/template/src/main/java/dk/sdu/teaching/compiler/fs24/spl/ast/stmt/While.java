@@ -17,4 +17,5 @@ public class While extends Stmt {
 	public <T> T accept(StmtVisitor<T> visitor) {
 		return visitor.visitWhileStmt(this);
 	}
+
 }

@@ -18,4 +18,5 @@ public class Var extends Stmt {
 	public <T> T accept(StmtVisitor<T> visitor) {
 		return visitor.visitVarStmt(this);
 	}
+
 }

@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.List;
 
 import dk.sdu.teaching.compiler.fs24.spl.ast.Stmt;
@@ -16,7 +17,8 @@ public class Spl {
 
 	// Expects a single file that comprises SPL' program as argument
 	public static void main(String[] args) throws IOException {
-		runFile(args[0] );
+
+		runFile("/home/lasse/Datalogi/5. semester/Compilerkonstruktion/Assignments/vvpl-interpreter/l-LLVME-SPL/template/inputs/sample-cf.spl");
 	}
 
 	private static void runFile(String path) throws IOException {
@@ -30,9 +32,20 @@ public class Spl {
 
 		Parser parser = new Parser(tokens);
 		List<Stmt> statements = parser.parse();
+
 		LLVMEmitter emitter = new LLVMEmitter();
 		emitter.generateCode(statements);
 
 		//TODO save the created statements to a .ll file
+
 	}
-}
+
+
+    }
+
+
+
+
+
+
+	

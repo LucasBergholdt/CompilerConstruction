@@ -17,6 +17,8 @@ if (i == s) {
 	x = 2;
 }
 
+x + x
+
 var a = 1;
 while (a < 10) {
 	x = x *5;
