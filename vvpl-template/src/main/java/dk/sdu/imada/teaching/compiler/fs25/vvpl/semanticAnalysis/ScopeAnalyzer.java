@@ -44,7 +44,7 @@ public class ScopeAnalyzer implements ExprVisitor<Void>, StmtVisitor<Void> {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'visit'");
     }
-
+    
     
     public Void visitIfStmt(IfStmt ifStmt) {
         // TODO Auto-generated method stub
@@ -57,7 +57,7 @@ public class ScopeAnalyzer implements ExprVisitor<Void>, StmtVisitor<Void> {
         throw new UnsupportedOperationException("Unimplemented method 'visit'");
     }
 
-    
+ 
     public Void visitBlockStmt(BlockStmt blockStmt) {
         SymbolTable oldTable = currentEnviroment;
         currentEnviroment = new SymbolTable(currentEnviroment);
@@ -69,7 +69,6 @@ public class ScopeAnalyzer implements ExprVisitor<Void>, StmtVisitor<Void> {
         return null;
     }
 
-    
 
     // C-E: Strongly Typed language. VarDecl must have happened.
     public Void visitAssignExpr(Assign assign) {
@@ -84,7 +83,7 @@ public class ScopeAnalyzer implements ExprVisitor<Void>, StmtVisitor<Void> {
 
     public Void visitVarDecl(VarDecl varDecl) {
         try {
-            currentEnviroment.define(varDecl.id.lexeme, varDecl.id);
+            currentEnviroment.define(varDecl.id.lexeme, varDecl.id);    // Token has type. 
         } catch (SymbolTableException e) {
             scopeErrors.add(ErrorTypeStrings.SCOPE_ERROR + ", line " + varDecl.id.line
                     + ": variable [insert name here] already exist in scope.");

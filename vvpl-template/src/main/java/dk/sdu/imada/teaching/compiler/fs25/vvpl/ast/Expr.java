@@ -134,7 +134,7 @@ public abstract class Expr {
 
     /** @author: Lucas Bergholdt Hansen */ 
     public static class Cast extends Expr {
-        public final Token type;
+        public final Token type;    // token efter "cast_to"
         public final Expr expr;
 
         public Cast(Token type, Expr expr) {

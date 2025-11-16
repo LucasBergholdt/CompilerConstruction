@@ -124,8 +124,9 @@ public class Parser {
     /** @author: Carl-Emil Dons Christensen */
     private Stmt printStmt() {
         Expr value = expression();
+        Token printtoken = previous();
         consume(SEMICOLON, "Expected semicolon");
-        return new Stmt.PrintStmt(value);
+        return new Stmt.PrintStmt(value, printtoken);
     }
 
 
@@ -383,7 +384,6 @@ public class Parser {
             } else {
                 throw new ParseError();
             }
-
 
             // Create new Expr.Cast:
             Expr expr = primaryNoCast();

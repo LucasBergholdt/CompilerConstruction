@@ -52,7 +52,7 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
         return literal.token.literal;   // Retrieve literal value from token.
     }
 
-// C-E: I øvelsestime gav hun en Binary i stedet for en Logical til denne funktion, men det synes jeg ser forkert ud.
+// C-E: TODO. Ikke færdig.
     @Override
     public Object visitLogicalExpr(Logical logical) {
 
@@ -60,12 +60,6 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
         Object right = evaluate(logical.right);
 
         switch (logical.operator.type) {
-            case NOT_EQUALS:
-                return !isEqual(left, right);
-            case EQUALS: 
-                return isEqual(left, right);
-            case GREATER:
-                return (double) left > (double) right;
             default:
                 break;
         }
@@ -74,13 +68,6 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
         return null;
     }
 
-    private boolean isEqual(Object left, Object right) {
-        if (left == null && right == null)
-            return true;
-        if (left == null)
-            return false;
-        return left.equals(right);
-    }
 
     @Override
     public Object visitBinaryExpr(Binary binary) {
@@ -96,9 +83,25 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
                 return (double)left / (double)right;
             case MULT:
                 return (double)left * (double)right;
+            case NOT_EQUALS:
+                return !isEqual(left, right);
+            case EQUALS: 
+                return isEqual(left, right);
+            case GREATER:
+                return (double) left > (double) right;
         }
         return null;
     }
+        private boolean isEqual(Object left, Object right) {
+        if (left == null && right == null)
+            return true;
+        if (left == null)
+            return false;
+        return left.equals(right);
+    }
+
+
+
 
     @Override
     public Object visitUnaryExpr(Unary unary) {

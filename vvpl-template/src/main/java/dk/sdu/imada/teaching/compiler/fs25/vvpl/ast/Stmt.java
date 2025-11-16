@@ -70,10 +70,12 @@ public abstract class Stmt {
 
     /** @author: Carl-Emil Dons Christensen */
     public static class PrintStmt extends Stmt {
+        public final Token token;
         public final Expr expr;
 
-        public PrintStmt(Expr expr) {
+        public PrintStmt(Expr expr, Token token) {
             this.expr = expr;
+            this.token = token;
         }
 
         @Override
