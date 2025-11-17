@@ -1,5 +1,6 @@
 package dk.sdu.teaching.compiler.fs24.spl.codegen;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -25,15 +26,8 @@ import dk.sdu.teaching.compiler.fs24.spl.ast.stmt.While;
 
 /////// KENDTE BUGS /////////// -Lasse
 /// 
-/// Problem med sampillet mellem VarStmt "var x =..." og BinaryExpr.
-/// Dette betyder, at De virker hver for sig "var x = 2;" og "b=b+2"/"b+2", men lige nu virker "var b = 2+2" ikke korrekt. 
-/// 
-/// Output er SSA og 3AC, men indeholder desværre en del redundans. 
-/// Dette skyldes, at binaryExpression både skal kunne virke ifm. 2+2+2 og bare 2+2. 
-/// Lige nu resulterer den per default en temp, som er godt ifm. nested expression (2+2+2), men 
-/// giver redundant kode ifm. ikke-nested (2+2).
-/// 
-/// Jeg ved ikke, om man kan detektere hvorvidt binary er en 2+2 eller 2+2+2 før en temp variabel skabes, men det virker ikke sådan.
+/// Kopi af Lasses implementation med fixes til bugs der skabte problemer.
+/// Tilføj extension "Better Comments" for tydeligt at se steder jeg har ændret.
 /// 
 
 public class LLVMEmitter {
@@ -76,14 +70,13 @@ public class LLVMEmitter {
             operatorMap.put("*", "mul");
             operatorMap.put("/", "udiv");
             operatorMap.put("==", "eq");
-            operatorMap.put("!=", "neq");
             operatorMap.put("!=", "ne");
             operatorMap.put("<", "ult");
             operatorMap.put("<=", "ule");
             operatorMap.put(">", "ugt");
             operatorMap.put(">=", "uge");
-            operatorMap.put("and", "AND");
-            operatorMap.put("or", "OR");
+            operatorMap.put("and", "and"); 
+            operatorMap.put("or", "or"); 
         }
 
         // For storing alive variables during compiling.
@@ -93,9 +86,6 @@ public class LLVMEmitter {
             boolean isTemporary;
             String llvmName;
             String originalVar;
-
-            // boolean isAlive;
-            // int scopeLevel;
 
             public Symbol(String tempName, boolean isTemporary, String originalVar) {
                 this.isTemporary = isTemporary;
@@ -107,20 +97,30 @@ public class LLVMEmitter {
         // Keeps track of the current amount of temporary variables.
         private static int current_temp = 0;
 
+        // Keeps track of the current label.
+        private static int current_label = 0; 
+
+        /*
+         * Produces a new label.
+         */
+        private String newLabel() { 
+            String labelName = "L" + current_label;
+            current_label++;
+            return labelName;
+        }
+
         /*
          * New var to be stored on the symbol table.
          * Should replace the old version, but have not implemented.
          */
-        public String newVar(String var, String tempName) {
-            String varName = var;
+        public void newVar(String var, String tempName) {
             Symbol newVar = new Symbol(tempName, false, var);
-            symbolHashMap.put(varName, newVar);
-            return varName;
+            symbolHashMap.put(var, newVar);
         }
 
         /* New temporary variable, does not point to an original variable. */
         public String newTempVar() {
-            String temp_name = "tempVar" + String.valueOf(current_temp);
+            String temp_name = "t" + current_temp; 
             Symbol new_temp = new Symbol(temp_name, true, null);
             symbolHashMap.put(temp_name, new_temp);
             current_temp++;
@@ -132,12 +132,13 @@ public class LLVMEmitter {
             return stmt.accept(this);
         }
 
-        @Override
+
         /*
          * For when existing variables get updated.
          * E.g "b=b+1"
          */
-        public String visitAssignExpr(Assign expr) {
+        @Override
+         public String visitAssignExpr(Assign expr) {
 
             String rightHandSide = expr.value.accept(this);
 
@@ -147,11 +148,13 @@ public class LLVMEmitter {
 
             String leftHandSide = "%" + temp + " = ";
 
-            return leftHandSide + rightHandSide;
+            sb.append(leftHandSide + rightHandSide + "\n"); 
+
+            return "%" + temp; 
         }
 
-        @Override
         /* "add i32 1, %d" */
+        @Override
         public String visitBinaryExpr(Binary expr) {
 
             String left = expr.left.accept(this);
@@ -159,7 +162,15 @@ public class LLVMEmitter {
             String operator = operatorMap.get(expr.operator.lexeme);
 
             String result = newTempVar();
-            String prefix = operator + " i32 ";
+
+            // Handles both arithemtic and comparison (e.g. also handles appending icmp)
+            String prefix;
+            String[] comparisonOperators = {"eq", "ne", "ult", "ule", "ugt", "uge"};
+            if (Arrays.asList(comparisonOperators).contains(operator)) {
+                prefix = "icmp " + operator + " i32 ";
+            } else {
+                prefix = operator + " i32 ";
+            }
 
             sb.append("%" + result + " = " + prefix + left + ", " + right + "\n");
 
@@ -169,21 +180,20 @@ public class LLVMEmitter {
 
         @Override
         /*
-         * Af en eller anden grund håndterer hun tal som Doubles,
-         * men vil have os til at emitte integers. Det virker som en dårlig løsning at
-         * omgøre noget, der er implementeret
-         * i hendes scanner. Derfor outputter vi "#.0"...
+         * Small known bug: Numbers are doubles, so even integers will be represented as "1.0".
+         * In general there are doubles in the examples, but we are to only use the i32 type.
+         * So this is probably not important. 
          */
+
         public String visitLiteralExpr(Literal expr) {
-            Object lexeme = expr.value;
-            return lexeme.toString();
+            String lexeme = expr.value.toString();
+            
+            return lexeme;
         }
 
         @Override
         /*
-         * "or", "and"
-         * Stadigvæk i32? Kommer an på brugerens input...
-         * "i1" angiver boolean værdi.
+         * "or", "and", same implementation as binary.
          */
         public String visitLogicalExpr(Logical expr) {
 
@@ -192,19 +202,15 @@ public class LLVMEmitter {
             String operator = operatorMap.get(expr.operator.lexeme);
 
             String result = newTempVar();
-            String prefix = operator + " i1 ";
 
-            sb.append("%" + result + " = " + prefix + left + ", " + right + "\n");
-
+            sb.append("%" + result + " = " + operator + " i1 " + left + ", " + right + "\n");
             return "%" + result;
         }
 
         @Override
-        /* IKKE FÆRDIG, Der står ikke som om, den skal implmementeres?. */
+        /* Not implemented */
         public String visitUnaryExpr(Unary expr) {
-            String operator = operatorMap.get(expr.operator.lexeme);
-            // String expr.right.accept(this);
-            return operator + expr.right.accept(this);
+            return null;
         }
 
         @Override
@@ -230,32 +236,37 @@ public class LLVMEmitter {
          */
         public Void visitExpressionStmt(Expression stmt) {
 
-            sb.append(stmt.expression.accept(this));
-            sb.append("\n");
-
+            stmt.expression.accept(this);
             return null;
         }
 
         @Override
         /*
-         * Jeg er i tvivl om, hvorvidt labels skal hardcodes.
-         * Under normale omstændigheder ville man jo lade labels være dynamiske, e.g
-         * label1,label2,... osv.
-         * 
-         * Opgavebeskrivelsen lyder som om, at man "bare" skal hardcode.
+         * Handles if statements.
+         * if (cond), then {block}
          */
         public Void visitIfStmt(If stmt) {
+            String testLabel = "Test" + newLabel();
+            String thenlabel = "IfEq" + newLabel();
+            String elseLabel = "IfNeq" + newLabel();
+            String endLabel  = "IfEnd" + newLabel();
 
-            sb.append("Test:\n");
-            String condVar = newTempVar();
-            sb.append("%" + condVar + " = icmp " + stmt.condition.accept(this));
-            sb.append("\n");
-            sb.append("br i1 %" + condVar + ", label %IfEq, label %ifNEq\n");
-            sb.append("ifEq:\n");
+            // Add the test label and then the branching condition
+            sb.append(testLabel + ":\n");
+            String cond = stmt.condition.accept(this);
+            sb.append("br i1 " + cond + ", label %" + thenlabel + ", label %" + elseLabel + "\n");
+
+            // Then block:
+            sb.append(thenlabel + ":\n");
             stmt.thenBranch.accept(this);
-            sb.append("ifNEq:\n");
-            stmt.elseBranch.accept(this);
-            sb.append("End:\n"); // I tvivl om denne skal returneres. 
+
+            // Else block:
+            if (stmt.elseBranch != null) {
+                sb.append(elseLabel + ":\n");
+                stmt.elseBranch.accept(this);
+            }
+
+            sb.append(endLabel + ":\n");
 
             return null;
         }
@@ -273,37 +284,44 @@ public class LLVMEmitter {
          * "var x = ...;""
          */
         public Void visitVarStmt(Var stmt) {
-
             String lexeme = stmt.name.lexeme;
-
-            sb.append("%" + lexeme + " = ");
 
             // Saves var to symbol table, for future get.
             Symbol var = new Symbol(lexeme, false, lexeme);
             symbolHashMap.put(lexeme, var);
 
-            sb.append(stmt.initializer.accept(this));
-            sb.append(";\n");
+            if (stmt.initializer != null) {
+                String initializer = stmt.initializer.accept(this);
+                sb.append("%" + lexeme + " = " + initializer + "\n");
+            } else {
+                sb.append("%" + lexeme + "\n");
+            }
 
             return null;
         }
 
         @Override
         /*
-         * Samme problematik som ovenstående - Man KUNNE lave dynamiske labels - men det
-         * ligner ikke, at det efterspørges i opgaven.
+         * Handles while statement.
+         * while (cond), then {block}
          */
         public Void visitWhileStmt(While stmt) {
 
-            sb.append("WhileTest:\n");
-            String condVar = newTempVar();
-            sb.append("%" + condVar + " = icmp " + stmt.condition.accept(this));
-            sb.append("\n");
-            sb.append("br i1 %" + condVar + ", label %WhileEql, label %End\n");
-            sb.append("WhileEql:\n");
+            String testLabel  = "WhileTest" + newLabel();
+            String whileLabel = "WhileEql" + newLabel();
+            String endLabel   = "WhileEnd" + newLabel();
+
+            sb.append(testLabel + ":\n");
+
+            // while condition:
+            String cond = stmt.condition.accept(this);
+            sb.append("br i1 " + cond + ", label %" + whileLabel + ", label %" + endLabel + "\n");
+
+            // WhileEql block:
+            sb.append(whileLabel + ":\n");
             stmt.body.accept(this);
-            sb.append("br label WhileTest\n");
-            sb.append("End:\n");
+            sb.append("br label %" + testLabel + "\n");
+            sb.append(endLabel + ":\n");
 
             return null;
 
