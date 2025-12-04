@@ -1,0 +1,3 @@
+function addfunc(a has_type Number, b has_type Number) has_type Number {
+    return add (a b);
+}
