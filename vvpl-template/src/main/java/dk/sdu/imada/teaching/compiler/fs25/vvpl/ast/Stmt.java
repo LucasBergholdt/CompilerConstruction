@@ -1,8 +1,6 @@
 package dk.sdu.imada.teaching.compiler.fs25.vvpl.ast;
 
-import java.beans.Expression;
 import java.util.List;
-import java.util.function.Function;
 
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.visitors.StmtVisitor;
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.Token;
@@ -135,11 +133,11 @@ public abstract class Stmt {
     /** @author: Lucas Bergholdt Hansen */
     public static class FunctionStmt extends Stmt {
         public final Token name;
-        public final List<Token> params;
+        public final List<Param> params;
         public final Token type;
         public final List<Stmt> body;
 
-        public FunctionStmt(Token name, List<Token> params, Token type, List<Stmt> body) {
+        public FunctionStmt(Token name, List<Param> params, Token type, List<Stmt> body) {
             this.name = name;
             this.params = params;
             this.type = type;

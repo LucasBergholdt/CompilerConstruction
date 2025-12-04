@@ -5,15 +5,9 @@ import java.util.LinkedList;
 import java.util.List;
 
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Expr;
-import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Expr.Assign;
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Expr.Identifier;
-import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Expr.Unary;
+import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Param;
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Stmt;
-import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Stmt.BlockStmt;
-import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Stmt.ExprStmt;
-import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Stmt.IfStmt;
-import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Stmt.PrintStmt;
-import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Stmt.VarDecl;
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.Token;
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.TokenType;
 
@@ -292,7 +286,7 @@ public class Parser {
         Token name = consume(IDENTIFIER, "Expected function name");
         consume(LEFT_PAREN, "Expected '('");
         // If we don't have a closing ')' right after we have params:
-        List<Token> params = new ArrayList<>();
+        List<Param> params = new ArrayList<>();
         if (!check(RIGHT_PAREN)) {
             params = params();
         }
@@ -314,30 +308,22 @@ public class Parser {
     }
 
     /** @author: Lucas Bergholdt Hansen */
-    // unfinished
-    private List<Token> params() {
-        List<Token> params = new ArrayList<>();
+    private List<Param> params() {
+        List<Param> params = new ArrayList<>();
 
-        Token id = consume(IDENTIFIER, "Expected identifier");
-        consume(TYPE_DEF, "Expected 'has_type'");
-        Token type = null;
-        if (match(NUMBER_TYPE, STRING_TYPE, BOOL_TYPE)) {
-            type = previous();
-        } else {
-            throw new ParseError();
-        }
-
-        while(match(COMMA)) {
-            Token id2 = consume(IDENTIFIER, "Expected identifier");
+        do {
+            Token id = consume(IDENTIFIER, "Expected identifier");
             consume(TYPE_DEF, "Expected 'has_type'");
-            Token type2 = null;
+            Token type = null;
             if (match(NUMBER_TYPE, STRING_TYPE, BOOL_TYPE)) {
                 type = previous();
             } else {
                 throw new ParseError();
             }
-        }
-        return null;
+            params.add(new Param(id, type));
+        } while (match(COMMA));
+
+        return params;
     }
 
     /** @author: Lucas Bergholdt Hansen */
@@ -345,10 +331,8 @@ public class Parser {
         Expr expr = primary();
 
         if (match(LEFT_PAREN)) {
-            List<Expr> arguments;
-            if (peek().type == RIGHT_PAREN) {
-                arguments = new ArrayList<>(); // Empty list
-            } else {
+            List<Expr> arguments = new ArrayList<>();
+            if (!check(RIGHT_PAREN)) {
                 arguments = args();
             }
             // Storing right paren token to use it for reporting rumtime errors caused by a function call
@@ -444,7 +428,6 @@ public class Parser {
         return false;
     }
 
-    // Consumes if given token matches current token, otherwise throws error
     private boolean check(TokenType type) {
         if (isAtEnd()) {
             return false;
@@ -459,6 +442,7 @@ public class Parser {
         return previous();
     }
 
+    // Consumes if given token matches current token, otherwise throws error
     private Token consume(TokenType type, String message) {
         if (check(type)) { // If we recieve the token type we expect, move on. 
             return advance();

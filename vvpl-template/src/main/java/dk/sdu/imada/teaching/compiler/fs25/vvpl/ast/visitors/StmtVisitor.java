@@ -1,8 +1,5 @@
 package dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.visitors;
 
-import java.beans.Expression;
-import java.util.function.Function;
-
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Stmt.*;
 
 /**
