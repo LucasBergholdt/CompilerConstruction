@@ -1,4 +1,4 @@
-package dk.sdu.imada.teaching.compiler.fs25.vvpl.semanticAnalysis;
+package dk.sdu.imada.teaching.compiler.fs25.vvpl.semanticAnalysis.scopeAnalysis;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -51,7 +51,6 @@ public class SymbolTable {
     if (outer != null) {
         return outer.get(symbol);
     }
-
     throw new SymbolTableException();
 }
 
@@ -67,13 +66,11 @@ public class SymbolTable {
 
         return false;
     }
-
 }
 
 class SymbolTableException extends Exception {
     // TODO create constructor with string for cause
 }
-
 
 class Attributes {
     public final TokenType type;
@@ -85,7 +82,7 @@ class Attributes {
         this.literal = token.literal;
     }
 
-    // Ordinary constructor for the sake of it. Can be deleted.
+    // C-E: Unødvendigt for nu. Ordinary constructor for the sake of it. Can be deleted.
     public Attributes(TokenType type, Object literal) {
     this.type = type;
     this.literal = literal;

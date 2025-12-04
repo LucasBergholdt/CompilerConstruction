@@ -13,8 +13,8 @@ import dk.sdu.imada.teaching.compiler.fs25.vvpl.interpretation.Interpreter;
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.parse.Parser;
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.Scanner;
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.Token;
-import dk.sdu.imada.teaching.compiler.fs25.vvpl.semanticAnalysis.ScopeAnalyzer;
-import dk.sdu.imada.teaching.compiler.fs25.vvpl.semanticAnalysis.TypeAnalyzer;
+import dk.sdu.imada.teaching.compiler.fs25.vvpl.semanticAnalysis.scopeAnalysis.ScopeAnalyzer;
+import dk.sdu.imada.teaching.compiler.fs25.vvpl.semanticAnalysis.typeAnalysis.TypeAnalyzer;
 
 public class VVPLController {
 

@@ -1,4 +1,4 @@
-package dk.sdu.imada.teaching.compiler.fs25.vvpl.semanticAnalysis;
+package dk.sdu.imada.teaching.compiler.fs25.vvpl.semanticAnalysis.scopeAnalysis;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -103,7 +103,6 @@ public class ScopeAnalyzer implements ExprVisitor<Void>, StmtVisitor<Void> {
         }
         return null;
     }
-
     
     public Void visitLogicalExpr(Logical logical) {
         analyse(logical.left);
