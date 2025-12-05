@@ -3,13 +3,8 @@ package dk.sdu.imada.teaching.compiler.fs25.vvpl.semanticAnalysis.typeAnalysis;
 import java.util.HashMap;
 import java.util.Map;
 
-import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.Token;
-import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.TokenType;
-
-
-/* C-E: Maps symbols (variables) to their values. */
 public class SymbolTable {
-    private Map<String, Type> symbols = new HashMap<>();       // Maps a name/identifier (=symbol) to attributes TokenType and Object literal (=values)
+    private Map<String, Type> symbols = new HashMap<>();       // Maps a name/identifier (=symbol) to their type.
     public SymbolTable outer = null;
 
     public SymbolTable() {
@@ -23,7 +18,6 @@ public class SymbolTable {
         symbols.put(symbol, type);
     }
 
-    // måske ikke rigtigt
     public void assign(String symbol, Type type){
         if (symbols.containsKey(symbol)) {
             symbols.put(symbol, type);

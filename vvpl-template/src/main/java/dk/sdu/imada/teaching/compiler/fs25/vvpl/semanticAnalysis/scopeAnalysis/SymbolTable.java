@@ -5,10 +5,8 @@ import java.util.Map;
 
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.Token;
 
-/* OBS TODO: Fjern Attribute Klassen. Vi gemmer ikke typer i dette symbol table alligevel. */
-
 public class SymbolTable {
-    private Map<String, Token> symbols = new HashMap<>();       // Maps a name/identifier (=symbol) to attributes TokenType and Object literal (=values)
+    private Map<String, Token> symbols = new HashMap<>();       // Maps a name/identifier (=symbol) their Token. #OBS: Vi anvender aldrig denne Token. Evt blot lav LinkedList<String> i stedet for et Table.
     public SymbolTable outer = null;
 
     /* Constructors */

@@ -45,6 +45,7 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
     }
 
     /* ------------------------------------- Expressions / Statements relateret til Symbol Table. ALL COMPLETED -------------------------  */
+    /* Type Error Policy: If new type is not compatible with old type, return the old type. If not possible (e.g. in binary expressions), return Type.UNKNOWN. */
 
     @Override
     public Void visitVarDecl(VarDecl varDecl) {
@@ -69,15 +70,6 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
         Type currType = currentEnviroment.get(assign.ID.lexeme);
         Type exprType = assign.expr.accept(this);
 
-        /* 
-            C-E: Niels har dette i hans kode. Men vi antager at: 1. varDecl er foregået foruden denne funktion (ScopeAnalyzer's opgave) 2. type er blevet erklæret (visitvarDecl's opgave) */
-                /*
-                    if (currType == Type.UNKNOWN) {
-                        currentEnviroment.assign(assign.ID.lexeme, exprType);
-                        return exprType;
-                }
-        */
-
         if (currType == exprType) {
             return currType;   
         }
@@ -91,13 +83,17 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
   /* ---------------------------- Expressions, nedefra og op af grammaren. ------------------------ */
     @Override // COMPLETED
     public Type visitLiteralExpr(Literal literal) {
-        return switch (literal.token.literal) {
-            case Double d -> Type.NUMBER;
-            case Boolean b -> Type.BOOL;
-            case String s -> Type.STRING;
-            // Unreachable
-            default -> null;    // C-E: Måske return Type.UNKNOWN her?
-        };
+        switch (literal.token.literal) {
+            case Double d: 
+                return Type.NUMBER;
+            case Boolean b:
+                return Type.BOOL;
+            case String s:
+                return Type.STRING;
+            default:
+                // Unreachable
+                throw new UnsupportedOperationException();
+        }
     }
 
     @Override // COMPLETED
@@ -107,7 +103,7 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
         if (unary.operator.type == NOT && exprType != Type.BOOL) {
             typeErrors.add(ErrorTypeStrings.TYPE_ERROR + ", line " + unary.operator.line
                     + ": operator NOT can only precede a boolean expression.");
-                    return Type.UNKNOWN;
+            return exprType;
         }
         else {
             return exprType;
@@ -182,7 +178,7 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
         }
     }
 
-    @Override // MISSING
+    @Override // COMPLETED
     public Type visitCastExpr(Cast cast) {
         Type cast_from = cast.expr.accept(this);    // Type of expression before cast
         TokenType cast_to = cast.typeToken.type;    // The type that we want to cast to. 
@@ -197,7 +193,7 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
                 else {
                     typeErrors.add(ErrorTypeStrings.TYPE_ERROR + ", line " + cast.typeToken.line
                     + ": can only cast NUMBER to string or bool.");
-                    return Type.UNKNOWN;
+                    return cast_from;
                 }
             case STRING:
                 if (cast_to == NUMBER_TYPE) {
@@ -207,13 +203,19 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
                 else {
                     typeErrors.add(ErrorTypeStrings.TYPE_ERROR + ", line " + cast.typeToken.line
                     + ": can only cast string to number");
-                    return Type.UNKNOWN;
+                    return cast_from;
                 }
             case BOOL:
                 if (cast_to == NUMBER_TYPE) {
                     return Type.NUMBER;
                 }
+                else {
+                    typeErrors.add(ErrorTypeStrings.TYPE_ERROR + ", line " + cast.typeToken.line
+                    + ": can only cast string to number");
+                    return cast_from;
+                }
             default:
+                // Reachable if current type is UNKNOWN (an error has happened before this clause). 
                 return Type.UNKNOWN;
         }
     }
