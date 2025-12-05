@@ -1,13 +1,8 @@
 package dk.sdu.imada.teaching.compiler.fs25.vvpl.semanticAnalysis.typeAnalysis;
-
 import static dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.TokenType.BOOL_TYPE;
-import static dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.TokenType.FALSE;
 import static dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.TokenType.NOT;
-import static dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.TokenType.NUMBER;
 import static dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.TokenType.NUMBER_TYPE;
-import static dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.TokenType.STRING;
 import static dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.TokenType.STRING_TYPE;
-import static dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.TokenType.TRUE;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -21,7 +16,7 @@ import dk.sdu.imada.teaching.compiler.fs25.vvpl.ErrorTypeStrings;
 
 public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
 
-    private SymbolTable currentEnviroment = new SymbolTable();
+    private SymbolTable currentEnvironment = new SymbolTable();
     private List<String> typeErrors = new LinkedList<>();
     private List<Stmt> program;
 
@@ -40,11 +35,12 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
         stmt.accept(this);
     }
 
-    private void analyse(Expr expr) {
-        expr.accept(this);
+    private Type analyse(Expr expr) {
+        return expr.accept(this);
     }
 
     /* ------------------------------------- Expressions / Statements relateret til Symbol Table. ALL COMPLETED -------------------------  */
+    /* Type Error Policy: If new type is not compatible with old type, return the old type. If not possible (e.g. in binary expressions), return Type.UNKNOWN. */
 
     @Override
     public Void visitVarDecl(VarDecl varDecl) {
@@ -54,29 +50,20 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
             return null;
         }
         else {
-            currentEnviroment.define(varDecl.id.lexeme, varDecl.expr.accept(this));
+            currentEnvironment.define(varDecl.id.lexeme, analyse(varDecl.expr));
             return null;
         }
     }
 
     @Override
     public Type visitIdentifierExpr(Identifier identifier) {
-        return currentEnviroment.get(identifier.id.lexeme);
+        return currentEnvironment.get(identifier.id.lexeme);
     }
 
     @Override
     public Type visitAssignExpr(Assign assign) {
-        Type currType = currentEnviroment.get(assign.ID.lexeme);
-        Type exprType = assign.expr.accept(this);
-
-        /* 
-            C-E: Niels har dette i hans kode. Men vi antager at: 1. varDecl er foregået foruden denne funktion (ScopeAnalyzer's opgave) 2. type er blevet erklæret (visitvarDecl's opgave) */
-                /*
-                    if (currType == Type.UNKNOWN) {
-                        currentEnviroment.assign(assign.ID.lexeme, exprType);
-                        return exprType;
-                }
-        */
+        Type currType = currentEnvironment.get(assign.ID.lexeme);
+        Type exprType = analyse(assign.expr);
 
         if (currType == exprType) {
             return currType;   
@@ -89,35 +76,39 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
     }
 
   /* ---------------------------- Expressions, nedefra og op af grammaren. ------------------------ */
-    @Override // COMPLETED
+    @Override 
     public Type visitLiteralExpr(Literal literal) {
-        return switch (literal.token.literal) {
-            case Double d -> Type.NUMBER;
-            case Boolean b -> Type.BOOL;
-            case String s -> Type.STRING;
-            // Unreachable
-            default -> null;    // C-E: Måske return Type.UNKNOWN her?
-        };
+        switch (literal.token.literal) {
+            case Double d: 
+                return Type.NUMBER;
+            case Boolean b:
+                return Type.BOOL;
+            case String s:
+                return Type.STRING;
+            default:
+                // Unreachable
+                throw new UnsupportedOperationException();
+        }
     }
 
-    @Override // COMPLETED
+    @Override 
     public Type visitUnaryExpr(Unary unary) {
-        Type exprType = unary.expr.accept(this);
+        Type exprType = analyse(unary.expr);
 
         if (unary.operator.type == NOT && exprType != Type.BOOL) {
             typeErrors.add(ErrorTypeStrings.TYPE_ERROR + ", line " + unary.operator.line
                     + ": operator NOT can only precede a boolean expression.");
-                    return Type.UNKNOWN;
+            return exprType;
         }
         else {
             return exprType;
         }
     }
 
-    @Override // COMPLETED
+    @Override 
     public Type visitBinaryExpr(Binary binary) {
-        Type left = binary.left.accept(this);
-        Type right = binary.right.accept(this);
+        Type left = analyse(binary.left);
+        Type right = analyse(binary.right);
 
         switch (binary.operator.type) {
             case PLUS:
@@ -161,10 +152,10 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
         }
     }
 
-    @Override   // COMPLETED
+    @Override   
     public Type visitLogicalExpr(Logical logical) {
-        Type left = logical.left.accept(this);
-        Type right = logical.right.accept(this);
+        Type left = analyse(logical.left);
+        Type right = analyse(logical.right);
 
         switch (logical.operator.type) {
             case OR, AND: 
@@ -182,9 +173,9 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
         }
     }
 
-    @Override // MISSING
+    @Override 
     public Type visitCastExpr(Cast cast) {
-        Type cast_from = cast.expr.accept(this);    // Type of expression before cast
+        Type cast_from = analyse(cast.expr);    // Type of expression before cast
         TokenType cast_to = cast.typeToken.type;    // The type that we want to cast to. 
         switch (cast_from) {
             case NUMBER:
@@ -197,7 +188,7 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
                 else {
                     typeErrors.add(ErrorTypeStrings.TYPE_ERROR + ", line " + cast.typeToken.line
                     + ": can only cast NUMBER to string or bool.");
-                    return Type.UNKNOWN;
+                    return cast_from;
                 }
             case STRING:
                 if (cast_to == NUMBER_TYPE) {
@@ -207,18 +198,24 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
                 else {
                     typeErrors.add(ErrorTypeStrings.TYPE_ERROR + ", line " + cast.typeToken.line
                     + ": can only cast string to number");
-                    return Type.UNKNOWN;
+                    return cast_from;
                 }
             case BOOL:
                 if (cast_to == NUMBER_TYPE) {
                     return Type.NUMBER;
                 }
+                else {
+                    typeErrors.add(ErrorTypeStrings.TYPE_ERROR + ", line " + cast.typeToken.line
+                    + ": can only cast string to number");
+                    return cast_from;
+                }
             default:
+                // Reachable if current type is UNKNOWN (an error has happened before this clause). 
                 return Type.UNKNOWN;
         }
     }
 
-    @Override //SKIP: Function related.
+    @Override //SKIP for now: Function related.
     public Type visitCallExpr(Call call) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'visitCallExpr'");
@@ -227,36 +224,45 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
     /* ------------------------- Statements ---------------------------- */
     @Override
     public Void visitExprStmt(ExprStmt exprStmt) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'visitExprStmt'");
+        analyse(exprStmt);
+        return null;
     }
 
     @Override
     public Void visitWhileStmt(WhileStmt whileStmt) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'visitWhileStmt'");
+        analyse(whileStmt.conditional);
+        analyse(whileStmt.body);
+        return null;
     }
 
     @Override
     public Void visitIfStmt(IfStmt ifStmt) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'visitIfStmt'");
+        analyse(ifStmt.cond);
+        analyse(ifStmt.thenBlock);
+        analyse(ifStmt.elseBlock);
+        return null;
     }
 
     @Override
     public Void visitPrintStmt(PrintStmt printStmt) {
-        Type exprType = printStmt.expr.accept(this);
-            if (exprType != Type.STRING) {
-                typeErrors.add(ErrorTypeStrings.TYPE_ERROR + ", line " + printStmt.token.line
-                    + ": PrintStmt only accepts strings.");
-            }
+        Type exprType = analyse(printStmt.expr);
+        if (exprType != Type.STRING) {
+            typeErrors.add(ErrorTypeStrings.TYPE_ERROR + ", line " + printStmt.token.line
+                + ": PrintStmt only accepts strings.");
+        }
         return null;
     }
 
     @Override
     public Void visitBlockStmt(BlockStmt blockStmt) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'visitBlockStmt'");
+        SymbolTable oldTable = currentEnvironment;
+        currentEnvironment = new SymbolTable(currentEnvironment);
+
+        for (Stmt stmt : blockStmt.stmts) {
+            analyse(stmt);
+        }
+        currentEnvironment = oldTable;
+        return null;
     }
 
     @Override
