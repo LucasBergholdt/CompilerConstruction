@@ -4,6 +4,10 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+
+import dk.sdu.imada.teaching.compiler.fs25.vvpl.ErrorTypeStrings;
+import dk.sdu.imada.teaching.compiler.fs25.vvpl.VVPLController;
+
 import static dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.TokenType.*;
 
 /**
@@ -111,7 +115,7 @@ public class Scanner {
                 } else if (isAlpha(c)) {
                     identifier();
                 } else {
-                    error(line, "Unexpected character.");
+                    VVPLController.error(line, ErrorTypeStrings.SCAN_ERROR, "Unexpected character.");
                 }
         }
     }
@@ -125,11 +129,7 @@ public class Scanner {
         scannedTokens.add(new Token(type, text, literal, line));
     }
 
-    // Basic error method for now
-    private void error(int line, String message) {
-        System.err.println("[line " + line + "] Error: " + message);
-    }
-
+    //TODO: Find ud af hvordan flere newlines skal håndteres rigtigt.
     private void string() {
         int newlineCount = 0;
         
@@ -138,7 +138,7 @@ public class Scanner {
                 line++;
                 newlineCount++;
                 if (newlineCount > 1) {
-                    error(line, "String spans too many lines");
+                    VVPLController.error(line, ErrorTypeStrings.SCAN_ERROR, "String spans too many lines.");
 
                     // Scanner still continues on rest of inputString even though we saw an error. So we consume the rest of the invalid string.
                     while (peek() != '"' && !isAtEnd()) {
@@ -155,7 +155,7 @@ public class Scanner {
         }
 
         if (isAtEnd()) {
-            error(line, "Unterminated string.");
+            VVPLController.error(line, ErrorTypeStrings.SCAN_ERROR, "Unterminated string.");
             return;
         }
         
