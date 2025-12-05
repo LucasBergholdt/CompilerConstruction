@@ -1,13 +1,8 @@
 package dk.sdu.imada.teaching.compiler.fs25.vvpl.semanticAnalysis.typeAnalysis;
-
 import static dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.TokenType.BOOL_TYPE;
-import static dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.TokenType.FALSE;
 import static dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.TokenType.NOT;
-import static dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.TokenType.NUMBER;
 import static dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.TokenType.NUMBER_TYPE;
-import static dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.TokenType.STRING;
 import static dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.TokenType.STRING_TYPE;
-import static dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.TokenType.TRUE;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -81,7 +76,7 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
     }
 
   /* ---------------------------- Expressions, nedefra og op af grammaren. ------------------------ */
-    @Override // COMPLETED
+    @Override 
     public Type visitLiteralExpr(Literal literal) {
         switch (literal.token.literal) {
             case Double d: 
@@ -96,7 +91,7 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
         }
     }
 
-    @Override // COMPLETED
+    @Override 
     public Type visitUnaryExpr(Unary unary) {
         Type exprType = unary.expr.accept(this);
 
@@ -110,7 +105,7 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
         }
     }
 
-    @Override // COMPLETED
+    @Override 
     public Type visitBinaryExpr(Binary binary) {
         Type left = binary.left.accept(this);
         Type right = binary.right.accept(this);
@@ -157,7 +152,7 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
         }
     }
 
-    @Override   // COMPLETED
+    @Override   
     public Type visitLogicalExpr(Logical logical) {
         Type left = logical.left.accept(this);
         Type right = logical.right.accept(this);
@@ -178,7 +173,7 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
         }
     }
 
-    @Override // COMPLETED
+    @Override 
     public Type visitCastExpr(Cast cast) {
         Type cast_from = cast.expr.accept(this);    // Type of expression before cast
         TokenType cast_to = cast.typeToken.type;    // The type that we want to cast to. 
@@ -220,7 +215,7 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
         }
     }
 
-    @Override //SKIP: Function related.
+    @Override //SKIP for now: Function related.
     public Type visitCallExpr(Call call) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'visitCallExpr'");
