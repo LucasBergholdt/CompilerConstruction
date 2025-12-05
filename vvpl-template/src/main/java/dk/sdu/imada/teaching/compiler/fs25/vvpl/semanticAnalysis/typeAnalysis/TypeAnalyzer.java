@@ -45,39 +45,48 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
     private void analyse(Expr expr) {
         expr.accept(this);
     }
-    
 
-    /* ------------------------------------- Expressions / Statements relateret til Symbol Table -------------------------  */
+    /* ------------------------------------- Expressions / Statements relateret til Symbol Table. ALL COMPLETED -------------------------  */
 
-
-    @Override // Returnér typen på denne variabel. Tilføj fejl hvis varDecl.expr == NULL
+    @Override
     public Void visitVarDecl(VarDecl varDecl) {
-        
-        currentEnviroment.define()
+        if (varDecl.expr == null) {
+            typeErrors.add(ErrorTypeStrings.TYPE_ERROR + ", line " + varDecl.id.line
+                    + ": VarDecl must be initialized with a value.");
+            return null;
+        }
+        else {
+            currentEnviroment.define(varDecl.id.lexeme, varDecl.expr.accept(this));
+            return null;
+        }
     }
 
-
-    @Override // COMPLETED
+    @Override
     public Type visitIdentifierExpr(Identifier identifier) {
         return currentEnviroment.get(identifier.id.lexeme);
     }
 
-    @Override // COMPLETED
+    @Override
     public Type visitAssignExpr(Assign assign) {
+        Type currType = currentEnviroment.get(assign.ID.lexeme);
         Type exprType = assign.expr.accept(this);
-        Type varType = currentEnviroment.get(assign.ID.lexeme);
-    
-        if (varType == Type.UNKNOWN) {  // if ID has not already been declared/initialized
-            currentEnviroment.assign(assign.ID.lexeme, exprType);
-            return exprType;
-        }
-        else if (varType == exprType) {
-            return varType;   
+
+        /* 
+            C-E: Niels har dette i hans kode. Men vi antager at: 1. varDecl er foregået foruden denne funktion (ScopeAnalyzer's opgave) 2. type er blevet erklæret (visitvarDecl's opgave) */
+                /*
+                    if (currType == Type.UNKNOWN) {
+                        currentEnviroment.assign(assign.ID.lexeme, exprType);
+                        return exprType;
+                }
+        */
+
+        if (currType == exprType) {
+            return currType;   
         }
         else {
             typeErrors.add(ErrorTypeStrings.TYPE_ERROR + ", line " + assign.ID.line
-                    + ": current type of identifier [insert name here] does not match the type of [insert name here]");
-                return varType; // return identifier's current type.
+                    + ": current type of identifier [insert name here] does not match the type of the given expression");
+            return currType; // return identifier's current type.
         }
     }
 
@@ -176,6 +185,7 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
     }
 
     @Override // MISSING
+    @SuppressWarnings("all")
     public Type visitCastExpr(Cast cast) {
         Type cast_from = cast.expr.accept(this);    // Type of expression before cast
         Type cast_to = cast.type;                  // Type of the type we want to cast to.

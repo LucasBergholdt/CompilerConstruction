@@ -4,14 +4,14 @@ import java.util.HashMap;
 import java.util.Map;
 
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.Token;
-import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.TokenType;
 
+/* OBS TODO: Fjern Attribute Klassen. Vi gemmer ikke typer i dette symbol table alligevel. */
 
-/* C-E: Maps symbols (variables) to their values. */
 public class SymbolTable {
-    private Map<String, Attributes> symbols = new HashMap<>();       // Maps a name/identifier (=symbol) to attributes TokenType and Object literal (=values)
+    private Map<String, Token> symbols = new HashMap<>();       // Maps a name/identifier (=symbol) to attributes TokenType and Object literal (=values)
     public SymbolTable outer = null;
 
+    /* Constructors */
     public SymbolTable() {
     }
 
@@ -19,19 +19,19 @@ public class SymbolTable {
         this.outer = outer;
     }
 
-    // define symbol
+    /* Methods */
+
     public void define(String symbol, Token token) throws SymbolTableException {
         if (contains(symbol)) {
             throw new SymbolTableException();
-            // Return error if Symbol is in current or any outer scope. Redefinition of symbol is not allowed.
+            // Return error if Symbol is in current or any outer scope. Redefinition of symbol is not allowed unless in function.
         }
-        symbols.put(symbol, new Attributes(token));
+        symbols.put(symbol, token);
     }
 
-    // måske ikke rigtigt
     public void assign(String symbol, Token token) throws SymbolTableException {
         if (symbols.containsKey(symbol)) {
-            symbols.put(symbol, new Attributes(token));
+            symbols.put(symbol, token);
             return;
         }
 
@@ -42,8 +42,7 @@ public class SymbolTable {
         throw new SymbolTableException();
     }
 
-    // get value. (Lavet af CE)
-    public Attributes get(String symbol) throws SymbolTableException {
+    public Token get(String symbol) throws SymbolTableException {
     if (symbols.containsKey(symbol)) {
         return symbols.get(symbol);
     }
@@ -54,7 +53,6 @@ public class SymbolTable {
     throw new SymbolTableException();
 }
 
-    // contains.
     public boolean contains(String symbol) {
         if (symbols.containsKey(symbol)) {
             return true;
@@ -72,6 +70,21 @@ class SymbolTableException extends Exception {
     // TODO create constructor with string for cause
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* DEPRECATED: Only here for reference. */
+/*
 class Attributes {
     public final TokenType type;
     public final Object literal;
@@ -88,3 +101,4 @@ class Attributes {
     this.literal = literal;
     }
 }
+*/

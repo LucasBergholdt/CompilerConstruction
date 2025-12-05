@@ -19,11 +19,7 @@ public class SymbolTable {
         this.outer = outer;
     }
 
-    public void define(String symbol, Type type) throws SymbolTableException {
-        if (contains(symbol)) {
-            throw new SymbolTableException();
-            // Return error if Symbol is in current or any outer scope. Redefinition of symbol is not allowed.
-        }
+    public void define(String symbol, Type type)  {
         symbols.put(symbol, type);
     }
 
@@ -53,19 +49,6 @@ public class SymbolTable {
     }
     // Unreachable. ScopeAnalyzer has checked already.
     return null;
-
-}
-
-    public boolean contains(String symbol) {
-        if (symbols.containsKey(symbol)) {
-            return true;
-        }
-
-        if (outer != null) {
-            return outer.contains(symbol);
-        }
-
-        return false;
     }
 }
 
