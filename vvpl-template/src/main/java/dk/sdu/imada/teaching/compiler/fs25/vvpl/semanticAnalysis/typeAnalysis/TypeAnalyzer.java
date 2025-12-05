@@ -18,8 +18,6 @@ import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Expr.*;
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.visitors.*;
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.TokenType;
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.ErrorTypeStrings;
-import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.Token;
-
 
 public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
 
@@ -185,38 +183,38 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
     }
 
     @Override // MISSING
-    @SuppressWarnings("all")
     public Type visitCastExpr(Cast cast) {
         Type cast_from = cast.expr.accept(this);    // Type of expression before cast
-        Type cast_to = cast.type;                  // Type of the type we want to cast to.
-        switch (cast_from.type) {
+        TokenType cast_to = cast.typeToken.type;    // The type that we want to cast to. 
+        switch (cast_from) {
             case NUMBER:
-                if (cast_to.type == STRING_TYPE) {
-                    // Return a STRING_TYPE.
-                    return cast_to; //C-E Problem: Denne Type vil KUN have en type, e.g. "NUMBER_TYPE", men ikke 
+                if (cast_to == STRING_TYPE) {
+                    return Type.STRING;
                 }
-                if (cast_to.type == BOOL_TYPE) {
-                    // Return a STRING_TYPE.
-                    return cast_to;
+                if (cast_to == BOOL_TYPE) {
+                    return Type.BOOL;
                 }
                 else {
-                    typeErrors.add(ErrorTypeStrings.TYPE_ERROR + ", line " + cast.type.line
+                    typeErrors.add(ErrorTypeStrings.TYPE_ERROR + ", line " + cast.typeToken.line
                     + ": can only cast NUMBER to string or bool.");
+                    return Type.UNKNOWN;
                 }
-            case STRING_TYPE:
-                if (cast_to.type == NUMBER_TYPE) {
-                    // prøver at caste fra String til Number. Kræver at alle elementer i String er tal.
-
-                    if !(string_to_number_possible(cast_from.literal)) {
-                        // go through string and see if it consists of digits only. If not, error
-                        typeErrors.add(ErrorTypeStrings.TYPE_ERROR + ", line " + cast.type.line
-                    + ": not possible to cast string to number.");
+            case STRING:
+                if (cast_to == NUMBER_TYPE) {
+                     // TypeAnalyzer assumes this is always possible. Runtime error is returned in interpreter in the case that string contains non-digits.
+                    return Type.NUMBER;
                     }
-                    else {
-                        typeErrors.add(ErrorTypeStrings.TYPE_ERROR + ", line " + cast.type.line
-                        + ": can only cast string to number");
-                    }
-                }   
+                else {
+                    typeErrors.add(ErrorTypeStrings.TYPE_ERROR + ", line " + cast.typeToken.line
+                    + ": can only cast string to number");
+                    return Type.UNKNOWN;
+                }
+            case BOOL:
+                if (cast_to == NUMBER_TYPE) {
+                    return Type.NUMBER;
+                }
+            default:
+                return Type.UNKNOWN;
         }
     }
 
@@ -247,8 +245,8 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
 
     @Override
     public Void visitPrintStmt(PrintStmt printStmt) {
-        Type exprtoken = printStmt.expr.accept(this); // e.g. STRING_TYPE
-            if (exprtoken.type != STRING) {
+        Type exprType = printStmt.expr.accept(this);
+            if (exprType != Type.STRING) {
                 typeErrors.add(ErrorTypeStrings.TYPE_ERROR + ", line " + printStmt.token.line
                     + ": PrintStmt only accepts strings.");
             }

@@ -248,7 +248,7 @@ import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.TokenType;
   public String visitCastExpr(Cast cast) {
     StringBuilder sb = new StringBuilder();
 
-    sb.append(indentString("Cast_To " + cast.type.lexeme));    
+    sb.append(indentString("Cast_To " + cast.typeToken.lexeme));    
     indent++;
     sb.append(cast.expr.accept(this));
     indent--;

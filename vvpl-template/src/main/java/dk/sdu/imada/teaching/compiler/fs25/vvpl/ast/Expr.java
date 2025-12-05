@@ -134,11 +134,11 @@ public abstract class Expr {
 
     /** @author: Lucas Bergholdt Hansen */ 
     public static class Cast extends Expr {
-        public final Token type;    // token efter "cast_to"
+        public final Token typeToken;    // token efter "cast_to"
         public final Expr expr;
 
-        public Cast(Token type, Expr expr) {
-            this.type = type;
+        public Cast(Token typeToken, Expr expr) {
+            this.typeToken = typeToken;
             this.expr = expr;
         }
 
