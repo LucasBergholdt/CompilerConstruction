@@ -145,7 +145,6 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
                     + ": operator [insert name here] can only compare two expressions of the same type.");
                     return Type.UNKNOWN;
                 }
-
             default:
                 // Unreachable
                 throw new UnsupportedOperationException();
@@ -230,14 +229,23 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
 
     @Override
     public Void visitWhileStmt(WhileStmt whileStmt) {
-        analyse(whileStmt.conditional);
+        Type condType = analyse(whileStmt.conditional);
+        if (condType != Type.BOOL) {
+            typeErrors.add(ErrorTypeStrings.TYPE_ERROR + ", line " + whileStmt.whileToken.line
+                + ": PrintStmt only accepts strings.");
+        }
         analyse(whileStmt.body);
         return null;
     }
 
     @Override
     public Void visitIfStmt(IfStmt ifStmt) {
-        analyse(ifStmt.cond);
+        Type condType = analyse(ifStmt.cond);
+        if (condType != Type.BOOL) {
+            typeErrors.add(ErrorTypeStrings.TYPE_ERROR + ", line " + ifStmt.ifToken.line
+                + ": PrintStmt only accepts strings.");
+        }
+
         analyse(ifStmt.thenBlock);
         analyse(ifStmt.elseBlock);
         return null;

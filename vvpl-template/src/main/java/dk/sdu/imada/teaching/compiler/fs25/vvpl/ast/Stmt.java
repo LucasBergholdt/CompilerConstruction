@@ -34,11 +34,13 @@ public abstract class Stmt {
 
     /** @author: Carl-Emil Dons Christensen */
     public static class IfStmt extends Stmt {
+        public final Token ifToken; /* Literal "IF". */
         public final Expr cond;
         public final Stmt thenBlock;
         public final Stmt elseBlock;
 
-        public IfStmt(Expr cond, Stmt thenBlock, Stmt elseBlock) {
+        public IfStmt(Token ifToken, Expr cond, Stmt thenBlock, Stmt elseBlock) {
+            this.ifToken = ifToken;
             this.cond = cond;
             this.thenBlock = thenBlock;
             this.elseBlock = elseBlock;
@@ -52,10 +54,12 @@ public abstract class Stmt {
 
     /** @author: Carl-Emil Dons Christensen */
     public static class WhileStmt extends Stmt {
+        public final Token whileToken;
         public final Expr conditional;
         public final Stmt body;
 
-        public WhileStmt(Expr conditional, Stmt body) {
+        public WhileStmt(Token whileToken, Expr conditional, Stmt body) {
+            this.whileToken = whileToken;
             this.conditional = conditional;
             this.body = body;
         }
@@ -151,8 +155,4 @@ public abstract class Stmt {
     }
 
 }
-
-
-    
-
 

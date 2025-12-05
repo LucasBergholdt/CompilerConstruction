@@ -8,6 +8,7 @@ import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.Token;
 public class SymbolTable {
     private Map<String, Token> symbols = new HashMap<>();       // Maps a name/identifier (=symbol) their Token. #OBS: Vi anvender aldrig denne Token. Evt blot lav LinkedList<String> i stedet for et Table.
     public SymbolTable outer = null;
+    public Boolean functionBlock = false;
 
     /* Constructors */
     public SymbolTable() {
@@ -15,6 +16,11 @@ public class SymbolTable {
 
     public SymbolTable(SymbolTable outer) {
         this.outer = outer;
+    }
+
+    public SymbolTable(SymbolTable outer, Boolean functionBlock) {
+        this.outer = outer;
+        this.functionBlock = functionBlock;
     }
 
     /* Methods */
@@ -32,7 +38,7 @@ public class SymbolTable {
             return;
         }
 
-        if (outer != null) {
+        if (outer != null && functionBlock == null) {
             outer.assign(symbol, token);
             return;
             }
@@ -44,7 +50,7 @@ public class SymbolTable {
         return symbols.get(symbol);
     }
 
-    if (outer != null) {
+    if (outer != null && functionBlock == null) {
         return outer.get(symbol);
     }
     throw new SymbolTableException();
@@ -55,7 +61,7 @@ public class SymbolTable {
             return true;
         }
 
-        if (outer != null) {
+        if (outer != null && functionBlock == null) {
             return outer.contains(symbol);
         }
 
