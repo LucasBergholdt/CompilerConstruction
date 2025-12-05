@@ -92,7 +92,7 @@ public class ScopeAnalyzer implements ExprVisitor<Void>, StmtVisitor<Void> {
         return null;
     }
 
-    @Override
+    @Override // MANGLER
     public Void visitCallExpr(Call call) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'visitCallExpr'");
@@ -101,7 +101,8 @@ public class ScopeAnalyzer implements ExprVisitor<Void>, StmtVisitor<Void> {
     @Override
     public Void visitCastExpr(Cast cast) {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'visitCastExpr'");
+        analyse(cast.expr);
+        return null;
     }
 
     /* ------------------------------------- Statements ------------------------------------- */
@@ -111,18 +112,22 @@ public class ScopeAnalyzer implements ExprVisitor<Void>, StmtVisitor<Void> {
     }
     
     public Void visitWhileStmt(WhileStmt whileStmt) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'visit'");
+        analyse(whileStmt.conditional);
+        analyse(whileStmt.body);
+        return null;
     }
     
     public Void visitIfStmt(IfStmt ifStmt) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'visit'");
+        analyse(ifStmt.cond);
+        analyse(ifStmt.thenBlock);
+        analyse(ifStmt.elseBlock);
+        return null;
+
     }
     
     public Void visitPrintStmt(PrintStmt printStmt) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'visit'");
+        analyse(printStmt.expr);
+        return null;
     }
 
     public Void visitBlockStmt(BlockStmt blockStmt) {

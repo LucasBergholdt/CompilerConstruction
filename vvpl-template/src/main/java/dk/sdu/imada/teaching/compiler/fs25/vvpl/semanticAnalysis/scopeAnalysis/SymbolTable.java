@@ -18,7 +18,6 @@ public class SymbolTable {
     }
 
     /* Methods */
-
     public void define(String symbol, Token token) throws SymbolTableException {
         if (contains(symbol)) {
             throw new SymbolTableException();
