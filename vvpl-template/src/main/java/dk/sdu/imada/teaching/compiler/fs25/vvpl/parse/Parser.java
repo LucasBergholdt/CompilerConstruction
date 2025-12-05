@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
+import dk.sdu.imada.teaching.compiler.fs25.vvpl.ErrorTypeStrings;
+import dk.sdu.imada.teaching.compiler.fs25.vvpl.VVPLController;
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Expr;
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Expr.Identifier;
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Param;
@@ -39,7 +41,7 @@ public class Parser {
             try {
                 statements.add(decl());
             } catch (ParseError e) {
-                // synchronise();
+                synchronise();
             }
 
         }
@@ -77,7 +79,7 @@ public class Parser {
         if (match(NUMBER_TYPE, STRING_TYPE, BOOL_TYPE)) {
             type = previous().type;
         } else {
-            throw new ParseError();
+            throw error(peek(), "Type specified should be NumberType, StringType or BoolType");
         }
 
         // Optional "is" expr:
@@ -178,7 +180,7 @@ public class Parser {
     /** @author: Carl-Emil Dons Christensen */
     private Stmt exprStmt() {
         Expr expr = expression();
-        consume(SEMICOLON, null);
+        consume(SEMICOLON, "Expected ';'");
 
         return new Stmt.ExprStmt(expr);
     }
@@ -188,23 +190,26 @@ public class Parser {
         return assignment();
     }
 
-    /** @author: Carl-Emil Dons Christensen */
+    /** @author: Carl-Emil Dons Christensen, Lucas Bergholdt Hansen */
     private Expr assignment() {
         Expr expr = logicalOr();
 
         if (match(ASSIGN)) {
-            if (!(expr instanceof Identifier)) {
-                // TODO: call error function (don't throw)
-            } else {
-                Token id = ((Identifier)expr).id;
-                expr = assignment();
+            Token assignToken = previous(); // The 'is' token
+            Expr value = assignment();
 
-                return new Expr.Assign(id, expr);
+            if (expr instanceof Identifier) {
+                Token id = ((Identifier)expr).id;
+                return new Expr.Assign(id, value);
             }
+
+            //TODO: Book doesn't throw error. Should we?
+            //TODO: Jeg tror blot det er en optimization de har lavet, men jeg synes det gør det hele lidt mere forvirrende egentlig.
+            throw error(assignToken, "Invalid assignment target.");
         }
+        
         return expr;
     }
-
 
     /** @author: Carl-Emil Dons Christensen */
     private Expr logicalOr() {
@@ -298,7 +303,7 @@ public class Parser {
             if (match(NUMBER_TYPE, STRING_TYPE, BOOL_TYPE)) {
                 type = previous();
             } else {
-                throw new ParseError();
+                throw error(peek(), "Type specified should be NumberType, StringType or BoolType");
             }
         }
 
@@ -318,7 +323,7 @@ public class Parser {
             if (match(NUMBER_TYPE, STRING_TYPE, BOOL_TYPE)) {
                 type = previous();
             } else {
-                throw new ParseError();
+                throw error(peek(), "Type specified should be NumberType, StringType or BoolType");
             }
             params.add(new Param(id, type));
         } while (match(COMMA));
@@ -366,7 +371,7 @@ public class Parser {
             if (match(NUMBER_TYPE, STRING_TYPE, BOOL_TYPE)) {
                 typeToken = previous();
             } else {
-                throw new ParseError();
+                throw error(peek(), "Type specified should be NumberType, StringType or BoolType");
             }
 
             // Create new Expr.Cast:
@@ -395,13 +400,17 @@ public class Parser {
                 expr = new Identifier(peek());
                 current++;
                 return expr;
-
-            // Else we expect a grouping
-            default:
-                consume(LEFT_PAREN, "Expected '('");
+            
+            // TODO: Test om dette fungerer. -> Hvorfor er det nu vi ikke har grouping expression som bogen?
+            case LEFT_PAREN:
+                advance(); // Consume the '('
                 expr = expression();
                 consume(RIGHT_PAREN, "Expected ')'");
                 return expr;
+
+            // Else we report that we expected an expression
+            default:
+                throw error(peek(), "Expected expression.");
         }
     }
 
@@ -447,8 +456,7 @@ public class Parser {
         if (check(type)) { // If we recieve the token type we expect, move on. 
             return advance();
         } else {
-            System.out.println(message);
-            throw new ParseError();
+            throw error(peek(), message);
         }
     }
 
@@ -456,8 +464,42 @@ public class Parser {
         return tokens.get(current - 1);
     }
 
-    // Temporary empty ParseError class
-    private class ParseError extends RuntimeException {
+
+    private static class ParseError extends RuntimeException {}
+
+    //TODO: Currently this just returns the error. They do this in the book because sometimes you want to report an error without throwing. However, we currently don't use this.
+    private ParseError error(Token token, String message) {
+        // Add the error to the list of errors in VVPLController and return a new ParseError
+        VVPLController.error(token.line, ErrorTypeStrings.PARSE_ERROR, message);
+        return new ParseError();
+    }
+
+    private void synchronise() {
+        // Consume the problematic token that triggered the error
+        advance();
+
+        // Discard tokens until we find a safe place to continue
+        while (!isAtEnd()) {
+            // If we just passed a semicolon the next token is very likely the start of a new statement
+            if (previous().type == SEMICOLON) return;
+
+            // Check if current token begins a new statement
+            switch (peek().type) {
+                case FUNCTION:
+                case VAR:
+                case IF:
+                case WHILE:
+                case PRINT:
+                case LEFT_BRACE:
+                case RETURN:
+                    return;
+                
+                default:
+                    // Current token is part of the mess. Discard it and continue looping.
+                    advance();
+                    break;
+            }
+        }
     }
 
 
