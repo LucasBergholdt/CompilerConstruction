@@ -126,6 +126,7 @@ public class Parser {
 
     /** @author: Carl-Emil Dons Christensen */
     private Stmt ifStmt() {
+        Token ifToken = previous();
         consume(LEFT_PAREN, "Expected '('");
         Expr cond = expression();
         consume(RIGHT_PAREN, "Expected ')'");
@@ -135,16 +136,17 @@ public class Parser {
         if (match(ELSE)) {
             elseBranch = statement();
         }
-        return new Stmt.IfStmt(cond, thenBranch, elseBranch);
+        return new Stmt.IfStmt(ifToken, cond, thenBranch, elseBranch);
     }
 
     /** @author: Carl-Emil Dons Christensen */
     private Stmt whileStmt() {
+        Token whileToken = previous();
         consume(LEFT_PAREN, "Expected '('");
         Expr cond = expression();
         consume(RIGHT_PAREN, "Expected ')'");
         Stmt body = statement();
-        return new Stmt.WhileStmt(cond, body);
+        return new Stmt.WhileStmt(whileToken, cond, body);
     }
 
     /** @author: Carl-Emil Dons Christensen, Lucas Bergholdt Hansen */
