@@ -47,6 +47,10 @@ public class VVPLController {
 		Parser parser = new Parser(tokens);
 		List<Stmt> stmts = parser.parse();
 		// Proceed ONLY if no failure.
+		if (hadError) {
+			Collections.sort(errorMessages);
+			return errorMessages.stream().map(ErrorMessage::toString).toList();
+		}
 
 
 		// Semantic analysis
