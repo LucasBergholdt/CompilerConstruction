@@ -1,0 +1,44 @@
+
+\section{Technical Description}
+
+Here you explain the technical work you have carried out. You should present the
+overall architecture of your interpreter. 
+Try to explain the development choices you made taking into account important properties, 
+such as reusability and performance.
+
+\subsection{Architecture}
+  
+Please provide at least \textbf{one diagram} of the entire 
+architecture and describe it. How do the individual elements of the interpreter (i.e., scanner, parser, etc.) work together to execute a given program? Have you applied specific design patterns?
+
+\subsection{Implementation}
+
+If you have implemented specific algorithms or used functionality not covered in the lecture, please explain it here.
+Which kind of design decisions did you take? Answer the following questions in the respective sections.
+\begin{itemize}[noitemsep]
+	\item How do you recognize tokens in the Scanner?
+	\item How does the Parser work?
+	\item How do you perform the semantic analyses?
+	\item How do you handle the casting of types?
+%	\item How do you (or the grammar) treat the dangling-else problem?
+%	\item Do you allow for syntactic sugar? If so, please report what and where.
+%	\item {What do you check in the scope analysis?}
+%	\item {What do you check in the type analysis?}
+	\item {How do you handle functions?}
+	\item What tasks are performed by the interpreter?
+	\item How and when do you report errors?
+\end{itemize}
+\subsubsection{Syntactic Analysis} 
+\subsubsection{Semantic Analysis} 
+\subsubsection{Tree-Walk Interpretation} 
+    
+\subsubsection{Monitoring and Logging} 
+Do you trace the state of the interpreter and its components (i.e., the scanner, parser, etc)?
+    
+\subsection{Testing \& Evaluation}
+
+How did you test your interpreter? Which coverage criterion did you apply?\\
+Describe the test setup and the test inputs with their expected outputs.
+If you have documented this in the source code a link and submission of the generated JavaDoc is also fine.
+
+If the provided tests have been changed or do not work, please explain here what tests fail, why and what it would require to fix them.

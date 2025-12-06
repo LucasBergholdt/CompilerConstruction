@@ -1,0 +1,76 @@
+\usepackage[a4paper,margin=2.4cm]{geometry} \linespread{1.25} 
+\usepackage[english]{babel}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage[page,toc]{appendix}
+\usepackage{fancyhdr}
+\usepackage{fancyvrb}
+\usepackage[T1]{fontenc}	
+\usepackage{graphicx}
+\usepackage[utf8]{inputenc}
+\usepackage{titlesec}
+\usepackage{hyperref}
+\usepackage{enumitem}
+
+% -------------------------------------------------------------------------------------- %
+% Egne tilføjelser -> ekstra packages jeg tænker vi plejer at bruge.
+\usepackage{rotating}
+\usepackage{float}
+\usepackage{comment}
+\usepackage{wrapfig}
+\usepackage{listings}
+\usepackage{subcaption}
+\usepackage{caption}
+\captionsetup{
+    format = plain,
+    font = footnotesize,
+    labelfont = sc
+}
+
+% Kode miljø indstillinger
+\usepackage{xcolor}
+\definecolor{comment_color}{rgb}{0,0.6,0}
+\definecolor{number_color}{rgb}{0.2, 0.2, 0.8}
+\definecolor{string_color}{rgb}{0.58,0.0,0.82}
+\definecolor{code_background_color}{rgb}{0.95, 0.93, 0.90}
+\definecolor{keyword_color}{rgb}{1.0,0.4,0.0}
+
+\lstdefinestyle{mystyle}{
+  backgroundcolor = \color{code_background_color},
+  commentstyle = \color{comment_color},
+  keywordstyle = \color{keyword_color},
+  numberstyle = \sffamily\tiny\color{number_color},
+  stringstyle = \color{string_color},
+  basicstyle = \sffamily\footnotesize, %font families: sffamily, ttfamily
+  breakatwhitespace = false,
+  breaklines = true,
+  prebreak=\raisebox{0ex}[0ex][0ex]{\ensuremath{\hookleftarrow}},
+  captionpos = b,
+  keepspaces = true,
+  numbers = left,
+  numbersep = 10pt,
+  showspaces = false,
+  showstringspaces = false,
+  showtabs = true,
+  tabsize = 2,
+  frame = leftline
+}
+
+\lstset{style=mystyle}
+
+% -------------------------------------------------------------------------------------- %
+
+\DeclareGraphicsExtensions{.png}	\graphicspath{{figures/}}               
+\renewcommand{\arraystretch}{1.15}
+
+\fancyhf{}
+\setlength{\headheight}{15pt}
+\lfoot{}
+\cfoot{}
+\rfoot{\thepage{}}
+
+\pagestyle{fancy}
+\lhead{Group T05}
+\chead{Full Interpreter}
+\rhead{\today}
