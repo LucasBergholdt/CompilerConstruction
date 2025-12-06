@@ -80,15 +80,6 @@ class SymbolTableException extends Exception {
 
 
 
-
-
-
-
-
-
-
-
-
 /* DEPRECATED: Only here for reference. */
 /*
 class Attributes {

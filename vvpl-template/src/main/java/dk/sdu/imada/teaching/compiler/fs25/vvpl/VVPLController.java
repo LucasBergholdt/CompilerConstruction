@@ -56,6 +56,7 @@ public class VVPLController {
 		// Semantic analysis
 		ScopeAnalyzer scopeanalyzer = new ScopeAnalyzer(stmts);
 		List<String> scopeErrors = scopeanalyzer.analyse();
+		
 		// Proceed ONLY if no failure.
 
 

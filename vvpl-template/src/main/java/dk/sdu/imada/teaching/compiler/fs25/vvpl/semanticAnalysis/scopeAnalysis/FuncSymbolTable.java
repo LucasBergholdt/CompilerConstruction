@@ -6,7 +6,7 @@ import java.util.Map;
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Stmt.FunctionStmt;
 
 public class FuncSymbolTable {
-    private Map<String, FunctionStmt> symbols = new HashMap<>();       // Maps a name/identifier (=symbol) their AST-node FunctionStmt
+    private Map<String, FunctionStmt> symbols = new HashMap<>();       // Maps a name/identifier (=symbol) to their AST-node FunctionStmt
 
     /* Constructors */
     public FuncSymbolTable() {
@@ -44,4 +44,8 @@ public class FuncSymbolTable {
 
         return false;
     }
+}
+
+class SymbolTableException extends Exception {
+    // TODO create constructor with string for cause
 }
