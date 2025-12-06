@@ -104,11 +104,11 @@ public abstract class Stmt {
     public static class VarDecl extends Stmt {
         public final Token id;
         public final Expr expr;
-        public final TokenType type;
+        public final Token typeToken;
 
-        public VarDecl(Token id, TokenType type, Expr expr) {
+        public VarDecl(Token id, Token typeToken, Expr expr) {
             this.id = id;
-            this.type = type;
+            this.typeToken = typeToken;
             this.expr = expr;
         }
 
@@ -138,13 +138,13 @@ public abstract class Stmt {
     public static class FunctionStmt extends Stmt {
         public final Token name;
         public final List<Param> params;
-        public final Token type;
+        public final Token typeToken;
         public final BlockStmt body;
 
-        public FunctionStmt(Token name, List<Param> params, Token type, BlockStmt body) {
+        public FunctionStmt(Token name, List<Param> params, Token typeToken, BlockStmt body) {
             this.name = name;
             this.params = params;
-            this.type = type;
+            this.typeToken = typeToken;
             this.body = body;
         }
 

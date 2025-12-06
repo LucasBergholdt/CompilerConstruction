@@ -183,7 +183,7 @@ public class ScopeAnalyzer implements ExprVisitor<Void>, StmtVisitor<Void> {
             return null;
         }
         try {
-            // Check for uniqueness of function name
+            // Check for uniqueness of function name, otherwise define function in table.
             functionsTable.define(functionStmt.name.lexeme, functionStmt);
         } 
         catch (SymbolTableException e) {
@@ -197,18 +197,25 @@ public class ScopeAnalyzer implements ExprVisitor<Void>, StmtVisitor<Void> {
         return null;
     }
 
-
     @Override
     public Void visitCallExpr(Call call) {
-        // ------------------ Fetch function ------------------
+
+        // If Call Expr is not a function call.
+        if (call.paren == null) {
+            analyse(call.callee);
+            return null;
+        }
+
+        // Else if Call Expr is a function call
         FunctionStmt functionStmt;
 
+        // ------------------ Fetch function ------------------
         try {
             functionStmt = functionsTable.get(call.id.lexeme);
         } 
         catch (SymbolTableException e) {
             VVPLController.error(call.id.line, ErrorTypeStrings.SCOPE_ERROR, "function [insert name here] does not exist.");
-        return null;
+            return null;
         }
 
         // ------------------ Fetch parameters ------------------

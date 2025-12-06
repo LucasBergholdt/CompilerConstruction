@@ -116,9 +116,9 @@ public abstract class Expr {
 
     /** @author: Lucas Bergholdt Hansen */
     public static class Call extends Expr {
-        public final Token id;
+        public final Token id;      // Set if call to a function
         public final Expr callee;
-        public final Token paren;
+        public final Token paren;   // Set if call to a function
         public List<Expr> arguments;
 
         public Call(Token id, Expr callee, Token paren, List<Expr> arguments) {

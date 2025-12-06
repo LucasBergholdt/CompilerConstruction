@@ -122,7 +122,7 @@ import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.TokenType;
     indent++;
     sb.append(indentString(varDecl.id.lexeme));
 
-    sb.append(indentString(reverse_keywords.get(varDecl.type)));
+    sb.append(indentString(reverse_keywords.get(varDecl.typeToken.type)));
 
     if (varDecl.expr != null) {
       sb.append(varDecl.expr.accept(this));

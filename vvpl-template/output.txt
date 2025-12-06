@@ -1,0 +1,8 @@
+TYPE_ERROR, line 3 operator [insert name here] only accepts numbers.
+TYPE_ERROR, line 3 Type UNKNOWN does not match type of expression (BOOL)
+TYPE_ERROR, line 6 conditional has to be of type Bool
+TYPE_ERROR, line 7 Type NUMBER does not match type of expression (STRING)
+TYPE_ERROR, line 10 Type null does not match type of expression (STRING)
+TYPE_ERROR, line 13 operator [insert name here] can only compare two expressions of the same type.
+TYPE_ERROR, line 13 conditional has to be of type Bool
+TYPE_ERROR, line 15 current type of identifier [insert name here] does not match the type of the given expression.

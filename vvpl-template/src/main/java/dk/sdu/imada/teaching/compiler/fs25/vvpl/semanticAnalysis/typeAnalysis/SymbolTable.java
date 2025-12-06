@@ -45,7 +45,3 @@ public class SymbolTable {
     return null;
     }
 }
-
-class SymbolTableException extends Exception {
-    // TODO create constructor with string for cause
-}

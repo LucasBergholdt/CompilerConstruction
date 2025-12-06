@@ -74,10 +74,10 @@ public class Parser {
         consume(TYPE_DEF, "Expected 'has_type'");
         
         // Expecting a NumberType, StringType or BoolType:
-        TokenType type = null;
+        Token typeToken = null;
 
         if (match(NUMBER_TYPE, STRING_TYPE, BOOL_TYPE)) {
-            type = previous().type;
+            typeToken = previous();
         } else {
             throw error(peek(), "Type specified should be NumberType, StringType or BoolType");
         }
@@ -92,7 +92,7 @@ public class Parser {
         // Expecting semicolon at end:
         consume(SEMICOLON, "Expected ';'");
 
-        return new Stmt.VarDecl(id, type, expr);
+        return new Stmt.VarDecl(id, typeToken, expr);
     }
 
     // ------------------ All statements in statement except exprStmt -----------------------
