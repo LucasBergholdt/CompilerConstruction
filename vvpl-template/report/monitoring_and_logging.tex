@@ -1,0 +1,50 @@
+% Explain how we do error handling.
+
+An essential part of making a programming language usable includes having a sensible error handling.
+Clear error messages help users understand what went wrong in their program and how to fix it.
+To facilitate this, we perform error handling in all parts of the interpreter.
+
+At the center of the error handling is the \texttt{VVPLController} class which functions as a centralized hub for
+reporting errors. This design decouples the error \emph{detection} from the error \emph{reporting}.
+Each component such as the scanner or parser is responsible for identifying errors and notifying the
+\texttt{VVPLController} class which in turn is responsible for handling how these errors are stored
+and reported to the user.
+
+This interplay between the classes is facilitated by the \texttt{error} method in the controller.
+\begin{lstlisting}[language=java]
+public static void error(int line, String errorType, String message) {
+    hadError = true;
+    errorMessages.add(new ErrorMessage(line, errorType, message));
+}
+\end{lstlisting}
+
+This method takes in the line where the error occured, the type of error and the error message we are reporting to the user. 
+The error type is one of the different errors from the \texttt{ErrorTypeStrings} class, which allows us to categorize the errors.
+The method firstly sets the \texttt{hadError} flag, which signals that the current stage of compilation has failed.
+After each stage of the interpreter pipeline, the controller checks this flag. If an error has been registered the pipeline stops.
+Halting the interpreter as soon as a single stage fails is part of a fail fast strategy that prevents later stages from operating 
+on invalid data which would cause a cascade of confusing and possibly misleading errors.
+%TODO: Skal denne sætning om at scanner, parser etc. reporter alle errors. Kan måske i stedet bruges senere til naturlig overgang.
+While the pipeline stops between stages, each individual stage is designed to detect as many errors as possible before terminating,
+providing the user with a comprehensive report of their errors in that stage.
+This gives the user a more complete overview of issues which decreases time spent debugging by
+reducing the number of compiles needed to find and fix all errors in the program.
+
+After setting the \texttt{hadError} flag the error is added to the errorMessages list which stores all the errors.
+This is a list of \texttt{ErrorMessage} objects:
+\begin{lstlisting}[language=java]
+private static List<ErrorMessage> errorMessages = new ArrayList<>();
+\end{lstlisting}
+
+The \texttt{ErrorMessage} class stores errors as structured data rather than just plain strings.
+It stores the line number, error type and message in seperate fields which allows for easy post-processing.
+Specifically this allows for sorting the 
+errors by line number such that the user receives a logical and actionable list of issues in the order they appear in the code. 
+This is achieved by having \texttt{ErrorMessage} implement the \texttt{Comparable} interface allowing the controller to sort the list with
+the \texttt{sort} method from the Collections class.
+The class also overrides the \texttt{toString} method such that the error messages can easily be reported to the
+user in the format: \texttt{<error-type>, line <lineNo> <message>}.
+
+% Kan måske passe ind et sted?:
+% Our system monitors the state of the source code's correctness at each stage and logs deviations in a structured user-friendly manner.
+
