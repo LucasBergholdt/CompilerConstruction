@@ -1,5 +1,7 @@
 package dk.sdu.imada.teaching.compiler.fs25.vvpl.semanticAnalysis.scopeAnalysis;
 
+import java.util.ArrayList;
+
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
@@ -8,13 +10,19 @@ import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.*;
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Stmt.*;
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Expr.*;
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.visitors.*;
+import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.Token;
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.ErrorTypeStrings;
 
 public class ScopeAnalyzer implements ExprVisitor<Void>, StmtVisitor<Void> {
 
     private SymbolTable currentEnvironment = new SymbolTable();
+    private Boolean is_env_function = false;
+
+    private FuncSymbolTable functionsTable = new FuncSymbolTable(); // #TODO lav denne klasse.
+
     private List<String> scopeErrors = new LinkedList<>();
     private List<Stmt> program;
+    
 
     public ScopeAnalyzer(List<Stmt> program) {
         this.program = program;
@@ -93,10 +101,50 @@ public class ScopeAnalyzer implements ExprVisitor<Void>, StmtVisitor<Void> {
         return null;
     }
 
-    @Override // MANGLER
+    @Override // TOPPRIO nu
     public Void visitCallExpr(Call call) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'visitCallExpr'");
+
+        // ------------------ Fetch function ------------------
+        FunctionStmt functionStmt;
+        try {
+            functionStmt = functionsTable.get(call.id.lexeme);
+        } catch (SymbolTableException e) {
+             scopeErrors.add(ErrorTypeStrings.SCOPE_ERROR + ", line " + call.id.line
+                    + ": function [insert name here] does not exist.");
+            return null;
+        }
+
+        // ------------------ Fetch parameters ------------------
+        List<Param> params = functionStmt.params;   
+        List<Expr> args = call.arguments;
+
+        if (params.size() != args.size()) {
+            scopeErrors.add(ErrorTypeStrings.SCOPE_ERROR + ", line " + call.id.line
+                    + ": function [ name here] takes exactly [params.size()] parameters.");
+            return null;
+        }
+
+        // ------------------ Create new environment and shadow parameters inside new environment. Check if parameters are in scope. ------------------
+        SymbolTable oldTable = currentEnvironment;
+        currentEnvironment = new SymbolTable(true);
+
+        for (int i = 0; i < params.size(); i++) { // shadower params i nye environment.
+            Token paramToken = params.get(i).id;
+            try { 
+                currentEnvironment.define(paramToken.lexeme, paramToken);
+            } 
+            catch (SymbolTableException e) {
+                // Unreachable. Dette nye environment har ikke noget outer environment og parametrene er derfor de første variabler defineret nogensinde i dette env.
+                return null;
+            }
+        }
+
+        // Analyse statements within body. These statements CANNOT see values defined in outer Environment.
+        analyse(functionStmt.body);
+  
+        // ------------- Reset state ------------
+        currentEnvironment = oldTable;
+        return null;
     }
 
     @Override
@@ -123,7 +171,6 @@ public class ScopeAnalyzer implements ExprVisitor<Void>, StmtVisitor<Void> {
         analyse(ifStmt.thenBlock);
         analyse(ifStmt.elseBlock);
         return null;
-
     }
     
     public Void visitPrintStmt(PrintStmt printStmt) {
@@ -134,6 +181,7 @@ public class ScopeAnalyzer implements ExprVisitor<Void>, StmtVisitor<Void> {
     public Void visitBlockStmt(BlockStmt blockStmt) {
         SymbolTable oldTable = currentEnvironment;
         currentEnvironment = new SymbolTable(currentEnvironment);
+
 
         for (Stmt stmt : blockStmt.stmts) {
             analyse(stmt);
@@ -174,27 +222,6 @@ public class ScopeAnalyzer implements ExprVisitor<Void>, StmtVisitor<Void> {
                     + ": Function name [insert name here] already exist in scope.");
                 return null;
         }
-
-       // ---------- Make new functionblock in current environment. (functionblocks does not access outer blocks) ---------
-        SymbolTable oldTable = currentEnvironment;
-        currentEnvironment = new SymbolTable(currentEnvironment, true);
-
-        // ---------- Fetch parameters and define them in the new block ---------
-        ListIterator<Param> parameters = functionStmt.params.listIterator();
-        while (parameters.hasNext()) {
-            try {
-                currentEnvironment.define(parameters.next().id.lexeme, parameters.next().id); /* Returnerer ikke fejl idét at vi har et helt nyt functionScope. Vi leder altså ikke i scopes udenfor funktionen. */
-            } catch (SymbolTableException e) {
-                // Unreachable. Parametre kan umuligvis være defineret i nye function table som nævnt ovenfor.
-            }
-        }
-        // ------------ Execute new block -----------------------
-        for (Stmt stmt : functionStmt.body) {
-            analyse(stmt);
-        }
-
-        // ------------- Reset state ------------
-        currentEnvironment = oldTable;
         return null;
 
     }

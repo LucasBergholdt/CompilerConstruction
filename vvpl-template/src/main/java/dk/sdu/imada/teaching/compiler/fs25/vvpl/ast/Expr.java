@@ -116,11 +116,13 @@ public abstract class Expr {
 
     /** @author: Lucas Bergholdt Hansen */
     public static class Call extends Expr {
+        public final Token id;
         public final Expr callee;
         public final Token paren;
         public List<Expr> arguments;
 
-        public Call(Expr callee, Token paren, List<Expr> arguments) {
+        public Call(Token id, Expr callee, Token paren, List<Expr> arguments) {
+            this.id = id;
             this.callee = callee;
             this.paren = paren;
             this.arguments = arguments;

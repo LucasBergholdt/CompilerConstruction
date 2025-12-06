@@ -139,9 +139,9 @@ public abstract class Stmt {
         public final Token name;
         public final List<Param> params;
         public final Token type;
-        public final List<Stmt> body;
+        public final BlockStmt body;
 
-        public FunctionStmt(Token name, List<Param> params, Token type, List<Stmt> body) {
+        public FunctionStmt(Token name, List<Param> params, Token type, BlockStmt body) {
             this.name = name;
             this.params = params;
             this.type = type;

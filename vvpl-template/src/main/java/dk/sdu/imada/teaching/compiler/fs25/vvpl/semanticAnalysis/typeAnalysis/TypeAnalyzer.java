@@ -276,6 +276,7 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
     @Override
     public Void visitReturnStmt(ReturnStmt returnStmt) {
         // TODO Auto-generated method stub
+        Type returnType = analyse(returnStmt.returnValue); // skal evt sammenlignes med givne type af funktion.
         throw new UnsupportedOperationException("Unimplemented method 'visitReturnStmt'");
     }
 

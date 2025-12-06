@@ -8,19 +8,25 @@ import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.Token;
 public class SymbolTable {
     private Map<String, Token> symbols = new HashMap<>();       // Maps a name/identifier (=symbol) their Token. #OBS: Vi anvender aldrig denne Token. Evt blot lav LinkedList<String> i stedet for et Table.
     public SymbolTable outer = null;
-    public Boolean functionBlock = false;
+    public Boolean isGlobal = false;
+    public Boolean isFuncEnv = false;
 
     /* Constructors */
+
+    // Used in global scope only.
     public SymbolTable() {
+        this.isGlobal = true;
     }
 
+    // Used for declaring a new function. Has no outer table.
+    public SymbolTable(Boolean isFuncEnv) {
+        this.isFuncEnv = isFuncEnv;
+    }
+
+    // Used for nested blocks.
     public SymbolTable(SymbolTable outer) {
         this.outer = outer;
-    }
-
-    public SymbolTable(SymbolTable outer, Boolean functionBlock) {
-        this.outer = outer;
-        this.functionBlock = functionBlock;
+        this.isFuncEnv = outer.isFuncEnv;
     }
 
     /* Methods */

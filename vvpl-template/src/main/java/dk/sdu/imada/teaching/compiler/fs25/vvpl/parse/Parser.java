@@ -310,7 +310,8 @@ public class Parser {
         }
 
         consume(LEFT_BRACE, "Expected '{'"); // block() assumes { has already been consumed
-        List<Stmt> body = block();
+        
+        Stmt.BlockStmt body = new Stmt.BlockStmt(block());
         return new Stmt.FunctionStmt(name, params, type, body);
     }
 
@@ -338,6 +339,10 @@ public class Parser {
         Expr expr = primary();
 
         if (match(LEFT_PAREN)) {
+            if (!(expr instanceof Identifier)) {
+                throw new ParseError(); 
+            }
+
             List<Expr> arguments = new ArrayList<>();
             if (!check(RIGHT_PAREN)) {
                 arguments = args();
@@ -345,7 +350,9 @@ public class Parser {
             // Storing right paren token to use it for reporting rumtime errors caused by a function call
             Token paren = consume(RIGHT_PAREN, "Expected ')'");
             
-            return new Expr.Call(expr, paren, arguments);
+            Token id = ((Identifier) expr).id;
+
+            return new Expr.Call(id, expr, paren, arguments);
         }
 
         return expr;
