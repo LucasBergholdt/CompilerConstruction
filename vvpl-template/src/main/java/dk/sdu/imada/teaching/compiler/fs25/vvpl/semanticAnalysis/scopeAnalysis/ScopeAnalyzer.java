@@ -15,8 +15,8 @@ import dk.sdu.imada.teaching.compiler.fs25.vvpl.ErrorTypeStrings;
 
 public class ScopeAnalyzer implements ExprVisitor<Void>, StmtVisitor<Void> {
 
-    private SymbolTable currentEnvironment = new SymbolTable();
-    private Boolean is_env_function = false;
+    private SymbolTable currentEnvironment = new SymbolTable(true);
+    private Boolean is_function_env = false;
 
     private FuncSymbolTable functionsTable = new FuncSymbolTable(); // #TODO lav denne klasse.
 
@@ -101,7 +101,7 @@ public class ScopeAnalyzer implements ExprVisitor<Void>, StmtVisitor<Void> {
         return null;
     }
 
-    @Override // TOPPRIO nu
+    @Override // COMPLETED (untested)
     public Void visitCallExpr(Call call) {
 
         // ------------------ Fetch function ------------------
@@ -118,17 +118,25 @@ public class ScopeAnalyzer implements ExprVisitor<Void>, StmtVisitor<Void> {
         List<Param> params = functionStmt.params;   
         List<Expr> args = call.arguments;
 
+        // see if #args == #params
         if (params.size() != args.size()) {
             scopeErrors.add(ErrorTypeStrings.SCOPE_ERROR + ", line " + call.id.line
                     + ": function [ name here] takes exactly [params.size()] parameters.");
             return null;
         }
 
-        // ------------------ Create new environment and shadow parameters inside new environment. Check if parameters are in scope. ------------------
-        SymbolTable oldTable = currentEnvironment;
-        currentEnvironment = new SymbolTable(true);
+        // analyse if given arguments are in scope
+        for (int i = 0; i < args.size(); i++) {
+            analyse(args.get(i));
+        }
 
-        for (int i = 0; i < params.size(); i++) { // shadower params i nye environment.
+        // ------------------ Create new environment and shadow parameters inside new environment. ------------------
+        is_function_env = true;
+        SymbolTable oldTable = currentEnvironment;
+        currentEnvironment = new SymbolTable();
+
+        // define (potentially shadowing) parameters in new environment.
+        for (int i = 0; i < params.size(); i++) {
             Token paramToken = params.get(i).id;
             try { 
                 currentEnvironment.define(paramToken.lexeme, paramToken);
@@ -139,11 +147,13 @@ public class ScopeAnalyzer implements ExprVisitor<Void>, StmtVisitor<Void> {
             }
         }
 
-        // Analyse statements within body. These statements CANNOT see values defined in outer Environment.
+        // analyse body
         analyse(functionStmt.body);
   
         // ------------- Reset state ------------
         currentEnvironment = oldTable;
+        is_function_env = false;
+
         return null;
     }
 
@@ -181,48 +191,55 @@ public class ScopeAnalyzer implements ExprVisitor<Void>, StmtVisitor<Void> {
     public Void visitBlockStmt(BlockStmt blockStmt) {
         SymbolTable oldTable = currentEnvironment;
         currentEnvironment = new SymbolTable(currentEnvironment);
+        int num_statements = blockStmt.stmts.size();
 
 
-        for (Stmt stmt : blockStmt.stmts) {
-            analyse(stmt);
+        // analyse each statement. error handle returnStatements.
+        for (int i = 0; i < num_statements; i++) {
+            // If returnstatement occurs in non-function context, return error
+            if (blockStmt.stmts.get(i) instanceof ReturnStmt && !is_function_env) {
+                scopeErrors.add(ErrorTypeStrings.SCOPE_ERROR + ", line " + ((ReturnStmt)blockStmt.stmts.get(i)).returnKeyword.line
+                    + ": Return statement cannot occur in block outside of function");
+                return null;
+            }
+            // If returnstatement is not the last statement of the block, return error
+            if (blockStmt.stmts.get(i) instanceof ReturnStmt && i != num_statements - 1 ) {
+                scopeErrors.add(ErrorTypeStrings.SCOPE_ERROR + ", line " + ((ReturnStmt)blockStmt.stmts.get(i)).returnKeyword.line
+                    + ": Return statement must be last statement of block.");
+                return null;
+            }
+            else {
+                analyse(blockStmt.stmts.get(i));
+            }
         }
+
         currentEnvironment = oldTable;
         return null;
     }
 
     @Override
     public Void visitReturnStmt(ReturnStmt returnStmt) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'visitReturnStmt'");
+        analyse(returnStmt.returnValue);
+        return null;
     }
 
     @Override
     public Void visitFunctionStmt(FunctionStmt functionStmt) {
-        /*
-        Fremgangsmåde:
-        - Tjek om Function er i Global Scope .
-        - Definér funktion i global scope environment (Checker for uniqueness af name)
-        - Definér nyt environment for funktion og initialisér parametre
-            - Kør block stmts inden for det nye environment
-        - Rollback til gamle environment.
-        */
-
-        // Functions can only be defined in global scope.
-        if (currentEnvironment.outer != null) {
-                        scopeErrors.add(ErrorTypeStrings.SCOPE_ERROR + ", line " + functionStmt.name.line
-                    + ": Attempting to define function [insert name here] in a non-global scope");
+        // Check if current scope is global scope
+        if (!currentEnvironment.isGlobal) {
+                scopeErrors.add(ErrorTypeStrings.SCOPE_ERROR + ", line " + functionStmt.name.line
+            + ": Attempting to define function [insert name here] in a non-global scope");
             return null;
         }
-
-        // ---------- Define function in current environment. (checks for unique name) ---------
         try {
-            currentEnvironment.define(functionStmt.name.lexeme, functionStmt.name);
-        } catch (SymbolTableException e) {
+            // Check for uniqueness of function name
+            functionsTable.define(functionStmt.name.lexeme, functionStmt);
+            return null;
+        } 
+        catch (SymbolTableException e) {
             scopeErrors.add(ErrorTypeStrings.SCOPE_ERROR + ", line " + functionStmt.name.line
                     + ": Function name [insert name here] already exist in scope.");
-                return null;
+            return null;
         }
-        return null;
-
     }
 }

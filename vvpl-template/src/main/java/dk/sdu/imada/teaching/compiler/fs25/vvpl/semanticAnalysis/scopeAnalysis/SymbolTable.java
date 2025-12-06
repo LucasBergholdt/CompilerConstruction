@@ -9,24 +9,21 @@ public class SymbolTable {
     private Map<String, Token> symbols = new HashMap<>();       // Maps a name/identifier (=symbol) their Token. #OBS: Vi anvender aldrig denne Token. Evt blot lav LinkedList<String> i stedet for et Table.
     public SymbolTable outer = null;
     public Boolean isGlobal = false;
-    public Boolean isFuncEnv = false;
 
     /* Constructors */
 
-    // Used in global scope only.
+    // Default (only used for functions)
     public SymbolTable() {
-        this.isGlobal = true;
     }
 
-    // Used for declaring a new function. Has no outer table.
-    public SymbolTable(Boolean isFuncEnv) {
-        this.isFuncEnv = isFuncEnv;
+    // Used in global scope only.
+    public SymbolTable(Boolean isGlobal) {
+        this.isGlobal = isGlobal;
     }
 
     // Used for nested blocks.
     public SymbolTable(SymbolTable outer) {
         this.outer = outer;
-        this.isFuncEnv = outer.isFuncEnv;
     }
 
     /* Methods */
@@ -44,7 +41,7 @@ public class SymbolTable {
             return;
         }
 
-        if (outer != null && functionBlock == null) {
+        if (outer != null) {
             outer.assign(symbol, token);
             return;
             }
@@ -56,7 +53,7 @@ public class SymbolTable {
         return symbols.get(symbol);
     }
 
-    if (outer != null && functionBlock == null) {
+    if (outer != null) {
         return outer.get(symbol);
     }
     throw new SymbolTableException();
@@ -67,7 +64,7 @@ public class SymbolTable {
             return true;
         }
 
-        if (outer != null && functionBlock == null) {
+        if (outer != null) {
             return outer.contains(symbol);
         }
 

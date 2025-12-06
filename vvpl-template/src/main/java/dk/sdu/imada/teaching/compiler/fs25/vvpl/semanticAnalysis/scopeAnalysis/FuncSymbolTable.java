@@ -12,9 +12,6 @@ public class FuncSymbolTable {
     public FuncSymbolTable() {
     }
 
-    public FuncSymbolTable(FuncSymbolTable outer) {
-    }
-
     /* Methods */
     public void define(String symbol, FunctionStmt functionStmt) throws SymbolTableException {
         if (contains(symbol)) {
