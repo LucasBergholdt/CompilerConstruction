@@ -13,22 +13,22 @@ import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Expr.*;
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.visitors.*;
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.TokenType;
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.ErrorTypeStrings;
+import dk.sdu.imada.teaching.compiler.fs25.vvpl.VVPLController;
 
 public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
 
     private SymbolTable currentEnvironment = new SymbolTable();
-    private List<String> typeErrors = new LinkedList<>();
     private List<Stmt> program;
 
     public TypeAnalyzer(List<Stmt> program) {
         this.program = program;
     }
 
-    public List<String> analyse() {
+    public void analyse() {
         for (Stmt stmt : program) {
             analyse(stmt);
         }
-        return this.typeErrors;
+        return;
     }
 
     private void analyse(Stmt stmt) {
@@ -44,16 +44,9 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
 
     @Override
     public Void visitVarDecl(VarDecl varDecl) {
-        if (varDecl.expr == null) {
-            typeErrors.add(ErrorTypeStrings.TYPE_ERROR + ", line " + varDecl.id.line
-                    + ": VarDecl must be initialized with a value.");
-            return null;
+        currentEnvironment.define(varDecl.id.lexeme, analyse(varDecl.expr));
+        return null;
         }
-        else {
-            currentEnvironment.define(varDecl.id.lexeme, analyse(varDecl.expr));
-            return null;
-        }
-    }
 
     @Override
     public Type visitIdentifierExpr(Identifier identifier) {
@@ -69,8 +62,7 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
             return currType;   
         }
         else {
-            typeErrors.add(ErrorTypeStrings.TYPE_ERROR + ", line " + assign.ID.line
-                    + ": current type of identifier [insert name here] does not match the type of the given expression");
+            VVPLController.error(assign.ID.line, ErrorTypeStrings.TYPE_ERROR, "current type of identifier [insert name here] does not match the type of the given expression.");
             return currType; // return identifier's current type.
         }
     }
@@ -96,8 +88,7 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
         Type exprType = analyse(unary.expr);
 
         if (unary.operator.type == NOT && exprType != Type.BOOL) {
-            typeErrors.add(ErrorTypeStrings.TYPE_ERROR + ", line " + unary.operator.line
-                    + ": operator NOT can only precede a boolean expression.");
+            VVPLController.error(unary.operator.line, ErrorTypeStrings.TYPE_ERROR, "operator NOT can only precede a boolean expression.");
             return exprType;
         }
         else {
@@ -119,8 +110,7 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
                     return Type.NUMBER;
                 }
                 else {
-                    typeErrors.add(ErrorTypeStrings.TYPE_ERROR + ", line " + binary.operator.line
-                    + ": operator [insert name here] only accepts numbers.");
+                    VVPLController.error(binary.operator.line, ErrorTypeStrings.TYPE_ERROR, "operator [insert name here] only accepts numbers.");
                     return Type.UNKNOWN;
                 }
             case GREATER:
@@ -131,8 +121,7 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
                     return Type.BOOL;
                 }
                 else {
-                    typeErrors.add(ErrorTypeStrings.TYPE_ERROR + ", line " + binary.operator.line
-                    + ": operator [insert name here] only accepts numbers.");
+                    VVPLController.error(binary.operator.line, ErrorTypeStrings.TYPE_ERROR, "operator [insert name here] only accepts numbers.");
                     return Type.UNKNOWN;
                 }
             case EQUALS:
@@ -141,8 +130,7 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
                     return Type.BOOL;
                 }
                 else {
-                    typeErrors.add(ErrorTypeStrings.TYPE_ERROR + ", line " + binary.operator.line
-                    + ": operator [insert name here] can only compare two expressions of the same type.");
+                    VVPLController.error(binary.operator.line, ErrorTypeStrings.TYPE_ERROR, "operator [insert name here] can only compare two expressions of the same type.");
                     return Type.UNKNOWN;
                 }
             default:
@@ -162,8 +150,7 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
                     return Type.BOOL;
                 }
                 else {
-                    typeErrors.add(ErrorTypeStrings.TYPE_ERROR + ", line " + logical.operator.line
-                    + ": operator [insert name here] only accepts booleans.");
+                    VVPLController.error(logical.operator.line, ErrorTypeStrings.TYPE_ERROR, "operator [insert name here] only accepts booleans.");
                     return Type.UNKNOWN;
                 }
             default:
@@ -185,18 +172,16 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
                     return Type.BOOL;
                 }
                 else {
-                    typeErrors.add(ErrorTypeStrings.TYPE_ERROR + ", line " + cast.typeToken.line
-                    + ": can only cast NUMBER to string or bool.");
+                    VVPLController.error(cast.typeToken.line, ErrorTypeStrings.TYPE_ERROR, "can only cast NUMBER to string or bool.");
                     return cast_from;
                 }
             case STRING:
                 if (cast_to == NUMBER_TYPE) {
                      // TypeAnalyzer assumes this is always possible. Runtime error is returned in interpreter in the case that string contains non-digits.
                     return Type.NUMBER;
-                    }
+                }
                 else {
-                    typeErrors.add(ErrorTypeStrings.TYPE_ERROR + ", line " + cast.typeToken.line
-                    + ": can only cast string to number");
+                    VVPLController.error(cast.typeToken.line, ErrorTypeStrings.TYPE_ERROR, "can only cast string to number.");
                     return cast_from;
                 }
             case BOOL:
@@ -204,8 +189,7 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
                     return Type.NUMBER;
                 }
                 else {
-                    typeErrors.add(ErrorTypeStrings.TYPE_ERROR + ", line " + cast.typeToken.line
-                    + ": can only cast string to number");
+                    VVPLController.error(cast.typeToken.line, ErrorTypeStrings.TYPE_ERROR, "can only cast bool to number.");
                     return cast_from;
                 }
             default:
@@ -231,8 +215,7 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
     public Void visitWhileStmt(WhileStmt whileStmt) {
         Type condType = analyse(whileStmt.conditional);
         if (condType != Type.BOOL) {
-            typeErrors.add(ErrorTypeStrings.TYPE_ERROR + ", line " + whileStmt.whileToken.line
-                + ": PrintStmt only accepts strings.");
+            VVPLController.error(whileStmt.whileToken.line, ErrorTypeStrings.TYPE_ERROR, "conditional has to be of type Bool");
         }
         analyse(whileStmt.body);
         return null;
@@ -242,10 +225,8 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
     public Void visitIfStmt(IfStmt ifStmt) {
         Type condType = analyse(ifStmt.cond);
         if (condType != Type.BOOL) {
-            typeErrors.add(ErrorTypeStrings.TYPE_ERROR + ", line " + ifStmt.ifToken.line
-                + ": PrintStmt only accepts strings.");
+            VVPLController.error(ifStmt.ifToken.line, ErrorTypeStrings.TYPE_ERROR, "conditional has to be of type Bool");
         }
-
         analyse(ifStmt.thenBlock);
         analyse(ifStmt.elseBlock);
         return null;
@@ -255,8 +236,7 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
     public Void visitPrintStmt(PrintStmt printStmt) {
         Type exprType = analyse(printStmt.expr);
         if (exprType != Type.STRING) {
-            typeErrors.add(ErrorTypeStrings.TYPE_ERROR + ", line " + printStmt.token.line
-                + ": PrintStmt only accepts strings.");
+            VVPLController.error(printStmt.token.line, ErrorTypeStrings.TYPE_ERROR, "PrintStmt only accepts strings.");
         }
         return null;
     }

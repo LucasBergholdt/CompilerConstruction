@@ -10,6 +10,7 @@ import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Expr.*;
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.visitors.*;
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.Token;
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.ErrorTypeStrings;
+import dk.sdu.imada.teaching.compiler.fs25.vvpl.VVPLController;
 
 public class ScopeAnalyzer implements ExprVisitor<Void>, StmtVisitor<Void> {
 
@@ -18,14 +19,14 @@ public class ScopeAnalyzer implements ExprVisitor<Void>, StmtVisitor<Void> {
 
     private FuncSymbolTable functionsTable = new FuncSymbolTable();
 
-    private List<String> scopeErrors = new LinkedList<>();
+    // private List<String> scopeErrors = new LinkedList<>(); DEPRECATED
     private List<Stmt> program;
     
     public ScopeAnalyzer(List<Stmt> program) {
         this.program = program;
     }
 
-    public List<String> analyse() {
+    public void analyse() {
         // Preprocessing: Analyse Function Statements first by going through the top-level program (e.g. not nested blocks) and modify List<Stmt> program by analysing and removing FunctionStmts.
         ListIterator<Stmt> stmts = program.listIterator();
 
@@ -41,7 +42,7 @@ public class ScopeAnalyzer implements ExprVisitor<Void>, StmtVisitor<Void> {
         for (Stmt stmt : program) {
             analyse(stmt);
         }
-        return this.scopeErrors;
+        return;
     }
 
     private void analyse(Stmt stmt) {
@@ -57,8 +58,7 @@ public class ScopeAnalyzer implements ExprVisitor<Void>, StmtVisitor<Void> {
         try {
             currentEnvironment.define(varDecl.id.lexeme, varDecl.id); 
         } catch (SymbolTableException e) {
-            scopeErrors.add(ErrorTypeStrings.SCOPE_ERROR + ", line " + varDecl.id.line
-                    + ": variable [insert name here] already exist in scope.");
+            VVPLController.error(varDecl.id.line, ErrorTypeStrings.SCOPE_ERROR, "variable [insert name here] already exist in scope.");
             return null;    // TODO: Skal test stoppe her? Antag ja for nu.
         }
         
@@ -66,16 +66,14 @@ public class ScopeAnalyzer implements ExprVisitor<Void>, StmtVisitor<Void> {
             analyse(varDecl.expr);
         }
         else {
-            scopeErrors.add(ErrorTypeStrings.SCOPE_ERROR + ", line " + varDecl.id.line
-                    + ": declared variable must be initialized with a value");
+            VVPLController.error(varDecl.id.line, ErrorTypeStrings.SCOPE_ERROR, "declared variable must be initialized with a value.");
         }
         return null;
     }
 
     public Void visitAssignExpr(Assign assign) {
         if (!currentEnvironment.contains(assign.ID.lexeme)) {
-            scopeErrors.add(ErrorTypeStrings.SCOPE_ERROR + ", line " + assign.ID.line
-                    + ": variable [insert name here] does not exist in scope or any parent scopes.");
+            VVPLController.error(assign.ID.line, ErrorTypeStrings.SCOPE_ERROR, "variable [insert name here] does not exist in scope or any parent scopes.");
             return null;
         }
 
@@ -86,13 +84,10 @@ public class ScopeAnalyzer implements ExprVisitor<Void>, StmtVisitor<Void> {
 
     public Void visitIdentifierExpr(Identifier identifier) {
         if (!currentEnvironment.contains(identifier.id.lexeme)) {
-            scopeErrors.add(ErrorTypeStrings.SCOPE_ERROR + ", line " + identifier.id.line
-                    + ": variable [insert name here] does not exist in scope or any parent scopes.");
+            VVPLController.error(identifier.id.line, ErrorTypeStrings.SCOPE_ERROR, "variable [insert name here] does not exist in scope or any parent scopes.");
         }
         return null;
     }
-
-
 
     /* ------------------------------------- Expressions bottom-up ------------------------------------- */
     public Void visitLiteralExpr(Literal literals) {
@@ -141,7 +136,9 @@ public class ScopeAnalyzer implements ExprVisitor<Void>, StmtVisitor<Void> {
     public Void visitIfStmt(IfStmt ifStmt) {
         analyse(ifStmt.cond);
         analyse(ifStmt.thenBlock);
-        analyse(ifStmt.elseBlock);
+        if (ifStmt.elseBlock != null) {
+            analyse(ifStmt.elseBlock);
+        }
         return null;
     }
     
@@ -160,14 +157,12 @@ public class ScopeAnalyzer implements ExprVisitor<Void>, StmtVisitor<Void> {
         for (int i = 0; i < num_statements; i++) {
             // If returnstatement occurs in non-function context, return error
             if (blockStmt.stmts.get(i) instanceof ReturnStmt && !is_function_env) {
-                scopeErrors.add(ErrorTypeStrings.SCOPE_ERROR + ", line " + ((ReturnStmt)blockStmt.stmts.get(i)).returnKeyword.line
-                    + ": Return statement cannot occur in block outside of function");
+                VVPLController.error(((ReturnStmt)blockStmt.stmts.get(i)).returnKeyword.line, ErrorTypeStrings.SCOPE_ERROR, "Return statement cannot occur in block outside of function.");
                 return null;    //TODO: Skal vi error handle ting som kommer efter return stmt?
             }
             // If returnstatement is not the last statement of the block, return error
             if (blockStmt.stmts.get(i) instanceof ReturnStmt && i != num_statements - 1 ) {
-                scopeErrors.add(ErrorTypeStrings.SCOPE_ERROR + ", line " + ((ReturnStmt)blockStmt.stmts.get(i)).returnKeyword.line
-                    + ": Return statement must be last statement of block.");
+                VVPLController.error(((ReturnStmt)blockStmt.stmts.get(i)).returnKeyword.line, ErrorTypeStrings.SCOPE_ERROR, "Return statement must be last statement of block.");
                 return null;
             }
             else {
@@ -184,8 +179,7 @@ public class ScopeAnalyzer implements ExprVisitor<Void>, StmtVisitor<Void> {
     public Void visitFunctionStmt(FunctionStmt functionStmt) {
         // Check if current scope is global scope
         if (!currentEnvironment.isGlobal) {
-                scopeErrors.add(ErrorTypeStrings.SCOPE_ERROR + ", line " + functionStmt.name.line
-            + ": Attempting to define function [insert name here] in a non-global scope");
+            VVPLController.error(functionStmt.name.line, ErrorTypeStrings.SCOPE_ERROR, "Attempting to define function [insert name here] in a non-global scope.");
             return null;
         }
         try {
@@ -193,8 +187,7 @@ public class ScopeAnalyzer implements ExprVisitor<Void>, StmtVisitor<Void> {
             functionsTable.define(functionStmt.name.lexeme, functionStmt);
         } 
         catch (SymbolTableException e) {
-            scopeErrors.add(ErrorTypeStrings.SCOPE_ERROR + ", line " + functionStmt.name.line
-                    + ": Function name [insert name here] already exist in scope.");
+            VVPLController.error(functionStmt.name.line, ErrorTypeStrings.SCOPE_ERROR, "Function name [insert name here] already exist in scope.");
         }
         return null;
     }
@@ -212,9 +205,9 @@ public class ScopeAnalyzer implements ExprVisitor<Void>, StmtVisitor<Void> {
 
         try {
             functionStmt = functionsTable.get(call.id.lexeme);
-        } catch (SymbolTableException e) {
-             scopeErrors.add(ErrorTypeStrings.SCOPE_ERROR + ", line " + call.id.line
-                    + ": function [insert name here] does not exist.");
+        } 
+        catch (SymbolTableException e) {
+            VVPLController.error(call.id.line, ErrorTypeStrings.SCOPE_ERROR, "function [insert name here] does not exist.");
         return null;
         }
 
@@ -224,8 +217,7 @@ public class ScopeAnalyzer implements ExprVisitor<Void>, StmtVisitor<Void> {
 
         // see if #args == #params
         if (params.size() != args.size()) {
-            scopeErrors.add(ErrorTypeStrings.SCOPE_ERROR + ", line " + call.id.line
-                    + ": function [ name here] takes exactly [params.size()] parameters.");
+            VVPLController.error(call.id.line, ErrorTypeStrings.SCOPE_ERROR, "function [name here] takes exactly [params.size()] parameters.");
             return null;
         }
 
@@ -247,8 +239,7 @@ public class ScopeAnalyzer implements ExprVisitor<Void>, StmtVisitor<Void> {
             } 
             catch (SymbolTableException e) {
                 // Unreachable. Dette nye environment har ikke noget outer environment og parametrene er derfor de første variabler defineret nogensinde i dette env.
-                scopeErrors.add(ErrorTypeStrings.SCOPE_ERROR + ", line " + call.id.line
-                    + ": function [insert name here] does not exist.");
+                VVPLController.error(call.id.line, ErrorTypeStrings.SCOPE_ERROR, "function [insert name here] does not exist.");
                 return null;    // #TODO return NULL eller vil vi blive ved med at finde fejl?
             }
         }

@@ -52,17 +52,21 @@ public class VVPLController {
 			return errorMessages.stream().map(ErrorMessage::toString).toList();
 		}
 
-
-		// Semantic analysis
+		// ScopeAnalyzer
 		ScopeAnalyzer scopeanalyzer = new ScopeAnalyzer(stmts);
-		List<String> scopeErrors = scopeanalyzer.analyse();
-		
-		// Proceed ONLY if no failure.
+		scopeanalyzer.analyse();
+		if (hadError) {
+			Collections.sort(errorMessages);
+			return errorMessages.stream().map(ErrorMessage::toString).toList();
+		}
 
-
-		TypeAnalyzer typeanalyzer = new TypeAnalyzer(stmts);
-		List<String> typeErrors = typeanalyzer.analyse();
-		// Proceed ONLY if no failure.
+		// TypeAnalyzer
+		TypeAnalyzer typeAnalyzer = new TypeAnalyzer(stmts);
+		typeAnalyzer.analyse();
+		if (hadError) {
+			Collections.sort(errorMessages);
+			return errorMessages.stream().map(ErrorMessage::toString).toList();
+		}
 
 		// Interpret semantically correct programs.
 		Interpreter interpreter = new Interpreter();
@@ -71,9 +75,7 @@ public class VVPLController {
 
 		List<String> errormessages = new LinkedList();
 		return errormessages;
-
 	}
-
 
 	// Custom error handler that sets hadError to true and adds the error message to the list of error messages
 	public static void error(int line, String errorType, String message) {
