@@ -1,0 +1,50 @@
+################################
+# Arithmetic operations
+################################
+
+add("String" "Concatenation");     #error
+add(5 2);
+add(5 "Not a number.");            #error
+
+subtract (5 2);
+subtract (5 "Not a number.");       #error
+
+divide (5 2);
+divide (5 true);                    #error
+
+multiply (5 2);
+multiply (5 true);     #error. TODO: virker ikke med (3 GREATER_EQUAL 4)?
+
+10 GREATER_EQUAL 15;
+true LESS false;                                    #error
+"Not a number" LESS_EQUAL "Not a number either!";   # error
+
+################################
+# Logical Operators
+################################
+
+10 GREATER 5 OR 50 LESS 20;
+10 AND 5;                           #error
+true OR 10;                         #error
+true AND false;
+NOT true;
+NOT (10 GREATER_EQUAL 5);
+NOT 10;                             #error
+NOT "Not a boolean.";               #error
+
+################################
+# Type conversions with cast_to
+################################
+
+# casting numbers
+cast_to String 50;
+cast_to Bool 20;
+
+# casting strings
+cast_to Number "500";
+cast_to Number "Not a number";
+cast_to Bool "Cast me to a boolean!";  #error
+
+# casting bools
+cast_to Number true;                   #error
+cast_to String false;

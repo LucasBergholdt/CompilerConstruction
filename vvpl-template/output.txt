@@ -1,8 +1,13 @@
-SCOPE_ERROR, line 15 Attempting to define function [insert name here] in a non-global scope.
-SCOPE_ERROR, line 20 Attempting to define function [insert name here] in a non-global scope.
-SCOPE_ERROR, line 29 Return statement cannot occur outside of function.
-SCOPE_ERROR, line 36 Return statement must be last statement of block.
-SCOPE_ERROR, line 62 variable [insert name here] does not exist in scope or any parent scopes.
-SCOPE_ERROR, line 74 Function name [insert name here] already exist in scope.
-SCOPE_ERROR, line 84 function [name here] takes exactly [params.size()] parameters.
-SCOPE_ERROR, line 90 function [insert name here] does not exist.
+TYPE_ERROR, line 5 operator [insert name here] only accepts numbers.
+TYPE_ERROR, line 7 operator [insert name here] only accepts numbers.
+TYPE_ERROR, line 10 operator [insert name here] only accepts numbers.
+TYPE_ERROR, line 13 operator [insert name here] only accepts numbers.
+TYPE_ERROR, line 16 operator [insert name here] only accepts numbers.
+TYPE_ERROR, line 19 operator [insert name here] only accepts numbers.
+TYPE_ERROR, line 20 operator [insert name here] only accepts numbers.
+TYPE_ERROR, line 27 operator [insert name here] only accepts booleans.
+TYPE_ERROR, line 28 operator [insert name here] only accepts booleans.
+TYPE_ERROR, line 32 operator NOT can only precede a boolean expression.
+TYPE_ERROR, line 33 operator NOT can only precede a boolean expression.
+TYPE_ERROR, line 46 can only cast string to number.
+TYPE_ERROR, line 49 can only cast bool to string.

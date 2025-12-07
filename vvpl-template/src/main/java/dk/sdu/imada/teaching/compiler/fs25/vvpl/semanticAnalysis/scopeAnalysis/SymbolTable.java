@@ -12,7 +12,7 @@ public class SymbolTable {
 
     /* Constructors */
 
-    // Default (only used for functions)
+    // Used for functions. Not global, no outer environment.
     public SymbolTable() {
     }
 

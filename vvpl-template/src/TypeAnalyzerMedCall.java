@@ -1,6 +1,5 @@
 package dk.sdu.imada.teaching.compiler.fs25.vvpl.semanticAnalysis.typeAnalysis;
 import static dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.TokenType.BOOL_TYPE;
-import static dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.TokenType.GREATER_EQUAL;
 import static dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.TokenType.NOT;
 import static dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.TokenType.NUMBER_TYPE;
 import static dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.TokenType.STRING_TYPE;
@@ -25,7 +24,7 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
 
     private List<Stmt> program;
 
-    public TypeAnalyzer(List<Stmt> program) {
+    public TypeAnalyzerMedCall(List<Stmt> program) {
         this.program = new ArrayList<>(program);
     }
 
@@ -64,16 +63,13 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
             case NUMBER_TYPE -> Type.NUMBER;
             case STRING_TYPE -> Type.STRING;
             case BOOL_TYPE -> Type.BOOL;
-            default -> Type.UNKNOWN; // Unreachable. 
-            };
+            default -> Type.UNKNOWN; // Unreachable.
+            };     
         }
 
     @Override
     public Void visitVarDecl(VarDecl varDecl) {
         Type exprType = analyse(varDecl.expr); 
-        if (exprType == Type.UNKNOWN) {
-            return null;
-        }
 
         Type castToType = convertVariableType(varDecl.typeToken.type);
 
@@ -105,20 +101,23 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
         }
         else {
             VVPLController.error(assign.ID.line, ErrorTypeStrings.TYPE_ERROR, "current type of identifier [insert name here] does not match the type of the given expression.");
-            return Type.UNKNOWN; // return identifier's current type.   #TODO return null?
+            return currType; // return identifier's current type.   #TODO return null?
         }
     }
 
   /* ---------------------------- Expressions, nedefra og op af grammaren. ------------------------ */
     @Override 
     public Type visitLiteralExpr(Literal literal) {
-        switch (literal.token.type) {
-            case NUMBER: 
+        if (literal.token.literal == null) {
+            return Type.UNKNOWN;
+        }
+
+        switch (literal.token.literal) {
+            case Double d: 
                 return Type.NUMBER;
-            case TRUE:
-            case FALSE:
+            case Boolean b:
                 return Type.BOOL;
-            case STRING:
+            case String s:
                 return Type.STRING;
             default:
                 return Type.UNKNOWN;
@@ -145,26 +144,16 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
     public Type visitBinaryExpr(Binary binary) {
         Type left = analyse(binary.left);
         Type right = analyse(binary.right);
-        /*
-        if (left == Type.UNKNOWN) {
-            return Type.UNKNOWN;
-        }
-        Type right = analyse(binary.right);
-        if (right == Type.UNKNOWN) {
-            return Type.UNKNOWN;
-        }
-        */
-        
-        
+
         if (left == Type.UNKNOWN || right == Type.UNKNOWN) {
             return Type.UNKNOWN;
         }
-        
+
         switch (binary.operator.type) {
             case PLUS:
+            case MINUS:
             case DIV:
-            case MULT:
-            case SUB:    
+            case MULT:    
                 if (left == Type.NUMBER && right == Type.NUMBER) {
                     return Type.NUMBER;
                 }
@@ -194,7 +183,7 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
                 }
             default:
                 // Unreachable #debugger siger noget andet. #TODO return null?
-                return null;
+                return Type.UNKNOWN;
         }
     }
 
@@ -262,6 +251,7 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
         }
     }
 
+
     /* ------------------------- Statements ---------------------------- */
     @Override
     public Void visitExprStmt(ExprStmt exprStmt) {
@@ -319,37 +309,12 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
     }
 
 
+
     /* --------------------- Function Related --------------------- */
 
     @Override
     public Void visitFunctionStmt(FunctionStmt functionStmt) {
         functionsTable.define(functionStmt.name.lexeme, functionStmt);
-
-        SymbolTable oldTable = currentEnvironment;
-        currentEnvironment = new SymbolTable();
-
-        // define (potentially shadowing) parameters in new environment.
-        List<Param> params = functionStmt.params;
-        for (int i = 0; i < params.size(); i++) {
-            Param currParam = params.get(i);
-            Type paramType = convertVariableType(currParam.typeToken.type);
-            
-            currentEnvironment.define(currParam.id.lexeme, paramType);
-        }
-
-        // if function type is declared, tell returnStmts which type this is.
-        if (functionStmt.typeToken != null) {
-            currentFuncReturnType = convertVariableType(functionStmt.typeToken.type);
-        }
-        else {
-            currentFuncReturnType = Type.UNKNOWN;
-        }
-
-        // analyse. 
-        analyse(functionStmt.body);
-
-        // ---- reset ----
-        currentEnvironment = oldTable;
         return null;
     }
 
@@ -360,17 +325,13 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
             return null;
         }
 
-        // Case: Vi læser et FunctionStmt (currFuncType != unknown). Return Stmt matcher ikke krævede type.
-        if (currentFuncReturnType != Type.UNKNOWN && exprType != currentFuncReturnType) {
-            VVPLController.error(returnStmt.returnKeyword.line, ErrorTypeStrings.TYPE_ERROR, "Type of returned value does not match declared return type of function");
-            return null;
-        }
-        else if (currentFuncReturnType != Type.UNKNOWN && exprType == currentFuncReturnType) {
-            // Case: Vi læser et FunctionStmt (currFuncType != unknown), og typerne matcher.
-            return null;
-        } else {
-            // Case: Vi læser et Call. Sæt værdien af returnStatement
+        if (currentFuncReturnType == Type.UNKNOWN) {
+            // ingen specific return value er krævet af funktionen.
             currentFuncReturnType = exprType;
+        }
+        else if (currentFuncReturnType != Type.UNKNOWN && exprType != currentFuncReturnType) {
+            // Specific return value er krævet af funktionen, og return value matcher ikke
+             VVPLController.error(returnStmt.returnKeyword.line, ErrorTypeStrings.TYPE_ERROR, "Type of returned value does not match declared return type of function");
         }
         return null;
     }
@@ -378,13 +339,10 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
     @Override
     public Type visitCallExpr(Call call) {
         
-        /*
         // If Call Expr is not a function call.
         if (call.paren == null) {
             return analyse(call.callee);
         }
-
-        */
 
         // Else if Call Expr is a function call
         FunctionStmt functionStmt = functionsTable.get(call.id.lexeme);
@@ -401,29 +359,14 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
             
             if (argumentType != paramType) {
                 VVPLController.error(call.id.line, ErrorTypeStrings.TYPE_ERROR, "Type of given argument [insert name here] does not match the required type [paramType]");
-                // return null;? Skal vi stoppe med funktionen her?
+                return Type.UNKNOWN;
             }
         }
 
-        // Function has return type declared. No need to evaluate function again.
-        if (functionStmt.typeToken != null) {
-            return convertVariableType(functionStmt.typeToken.type);
-        } 
-
-
-        // else, functionReturnType is dynamically fetched. Let interpreter return runtime error.
-
-        /* #TODO: Alt under dette er midlertidigt. */
-
-
-        // else, function has no return type declared
-        currentFuncReturnType = Type.UNKNOWN;
-
-
-        // Else we must evaluate the function again to fetch the correct type.
+        // ---- No errors. Create new environment ----------
         SymbolTable oldTable = currentEnvironment;
         currentEnvironment = new SymbolTable();
-  
+
         // define (potentially shadowing) parameters in new environment.
         for (int i = 0; i < params.size(); i++) {
             Param currParam = params.get(i);
@@ -431,14 +374,22 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
             
             currentEnvironment.define(currParam.id.lexeme, paramType);
         }
-        
-        analyse(functionStmt.body);
-        Type resultType = currentFuncReturnType;
 
-        // reset
-        currentFuncReturnType = Type.UNKNOWN;
+        // --------- Analyse Body ----------
+
+        // If function has declared type, change return type from UNKNOWN. visitReturnStmt uses this to check if value fit.
+        if (functionStmt.typeToken != null) {
+            currentFuncReturnType = convertVariableType(functionStmt.typeToken.type);
+        }
+
+        analyse(functionStmt.body);
+
+        // ------------- Reset state ------------
         currentEnvironment = oldTable;
 
-        return resultType;
+        Type returnType = currentFuncReturnType;
+        currentFuncReturnType = Type.UNKNOWN;   // Reset FuncReturnType
+
+        return returnType;
     }
 }

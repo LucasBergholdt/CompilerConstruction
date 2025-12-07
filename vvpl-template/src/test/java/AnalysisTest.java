@@ -12,7 +12,8 @@ public class AnalysisTest {
     public void testAnalyses() {
         try {
             TestUtil.runTestFiles("src/test/resources/semantic-analysis/");
-             TestUtil.runTestFiles("src/test/resources/semantic-analysis/additionalScopeError/");
+            TestUtil.runTestFiles("src/test/resources/semantic-analysis/additionalScopeError/");
+            TestUtil.runTestFiles("src/test/resources/semantic-analysis/additionalTypeError/");
         } catch (IOException e) {
             e.printStackTrace();
         }
