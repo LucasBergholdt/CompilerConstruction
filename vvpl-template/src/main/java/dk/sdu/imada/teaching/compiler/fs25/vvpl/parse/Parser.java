@@ -487,7 +487,7 @@ public class Parser {
         // Consume the problematic token that triggered the error
         advance();
 
-        // Discard tokens until we find a safe place to continue
+        // Discard tokens until we find a valid place to continue
         while (!isAtEnd()) {
             // If we just passed a semicolon the next token is very likely the start of a new statement
             if (previous().type == SEMICOLON) return;

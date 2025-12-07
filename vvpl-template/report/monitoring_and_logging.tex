@@ -1,4 +1,5 @@
-% Explain how we do error handling.
+%TODO: Gentager lidt migselv omkring det her med at scanner, parser etc. ikke stopper ved første fejl.
+%TODO: Find ud af hvordan det bedst passer ind i den samlede sammenhæng til sidst -> måske nævner vi allerede dette i tidligere afsnit?
 
 An essential part of making a programming language usable includes having a sensible error handling.
 Clear error messages help users understand what went wrong in their program and how to fix it.
@@ -48,3 +49,141 @@ user in the format: \texttt{<error-type>, line <lineNo> <message>}.
 % Kan måske passe ind et sted?:
 % Our system monitors the state of the source code's correctness at each stage and logs deviations in a structured user-friendly manner.
 
+
+\subsubsection{Lexical error handling in the Scanner}
+
+The \texttt{Scanner} is the first component to utilize this centralized error handling.
+When it encounters a character or character sequence that does not conform with the language, 
+it calls the controller's \texttt{error} method. A common example is
+finding a character that is not part of the language such as '\$'.
+This is handled in the default branch of the \texttt{scanToken} method:
+\begin{lstlisting}[language=java]
+private void scanToken() {
+    char c = advance();
+    switch (c) {
+        // ... cases for valid characters
+        default:
+            if (isDigit(c)) {
+                number();
+            } else if (isAlpha(c)) {
+                identifier();
+            } else {
+                VVPLController.error(line, ErrorTypeStrings.SCAN_ERROR, "Unexpected character.");
+            }
+    }
+}
+\end{lstlisting}
+
+A deliberate design choice here is that the scanner does not halt after finding an error. Instead it simply reports the error and
+proceeds to the next character, attempting to tokenize the rest of the file. This allows the scanner to report all
+lexical erros in a single pass, rather than informing the user about the errors one by one.
+
+
+%TODO: Skriv færdigt alt efter hvad hun svarer omkring håndteringen af unterminated strings
+One area, however, requires extra care: handling string literals. 
+When encountering a string...
+%The scanner must report an error if a string is unterminated.
+%Furthermore, our language specifies that strings cannnot span more than a single line break. 
+%The scanner also validates this and reports an error if a string contains too many newline characters.
+% Noget med at den leder efter slut " / consumer resten af invalid string ved multi line strings?
+
+
+\subsubsection{Syntactic error recovery in the Parser}
+While the scanner can often recover from errors by simply advancing, handling errors in the parser is more involved.
+The parser should be robust in the face of syntax errors such that it does not crash or hang.
+Invalid code is valid input for a parser since one of its key responsibilities is to teach the user what
+valid syntax looks like.
+%Måske omskriv til: (invalid code = valid input taget fra bogen)
+%A parser must be able to handle invalid code gracefully as one of its key responsibilities
+%is to guide the user in writing syntactically correct programs.
+A single syntax error like a missing parenthesis may confuse the parser and cause it to report a long cascade
+of pseudo-errors that don't indicate another real problem in the code. 
+We should strive to report only errors that are caused by the user's invalid syntax and not by the parser's own
+confusion after encountering an error.
+
+To support both reporting as many distict errors as possible while also filtering out those who are simply a side-effect
+of another error we have implemented the more sophisitcated error recovery strategy known as \emph{panic mode}.
+
+\subsubsection{Panic mode and synchronization}
+When the parser detects an error it enters panic mode.
+At this point the parser knows that at minimum one token is unexpected in the
+current state of applying a production rule from the grammar and that the parser's internal state and the remaining
+token stream may no longer be aligned. Before parsing can continue, the parser must realign its state with the upcoming tokens
+such that the next token matches the expected token in the rule being parsed.
+
+This is accomplished through synchronization. 
+The idea is to choose a specific grammar rule as synchronization point that is safe to restart from and 
+to discard tokens until a token that is valid at this synchronization point is encountered.
+%The parser can fix its state by jumping out of any nested state to the synchronization point.
+%Thereby synchronizing the token stream by discarding tokens until encountering a token that is allowed at the synchronization point.
+Our chosen synchronization point follows the common decision of choosing to synchronize between statements.
+
+The implications of this approach is that any real syntax errors hiding inside the discarded tokens will not be reported.
+However, this is an acceptable tradeoff for avoiding falsely reporting cascaded errors in the discarded tokens that are
+simply a side effect of the initial error.
+
+
+\subsubsection{Synchronizing via exceptions}
+In a recursive descent parser like ours the parser's state is not explicitly stored but instead tracked with the call stack. 
+So to reset the parser's state we need to clear out the call frames on the stack.
+We achive this by using Java exceptions. Encountering a syntax error triggers a \texttt{ParseError} exception, which
+unwinds the stack until it is caught in the \texttt{parse} loop between statements.
+
+The exception is triggered through the parser's \texttt{error} method, which informs the controller about the error and produces the exception:
+\begin{lstlisting}[language=java]
+private ParseError error(Token token, String message) {
+    VVPLController.error(token.line, ErrorTypeStrings.PARSE_ERROR, message);
+    return new ParseError();
+}
+\end{lstlisting}
+
+The exception itself is just a simple class:
+\begin{lstlisting}[language=java]
+private static class ParseError extends RuntimeException {}
+\end{lstlisting}
+
+When a \texttt{ParseError} is thrown, the top-level loop in \texttt{parse} catches it and invokes the \texttt{syncrhonise} method.
+This method discards tokens until reaching a token that can begin a new statement.
+The \texttt{synchronise} method can be seen in its full glory below. It mainly conists of just a simple switch statement in a loop.
+We are also returning if we have just discarded a semicolon as this is a good indication, that a new statement is likely to start.
+%TODO: Skal synchronise method vises i sin helhed her?
+\begin{lstlisting}[language=java]
+private void synchronise() {
+    advance(); // Discard the problematic token that triggered the error
+
+    while (!isAtEnd()) {
+        if (previous().type == SEMICOLON) return;
+
+        switch (peek().type) {
+            case FUNCTION:
+            case VAR:
+            case IF:
+            case WHILE:
+            case PRINT:
+            case LEFT_BRACE:
+            case RETURN:
+                return;
+            
+            default:
+                advance(); // Discard token and continue
+                break;
+        }
+    }
+}
+\end{lstlisting}
+
+The \texttt{error} method is also integrated into \texttt{consume}, supporting reusability and enabling consistent
+syntax checking throughout the parser:
+\begin{lstlisting}[language=java]
+private Token consume(TokenType type, String message) {
+    if (check(type)) {
+        return advance();
+    } else {
+        throw error(peek(), message);
+    }
+}
+\end{lstlisting}
+
+
+This parsing strategy ensures that the parser reports only genuine syntax erros, recovers cleanly and avoids polluting
+the error output with misleading cascading errors.
