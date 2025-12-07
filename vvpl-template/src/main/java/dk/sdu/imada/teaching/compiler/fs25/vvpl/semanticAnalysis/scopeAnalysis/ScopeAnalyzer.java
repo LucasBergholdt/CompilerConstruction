@@ -233,7 +233,6 @@ public class ScopeAnalyzer implements ExprVisitor<Void>, StmtVisitor<Void> {
         } // #TODO: fortsætter selv hvis parameters IKKE er i scope. dette modsiger hvad vi plejer at gøre.
 
         // ------------------ Create new environment and shadow parameters inside new environment. ------------------
-        is_function_env = true;
         SymbolTable oldTable = currentEnvironment;
         currentEnvironment = new SymbolTable();
 
@@ -244,18 +243,17 @@ public class ScopeAnalyzer implements ExprVisitor<Void>, StmtVisitor<Void> {
                 currentEnvironment.define(paramToken.lexeme, paramToken);
             } 
             catch (SymbolTableException e) {
-                // Unreachable. Dette nye environment har ikke noget outer environment og parametrene er derfor de første variabler defineret nogensinde i dette env.
-                VVPLController.error(call.id.line, ErrorTypeStrings.SCOPE_ERROR, "function [insert name here] does not exist.");
-                return null;    // #TODO return NULL eller vil vi blive ved med at finde fejl?
+                VVPLController.error(call.id.line, ErrorTypeStrings.SCOPE_ERROR, "Parameter has already been defined.");
+                // TODO: evt returnér null her og exit.
             }
         }
-
+        is_function_env = true;
         // analyse body
         analyse(functionStmt.body);
-  
+        is_function_env = false;
+        
         // ------------- Reset state ------------
         currentEnvironment = oldTable;
-        is_function_env = false;
 
         return null;
     }

@@ -1,3 +1,7 @@
-SCOPE_ERROR, line 7 variable [insert name here] does not exist in scope or any parent scopes.
-SCOPE_ERROR, line 11 variable [insert name here] does not exist in scope or any parent scopes.
-SCOPE_ERROR, line 11 variable [insert name here] does not exist in scope or any parent scopes.
+SCOPE_ERROR, line 15 Attempting to define function [insert name here] in a non-global scope.
+SCOPE_ERROR, line 20 Attempting to define function [insert name here] in a non-global scope.
+SCOPE_ERROR, line 62 variable [insert name here] does not exist in scope or any parent scopes.
+SCOPE_ERROR, line 63 Return statement must be last statement of block.
+SCOPE_ERROR, line 75 Function name [insert name here] already exist in scope.
+SCOPE_ERROR, line 85 function [name here] takes exactly [params.size()] parameters.
+SCOPE_ERROR, line 91 function [insert name here] does not exist.

@@ -8,6 +8,8 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.io.FileWriter;
+
 
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.VVPLController;
 
@@ -42,6 +44,15 @@ public class TestUtil {
 
                 VVPLController controller = new VVPLController();
                 List<String> actualLines = controller.execute(inputFile);
+
+                // C-E debug
+                FileWriter writer = new FileWriter("output.txt"); 
+                for(String str: actualLines) {
+                writer.write(str + System.lineSeparator());
+                }
+                writer.close();
+
+
                 List<String> expectedLines = TestUtil.getExpectedLines(fileName, dir);
 
                 for (int i = 0; i < expectedLines.size(); i++) {

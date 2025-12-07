@@ -1,0 +1,91 @@
+################################
+# out-of-order definition of function and call
+################################
+
+laterDefinedFunction();
+
+function laterDefinedFunction() {
+}
+
+################################
+# definition of function outside of global scope
+################################
+
+{
+    function definedOutsideGlobal1() {   #error
+    }
+}
+
+if (10 EQUALS 4) {
+    function definedOutsideGlobal2() {   #error
+    }
+	write_to_console 4;
+}
+
+################################
+# return statement outside of function
+################################
+
+return 50; #error
+
+################################
+# return statement as non-final statement in block
+################################
+
+function nonFinalReturnStmt() { 
+    return 50;  #error
+    write_to_console "Unreachable";
+}
+
+################################
+# Shadowing Parameters in function block
+################################
+
+variable x has_type Number is 50;
+variable y has_type Number is 50;
+
+function printAdd(x has_type Number, y has_type Number) {
+    write_to_console add(x y);
+}
+printAdd(10, 10); # should return 20, not 100.
+
+################################
+# Variables in function block
+################################
+
+variable a has_type Number is 50;
+variable b has_type Number is 50;
+
+function return1000() {
+    variable b has_type Number is 1000; # should shadow variable outside of function
+    
+    write_to_console a; #error. outside of scope
+    return b;
+    write_to_console b; #should print 1000, not 50
+}
+write_to_console return1000();  #should print 1000, not 50 as defined outside of scope.
+
+################################
+# uniqueness of function name
+################################
+
+function myFunction() {
+}
+
+function myFunction() {     #error
+}
+
+################################
+# function parameter mismatch
+################################
+
+function threeParams(a has_type String, b has_type String, c has_type String) {
+}
+
+threeParams("hello", "no"); #error
+
+################################
+# unknown function call
+################################
+
+darling(); #error
