@@ -154,11 +154,6 @@ public class ScopeAnalyzer implements ExprVisitor<Void>, StmtVisitor<Void> {
         int num_statements = blockStmt.stmts.size();
 
         for (int i = 0; i < num_statements; i++) {
-            // If returnstatement occurs in non-function context, return error
-            if (blockStmt.stmts.get(i) instanceof ReturnStmt && !is_function_env) {
-                VVPLController.error(((ReturnStmt)blockStmt.stmts.get(i)).returnKeyword.line, ErrorTypeStrings.SCOPE_ERROR, "Return statement cannot occur in block outside of function.");
-                return null;    //TODO: Skal vi error handle ting som kommer efter return stmt?
-            }
             // If returnstatement is not the last statement of the block, return error
             if (blockStmt.stmts.get(i) instanceof ReturnStmt && i != num_statements - 1 ) {
                 VVPLController.error(((ReturnStmt)blockStmt.stmts.get(i)).returnKeyword.line, ErrorTypeStrings.SCOPE_ERROR, "Return statement must be last statement of block.");
@@ -188,17 +183,47 @@ public class ScopeAnalyzer implements ExprVisitor<Void>, StmtVisitor<Void> {
         catch (SymbolTableException e) {
             VVPLController.error(functionStmt.name.line, ErrorTypeStrings.SCOPE_ERROR, "Function name [insert name here] already exist in scope.");
         }
+
+        // Analyse function body.
+        // ------------------ Create new environment and shadow parameters inside new environment. ------------------
+        SymbolTable oldTable = currentEnvironment;
+        currentEnvironment = new SymbolTable();
+
+        List<Param> params = functionStmt.params;
+        // define (potentially shadowing) parameters in new environment.
+        for (int i = 0; i < params.size(); i++) {
+            Token paramToken = params.get(i).id;
+            try { 
+                currentEnvironment.define(paramToken.lexeme, paramToken);
+            } 
+            catch (SymbolTableException e) {
+                VVPLController.error(paramToken.line, ErrorTypeStrings.SCOPE_ERROR, "Parameter has already been defined.");
+                // TODO: evt returnér null her og exit.
+            }
+        }
+        is_function_env = true;
+        // analyse body
+        analyse(functionStmt.body);
+        is_function_env = false;
+
+        // ------------- Reset state ------------
+        currentEnvironment = oldTable;
+
         return null;
     }
     @Override
     public Void visitReturnStmt(ReturnStmt returnStmt) {
-        analyse(returnStmt.returnValue);
+        // If returnstatement occurs in non-function context, return error
+            if (!is_function_env) {
+                VVPLController.error(returnStmt.returnKeyword.line, ErrorTypeStrings.SCOPE_ERROR, "Return statement cannot occur outside of function.");
+            } else {
+                analyse(returnStmt.returnValue);
+            }
         return null;
     }
 
     @Override
     public Void visitCallExpr(Call call) {
-
         // If Call Expr is not a function call.
         if (call.paren == null) {
             analyse(call.callee);
@@ -230,30 +255,8 @@ public class ScopeAnalyzer implements ExprVisitor<Void>, StmtVisitor<Void> {
         // analyse given arguments (check if they are in scope).
         for (int i = 0; i < args.size(); i++) {
             analyse(args.get(i));   
-        } // #TODO: fortsætter selv hvis parameters IKKE er i scope. dette modsiger hvad vi plejer at gøre.
-
-        // ------------------ Create new environment and shadow parameters inside new environment. ------------------
-        SymbolTable oldTable = currentEnvironment;
-        currentEnvironment = new SymbolTable();
-
-        // define (potentially shadowing) parameters in new environment.
-        for (int i = 0; i < params.size(); i++) {
-            Token paramToken = params.get(i).id;
-            try { 
-                currentEnvironment.define(paramToken.lexeme, paramToken);
-            } 
-            catch (SymbolTableException e) {
-                VVPLController.error(call.id.line, ErrorTypeStrings.SCOPE_ERROR, "Parameter has already been defined.");
-                // TODO: evt returnér null her og exit.
-            }
         }
-        is_function_env = true;
-        // analyse body
-        analyse(functionStmt.body);
-        is_function_env = false;
-        
-        // ------------- Reset state ------------
-        currentEnvironment = oldTable;
+
 
         return null;
     }

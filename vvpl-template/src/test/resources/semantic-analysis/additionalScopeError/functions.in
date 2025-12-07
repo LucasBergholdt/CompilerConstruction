@@ -60,7 +60,6 @@ function return1000() {
     variable b has_type Number is 1000; # should shadow variable outside of function
     
     write_to_console a; #error. outside of scope
-    return b;
     write_to_console b; #should print 1000, not 50
 }
 write_to_console return1000();  #should print 1000, not 50 as defined outside of scope.
