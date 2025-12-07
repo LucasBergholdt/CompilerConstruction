@@ -8,11 +8,9 @@ import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Stmt.FunctionStmt;
 public class FuncSymbolTable {
     private Map<String, FunctionStmt> symbols = new HashMap<>();       // Maps a name/identifier (=symbol) to their AST-node FunctionStmt
 
-    /* Constructors */
     public FuncSymbolTable() {
     }
 
-    /* Methods */
     public void define(String symbol, FunctionStmt functionStmt) throws SymbolTableException {
         if (contains(symbol)) {
             throw new SymbolTableException();
@@ -30,12 +28,12 @@ public class FuncSymbolTable {
     }
 
     public FunctionStmt get(String symbol) throws SymbolTableException {
-    if (symbols.containsKey(symbol)) {
-        return symbols.get(symbol);
-    }
+        if (symbols.containsKey(symbol)) {
+            return symbols.get(symbol);
+        }
 
-    throw new SymbolTableException();
-}
+        throw new SymbolTableException();
+    }
 
     public boolean contains(String symbol) {
         if (symbols.containsKey(symbol)) {

@@ -1,6 +1,6 @@
 package dk.sdu.imada.teaching.compiler.fs25.vvpl.semanticAnalysis.scopeAnalysis;
 
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
 
@@ -18,16 +18,15 @@ public class ScopeAnalyzer implements ExprVisitor<Void>, StmtVisitor<Void> {
     private Boolean is_function_env = false;
 
     private FuncSymbolTable functionsTable = new FuncSymbolTable();
-
-    // private List<String> scopeErrors = new LinkedList<>(); DEPRECATED
     private List<Stmt> program;
     
     public ScopeAnalyzer(List<Stmt> program) {
-        this.program = program;
+        this.program = new ArrayList<>(program);    // New object is created so that we can remove statements from this program as we go.
     }
 
     public void analyse() {
         // Preprocessing: Analyse Function Statements first by going through the top-level program (e.g. not nested blocks) and modify List<Stmt> program by analysing and removing FunctionStmts.
+        
         ListIterator<Stmt> stmts = program.listIterator();
 
         while (stmts.hasNext()) {

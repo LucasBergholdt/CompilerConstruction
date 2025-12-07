@@ -4,8 +4,6 @@ import java.util.List;
 
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.visitors.StmtVisitor;
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.Token;
-import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.TokenType;
-
 /**
  * @author Sandra Greiner
  * @version CompilerConstruction FT 2025

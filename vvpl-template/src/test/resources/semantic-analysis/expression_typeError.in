@@ -1,6 +1,6 @@
 variable a has_type String is "10";
 variable b has_type Number is 5;
-variable c has_type Bool is add(true b); 	# no computation between number and bool
+variable c has_type Bool is add(true  b); 	# no computation between number and bool
 
 
 if (a) {							# no boolean

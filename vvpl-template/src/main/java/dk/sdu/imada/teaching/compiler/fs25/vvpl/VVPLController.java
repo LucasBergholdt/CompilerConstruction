@@ -17,7 +17,6 @@ import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.Scanner;
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.Token;
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.semanticAnalysis.scopeAnalysis.ScopeAnalyzer;
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.semanticAnalysis.typeAnalysis.TypeAnalyzer;
-import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.TokenType;
 
 public class VVPLController {
 	private static boolean hadError = false;

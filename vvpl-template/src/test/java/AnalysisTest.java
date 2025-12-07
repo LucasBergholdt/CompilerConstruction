@@ -7,6 +7,7 @@ import java.io.IOException;
  * @version Compiler Construction FT 2025
  */
 public class AnalysisTest {
+
     @Test
     public void testAnalyses() {
         try {
