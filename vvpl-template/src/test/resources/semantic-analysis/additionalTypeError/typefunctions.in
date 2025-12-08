@@ -1,0 +1,37 @@
+################################
+# Typechecking arguments
+################################
+
+function printStrings(x has_type String, y has_type String) {
+    write_to_console x;
+    write_to_console y;
+}
+
+printStrings("Print me!", "Also me!");
+printStrings(5, 10);                        #error
+printStrings(true, "Greetings");            #error
+printStrings("Onion", 10);                  #error
+
+################################
+# Type checking declarations
+################################
+
+function invalidFunction() {
+    variable a has_type Bool is 50;         #error
+}
+
+################################
+# Type checking return type
+################################
+
+function returnString() has_type String{
+    return "I feel validated!";
+}
+
+function returnNumber() has_type Number{
+    return "I don't feel very validated...";    #error
+}
+
+function noReturnStmt() {
+    return "There should not occur a return statement in a void function.";     #error
+}

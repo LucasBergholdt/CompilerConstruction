@@ -1,0 +1,14 @@
+################################
+# Declared variables
+################################
+
+variable a has_type Number is 50;
+variable b has_type Number is "Not a number!"; #error
+
+################################
+# Assignment to variables
+################################
+
+variable c has_type Number is 100;
+c is 150;
+c is "Not a number!";    #error

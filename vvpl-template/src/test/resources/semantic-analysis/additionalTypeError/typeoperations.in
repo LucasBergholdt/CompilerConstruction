@@ -17,7 +17,7 @@ multiply (5 true);     #error. TODO: virker ikke med (3 GREATER_EQUAL 4)?
 
 10 GREATER_EQUAL 15;
 true LESS false;                                    #error
-"Not a number" LESS_EQUAL "Not a number either!";   # error
+"Not a number" LESS_EQUAL "Not a number either!";   #error
 
 ################################
 # Logical Operators
@@ -48,3 +48,26 @@ cast_to Bool "Cast me to a boolean!";  #error
 # casting bools
 cast_to Number true;                   #error
 cast_to String false;
+
+################################
+# Type of conditions
+################################
+
+if (5 GREATER 10) {
+    write_to_console "Apple!";
+}
+else {
+    write_to_console "Orange!";
+}
+
+if ("Greetings") {                      #error. Implicit type conversion
+    write_to_console "Apple!";        
+}
+
+loop_while (true) {
+    write_to_console "Pear!";
+}
+
+loop_while (100) {                   #error. Implicit type conversion
+    write_to_console "Onion?";
+}

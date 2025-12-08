@@ -1,13 +1,7 @@
-TYPE_ERROR, line 5 operator [insert name here] only accepts numbers.
-TYPE_ERROR, line 7 operator [insert name here] only accepts numbers.
-TYPE_ERROR, line 10 operator [insert name here] only accepts numbers.
-TYPE_ERROR, line 13 operator [insert name here] only accepts numbers.
-TYPE_ERROR, line 16 operator [insert name here] only accepts numbers.
-TYPE_ERROR, line 19 operator [insert name here] only accepts numbers.
-TYPE_ERROR, line 20 operator [insert name here] only accepts numbers.
-TYPE_ERROR, line 27 operator [insert name here] only accepts booleans.
-TYPE_ERROR, line 28 operator [insert name here] only accepts booleans.
-TYPE_ERROR, line 32 operator NOT can only precede a boolean expression.
-TYPE_ERROR, line 33 operator NOT can only precede a boolean expression.
-TYPE_ERROR, line 46 can only cast string to number.
-TYPE_ERROR, line 49 can only cast bool to string.
+TYPE_ERROR, line 11 Type of given argument [insert name here] does not match the required type [paramType]
+TYPE_ERROR, line 11 Type of given argument [insert name here] does not match the required type [paramType]
+TYPE_ERROR, line 12 Type of given argument [insert name here] does not match the required type [paramType]
+TYPE_ERROR, line 13 Type of given argument [insert name here] does not match the required type [paramType]
+TYPE_ERROR, line 20 Type NUMBER does not match type of expression (BOOL)
+TYPE_ERROR, line 32 Type of returned value does not match declared return type of function
+TYPE_ERROR, line 36 A return stmt cannot occur in a void function.

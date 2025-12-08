@@ -350,17 +350,18 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
 
         // ---- reset ----
         currentEnvironment = oldTable;
+        currentFuncReturnType = Type.UNKNOWN;
         return null;
     }
 
     @Override
     public Void visitReturnStmt(ReturnStmt returnStmt) {
-        Type exprType = analyse(returnStmt.returnValue); // skal evt sammenlignes med givne type af funktion.
+        Type exprType = analyse(returnStmt.returnValue);
         if (exprType == Type.UNKNOWN) {
             return null;
         }
 
-        // Case: Vi læser et FunctionStmt (currFuncType != unknown). Return Stmt matcher ikke krævede type.
+        // Case: Vi læser et FunctionStmt (currFuncReturnType != unknown). Return Stmt matcher ikke krævede type.
         if (currentFuncReturnType != Type.UNKNOWN && exprType != currentFuncReturnType) {
             VVPLController.error(returnStmt.returnKeyword.line, ErrorTypeStrings.TYPE_ERROR, "Type of returned value does not match declared return type of function");
             return null;
@@ -368,11 +369,11 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
         else if (currentFuncReturnType != Type.UNKNOWN && exprType == currentFuncReturnType) {
             // Case: Vi læser et FunctionStmt (currFuncType != unknown), og typerne matcher.
             return null;
-        } else {
-            // Case: Vi læser et Call. Sæt værdien af returnStatement
-            currentFuncReturnType = exprType;
         }
-        return null;
+        else {  //currentFuncReturnType == Type.UNKNOWN. Ergo er return type NULL, og der må ikke forekomme et returnStmt i null statements. Error!
+            VVPLController.error(returnStmt.returnKeyword.line, ErrorTypeStrings.TYPE_ERROR, "A return stmt cannot occur in a void function.");
+            return null;    //#TODO
+        }
     }
 
     @Override
@@ -383,7 +384,6 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
         if (call.paren == null) {
             return analyse(call.callee);
         }
-
         */
 
         // Else if Call Expr is a function call
@@ -409,18 +409,18 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
         if (functionStmt.typeToken != null) {
             return convertVariableType(functionStmt.typeToken.type);
         } 
+        else {
+            // CASE: Funktion har ikke angivet en type. Derfor må return type være null. #TODO Antagelse om opgaven.
+            return Type.UNKNOWN;
+        }
+
+        // Else, we need to return a type of a dynamically chosen return type. This is the interpreter's job.
+
+        /* ALT I KOMMENTAREN: Returnerer return typen på en arbitrær ReturnStmt i koden
+
+        currentFuncReturnType = Type.UNKNOWN; // function has no return type declared
 
 
-        // else, functionReturnType is dynamically fetched. Let interpreter return runtime error. //TODO fjern alt herunder.
-
-        /* #TODO: Alt under dette er midlertidigt. */
-
-
-        // else, function has no return type declared
-        currentFuncReturnType = Type.UNKNOWN;
-
-
-        // Else we must evaluate the function again to fetch the correct type.
         SymbolTable oldTable = currentEnvironment;
         currentEnvironment = new SymbolTable();
   
@@ -440,5 +440,6 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
         currentEnvironment = oldTable;
 
         return resultType;
+    */
     }
 }

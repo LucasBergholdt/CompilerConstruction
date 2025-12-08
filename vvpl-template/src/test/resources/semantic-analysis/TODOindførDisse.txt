@@ -1,0 +1,5 @@
+i type checking:
+
+function returnNewNumber() has_type Number{
+    write_to_console "Function has no return statement. Oops!";     #error. Hvordan tjekker vi for dette?
+}
