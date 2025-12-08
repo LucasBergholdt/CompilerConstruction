@@ -1,5 +1,15 @@
 i type checking:
 
-function returnNewNumber() has_type Number{
-    write_to_console "Function has no return statement. Oops!";     #error. Hvordan tjekker vi for dette?
+function returnNewNumber() has_type Number{                             #error. Funktion har ingen returnstatement.
+    write_to_console "Function has no return statement. Oops!";     
+}
+
+
+function returnNewNumber() has_type Number{                             #error. Funktion har muligheden for ikke at returnere en value
+    if (false) {
+        return 100;
+    }
+    else {
+        write_to_console "The function will terminate without returning an error!"
+    }
 }
