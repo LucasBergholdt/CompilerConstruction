@@ -321,6 +321,53 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
 
     /* --------------------- Function Related --------------------- */
 
+    public boolean alwaysReturns(Stmt stmt) {
+        // CASE 1: Hvis vi ser en return statement ved vi at denne branch/path returnerer.
+        // Base case
+        if (stmt instanceof ReturnStmt) {
+            return true;
+        }
+
+        // CASE 2: Block statement.
+        // HVILKEN SOM HELST af dens statements skal returnere. Vi skal bare returnere på et eller andet tidspunkt i en block.
+        // En if-else statement har flere blocks. Hver af disse blocks skal have bare ÈN statement der returnerer.
+        if (stmt instanceof BlockStmt) {
+            BlockStmt block = (BlockStmt) stmt;
+            // Return if ANY of the blocks statements return
+            for (Stmt s : block.stmts) {
+                if (alwaysReturns(s)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        // CASE 3: If Statement
+        // For at en if statmenet altid returner kræver det at:
+        // 1. Else block eksisterer (ellers kan vi skippe if branch hvis condition ikke er satisfied og så retunerer vi måske ikke)
+        // 2. Både then-branch OG else-branch skal returnere.
+        if (stmt instanceof IfStmt) {
+            IfStmt ifStmt = (IfStmt) stmt;
+
+            // If tjekker 1.
+            if (ifStmt.elseBlock != null) { 
+                // Denne && tjekker 2.
+                return alwaysReturns(ifStmt.thenBlock) && alwaysReturns(ifStmt.elseBlock);
+            } else {
+                // Ingen else block, så vi der er sti (når if condition ikke er satisfied)
+                // hvor vi skpper hele if statement og ikke returner fra ifStmt
+                return false;
+            }
+        }
+
+        // CASE 4: alle andre statements
+        // Alle andre statements kan vi ikke garantere returnerer skulle jeg mene.
+        // Kun whileStmt er iffy men det er lidt samme logik som ifStmt uden else-branch.
+        // Vi kan ikke garantere at while condition er satisfied -> derfor kan while skippes helt og ikke returnere
+        // Derfor blot false for alle andre typer statements
+        return false;
+    }
+
     @Override
     public Void visitFunctionStmt(FunctionStmt functionStmt) {
         functionsTable.define(functionStmt.name.lexeme, functionStmt);
@@ -347,6 +394,11 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
 
         // analyse. 
         analyse(functionStmt.body);
+
+        //: Check that functions with return types actually return
+        if (functionStmt.typeToken != null && !alwaysReturns(functionStmt.body)) {
+            VVPLController.error(functionStmt.name.line, ErrorTypeStrings.TYPE_ERROR, "Function must return a value in all code paths");
+        }
 
         // ---- reset ----
         currentEnvironment = oldTable;
