@@ -411,7 +411,7 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
         } 
 
 
-        // else, functionReturnType is dynamically fetched. Let interpreter return runtime error.
+        // else, functionReturnType is dynamically fetched. Let interpreter return runtime error. //TODO fjern alt herunder.
 
         /* #TODO: Alt under dette er midlertidigt. */
 
