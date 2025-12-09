@@ -214,11 +214,11 @@ public class ScopeAnalyzer implements ExprVisitor<Void>, StmtVisitor<Void> {
     @Override
     public Void visitReturnStmt(ReturnStmt returnStmt) {
         // If returnstatement occurs in non-function context, return error
-            if (!is_function_env) {
-                VVPLController.error(returnStmt.returnKeyword.line, ErrorTypeStrings.SCOPE_ERROR, "Return statement cannot occur outside of function.");
-            } else {
-                analyse(returnStmt.returnValue);
-            }
+        if (!is_function_env) {
+            VVPLController.error(returnStmt.returnKeyword.line, ErrorTypeStrings.SCOPE_ERROR, "Return statement cannot occur outside of function.");
+        } else if (returnStmt.returnValue != null) {
+            analyse(returnStmt.returnValue);
+        }
         return null;
     }
 
