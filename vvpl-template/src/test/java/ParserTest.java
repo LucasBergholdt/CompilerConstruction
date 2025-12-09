@@ -1,11 +1,3 @@
-import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Stmt;
-import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.visitors.ASTPrinter;
-import dk.sdu.imada.teaching.compiler.fs25.vvpl.parse.Parser;
-import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.Scanner;
-import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.Token;
-
-
-
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -14,6 +6,12 @@ import java.util.Arrays;
 import java.util.List;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+
+import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Stmt;
+import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.visitors.ASTPrinter;
+import dk.sdu.imada.teaching.compiler.fs25.vvpl.parse.Parser;
+import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.Scanner;
+import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.Token;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 

@@ -1,4 +1,4 @@
-function returnParamNumber() has_type Number {
+function returnParamNumber() has_type Number {	# error (marked as error by us!)
 	write_to_console "noparam";
 }
 

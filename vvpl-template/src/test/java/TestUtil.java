@@ -1,7 +1,6 @@
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
-import java.io.FileWriter; // C-E
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -9,11 +8,10 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.io.FileWriter;
 
-// import dk.sdu.imada.teaching.compiler.fs24.verbosepl.VVPLController;
+
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.VVPLController;
-
-
 
 /**
  * @author Sandra Greiner
@@ -46,9 +44,8 @@ public class TestUtil {
 
                 VVPLController controller = new VVPLController();
                 List<String> actualLines = controller.execute(inputFile);
-                List<String> expectedLines = TestUtil.getExpectedLines(fileName, dir);
 
-                /* C-E: */
+                // C-E debug
                 FileWriter writer = new FileWriter("output.txt"); 
                 for(String str: actualLines) {
                 writer.write(str + System.lineSeparator());
@@ -56,9 +53,7 @@ public class TestUtil {
                 writer.close();
 
 
-
-                // C-E DONE
-
+                List<String> expectedLines = TestUtil.getExpectedLines(fileName, dir);
 
                 for (int i = 0; i < expectedLines.size(); i++) {
                     if (i >= actualLines.size())

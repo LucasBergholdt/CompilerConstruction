@@ -7,10 +7,13 @@ import java.io.IOException;
  * @version Compiler Construction FT 2025
  */
 public class AnalysisTest {
+
     @Test
     public void testAnalyses() {
         try {
             TestUtil.runTestFiles("src/test/resources/semantic-analysis/");
+            TestUtil.runTestFiles("src/test/resources/semantic-analysis/additionalScopeError/");
+            TestUtil.runTestFiles("src/test/resources/semantic-analysis/additionalTypeError/");
         } catch (IOException e) {
             e.printStackTrace();
         }

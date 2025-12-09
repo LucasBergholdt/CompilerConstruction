@@ -1,0 +1,72 @@
+################################
+# Typechecking arguments
+################################
+
+function printStrings(x has_type String, y has_type String) {
+    write_to_console x;
+    write_to_console y;
+}
+
+printStrings("Print me!", "Also me!");
+printStrings(5, 10);                        #error
+printStrings(true, "Greetings");            #error
+printStrings("Onion", 10);                  #error
+
+################################
+# Type checking declarations
+################################
+
+function invalidFunction() {
+    variable a has_type Bool is 50;         #error
+}
+
+################################
+# Type checking return type
+################################
+
+function returnString() has_type String{
+    return "I feel validated!";
+}
+
+function returnNumber() has_type Number{
+    return "I don't feel very validated...";    #error
+}
+
+function noReturnStmt() {
+    return "We cannot return a string in a void function.";     #error
+}
+
+function voidReturnt() {
+    return;
+}
+
+################################
+# Type checking that function must return declared value
+################################
+
+function returnNewNumber() has_type Number{                             #error. function does not return number.
+    write_to_console "Function has no return statement. Oops!";     
+}
+
+function returnNewString() has_type String{                             #error. function has the option to not return a value
+    if (10 EQUALS 5) {
+        return "Hello.";
+    }
+    else {
+        write_to_console "The function will terminate without returning an error!";
+    }
+}
+
+################################
+# Calling a function inside a function or a block.
+################################
+
+function helper() {
+    write_to_console "I'm a helper function";
+}
+
+function callsHelper() {
+    helper();
+}
+
+callsHelper();
