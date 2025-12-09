@@ -1,1 +1,8 @@
-bin/
+vvpl-template/report/bin/
+*.aux
+*.log
+*.synctex.gz
+*.fdb_latexmk
+*.fls
+*.out
+*.pdf
