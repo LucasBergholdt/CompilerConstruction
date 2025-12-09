@@ -1,0 +1,158 @@
+Scanning is the first step of the pipeline. Here we translate the character sequence from the source program into a token sequence.
+An UML diagram can be found in figure \ref{fig:scanuml} which gives an overview of the Scanner class and its related classes.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.5\textwidth]{scanneruml.png}
+\caption{UML diagram of the Scanner class}
+\label{fig:scanuml}
+\end{figure}
+
+The scanner iterates the entire input string and tries to recognize different types of tokens.
+Each Token can store the lexeme, literal, the line the token appears at and the type of the token which is one of the values from enum \texttt{TokenType}.
+When a token is recognized we generate the Token object and add it to the list of all tokens \texttt{scannedTokens}.
+This is faciliated through the \texttt{scanTokens} method which loops through the entire source code
+adding tokens until it runs out of characters finishing off with the final ''end of file'' token.
+\begin{lstlisting}[language=java]
+public List<Token> scanTokens() {
+    while (!isAtEnd()) {
+        start = current;
+        scanToken();
+    }
+
+    scannedTokens.add(new Token(EOF, "", null, line));
+    return scannedTokens;
+}
+\end{lstlisting}
+
+To track where in the file it is at, the Scanner uses three pointers: start, current and line.
+The start pointer always indicates the start of the lexeme being scanned while current points to the character
+we are currently inspecting. The line field keeps track of the line we are at.
+
+
+In each iteration of the loop we call the \texttt{scanToken} method.
+This is the heart of the scanner and consists of one big switch statement.
+
+The method calls helper \texttt{advance} which consumes the next character in the input string and returns it.
+We then analyse this character first of all by trying to match it with single character lexemes.
+This includes parenthesies, braces, coomas, semicolons, and minuses.
+All of these cases are easy - we simply generate the corresponding token and add it to the \texttt{scannedTokens} list:
+\begin{lstlisting}[language=java]
+private void scanToken() {
+    char c = advance();
+    switch (c) {
+        case '(': addToken(LEFT_PAREN); break;
+        case ')': addToken(RIGHT_PAREN); break;
+        case '{': addToken(LEFT_BRACE); break;
+        case '}': addToken(RIGHT_BRACE); break;
+        case ',': addToken(COMMA); break;
+        case ';': addToken(SEMICOLON); break;
+        case '-': addToken(MINUS); break;
+        
+        \dots
+    }
+}
+\end{lstlisting}
+
+Other single character lexemes include '\#' indicating a comment, newlines and whitespaces.
+All of these aren't meaningful to the parser and as such we skip them remembering to consume the rest of the line
+(the entire comment) when encountering a comment and incrementing the linecounter when encountering a newline:
+\begin{lstlisting}[language=java]
+        case '#':
+            while (peek() != '\n' && !isAtEnd()) advance();
+            break;
+
+        case ' ':
+        case '\r':
+        case '\t':
+            // Ignore whitespaces.
+            break;
+        
+        case '\n':
+            line++;
+            break;
+\end{lstlisting}
+
+
+
+In case we meet a double quotation mark '"' we are dealing with a string. Here we call our \texttt{string} method to take care of this scenario:
+\begin{lstlisting}[language=java]
+        case '"':
+            string();
+            break;
+\end{lstlisting}
+
+Strings are handled similar to comments - although this time we keep consuming until we find the closing '"' that ends the string rather than a newline.
+If we run out of characters before finding this we report an error.
+We also keep track of newlines not only to update the \texttt{line} field but also because VVPL only supports one line break for strings.
+That is strings cannot span more than two lines. If the string does span more than two lines we report an error for that and make sure to
+consume the rest of the faulty string so that we can keep on scanning to potentially locate more errors in the program.
+
+TODO: INDSÆT METODE / SKRIV OM, ALT EFTER SANDRAS SVAR OM STRING HÅNDTERING.
+%TODO: Nævn også hvordan dette medfører at vores error reporting afviger fra hendes expected test output.
+
+We have now reached the default case of our switch statement. This consists of three branches:
+\begin{lstlisting}[language=java]
+        default:
+            if (isDigit(c)) {
+                number();
+            } else if (isAlpha(c)) {
+                identifier();
+            } else {
+                VVPLController.error(line, ErrorTypeStrings.SCAN_ERROR, "Unexpected character.");
+            }
+\end{lstlisting}
+
+
+The first of these branches handles number literals. This utilizes the \texttt{isDigit} helper which just checks if the character is a number 0-9.
+\begin{lstlisting}[language=java]
+private boolean isDigit(char c) {
+    return c >= '0' && c <= '9';
+}
+\end{lstlisting}
+
+If that is the case we call the \texttt{number} which consumes a series of digits potentially followed by a decimal point '.' with one or more trailing digits.
+Leading or trailing decimal points are not allowed (e.g. .34 and 34. are invalid). The literal value is stored as a Double.
+\begin{lstlisting}[language=java]
+private void number() {
+    while (isDigit(peek())) advance();
+
+    if (peek() == '.' && isDigit(peekNext())) {
+        advance(); // consume '.'
+
+        while (isDigit(peek())) advance(); // consume rest of number
+    }
+
+    addToken(NUMBER, Double.parseDouble(inputString.substring(start, current)));
+}
+\end{lstlisting}
+The \texttt{peekNext} method used here looks ahead two characters.
+
+The second branch is taken in case we encounter a letter (or underscore) that is not part of a string.
+In that case we call the \texttt{identifier} method which handles, well, identifiers aswell as reserved keywords.
+We assume identifiers and keywords don't start with a digit which is why we only check for letters in the first character.
+
+The \texttt{identifier} method starts off by consuming the entire literal.
+We consume the entire literal in accordance with the maximal munch principal where a token is the longest possible valid string.
+The entire character sequence is matched against the \texttt{keywords} map of all reserved keywords.
+If the sequence does not match any reserved keyword it is categorized as an identifier.
+This order of operations is deliberate to ensure that keywords have a higher priority than user-defined identifiers.
+\begin{lstlisting}[language=java]
+private void identifier() {
+    while (isAlphaNumeric(peek())) advance();
+
+    String text = inputString.substring(start, current);
+    TokenType type = keywords.get(text); // returns keyword if in map or null otherwise
+    if (type == null) type = IDENTIFIER;
+    addToken(type);
+} 
+\end{lstlisting}
+
+
+
+%TODO: Husk at nævn afvigelser fra tests.
+%TODO: Skal nok først gøres i test afsnit?
+
+
+If the entire input string was consumed, we know the input was without lexical errors and is now converted into a sequence of tokens that we can use in the next step: Parsing.
+
