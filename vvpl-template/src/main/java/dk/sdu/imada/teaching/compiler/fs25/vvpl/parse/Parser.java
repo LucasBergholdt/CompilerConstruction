@@ -340,7 +340,7 @@ public class Parser {
 
         if (match(LEFT_PAREN)) {
             if (!(expr instanceof Identifier)) {
-                throw new ParseError(); 
+                throw error(peek(), "Can't call an expression that is not an identifier."); 
             }
 
             List<Expr> arguments = new ArrayList<>();

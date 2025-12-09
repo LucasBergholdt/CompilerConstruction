@@ -251,12 +251,10 @@ public class ScopeAnalyzer implements ExprVisitor<Void>, StmtVisitor<Void> {
             VVPLController.error(call.id.line, ErrorTypeStrings.SCOPE_ERROR, "function [name here] takes exactly [params.size()] parameters.");
             return null;
         }
-
         // analyse given arguments (check if they are in scope).
         for (int i = 0; i < args.size(); i++) {
             analyse(args.get(i));   
         }
-
 
         return null;
     }

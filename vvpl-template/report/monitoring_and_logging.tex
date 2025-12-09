@@ -50,8 +50,7 @@ user in the format: \texttt{<error-type>, line <lineNo> <message>}.
 % Our system monitors the state of the source code's correctness at each stage and logs deviations in a structured user-friendly manner.
 
 
-\subsubsection{Lexical error handling in the Scanner}
-
+\paragraph{Lexical error handling in the Scanner}\mbox{}\\
 The \texttt{Scanner} is the first component to utilize this centralized error handling.
 When it encounters a character or character sequence that does not conform with the language, 
 it calls the controller's \texttt{error} method. A common example is
@@ -88,7 +87,7 @@ When encountering a string...
 % Noget med at den leder efter slut " / consumer resten af invalid string ved multi line strings?
 
 
-\subsubsection{Syntactic error recovery in the Parser}
+\paragraph{Syntactic error recovery in the Parser}\mbox{}\\
 While the scanner can often recover from errors by simply advancing, handling errors in the parser is more involved.
 The parser should be robust in the face of syntax errors such that it does not crash or hang.
 Invalid code is valid input for a parser since one of its key responsibilities is to teach the user what
@@ -104,7 +103,7 @@ confusion after encountering an error.
 To support both reporting as many distict errors as possible while also filtering out those who are simply a side-effect
 of another error we have implemented the more sophisitcated error recovery strategy known as \emph{panic mode}.
 
-\subsubsection{Panic mode and synchronization}
+\paragraph{Panic mode and synchronization}\mbox{}\\
 When the parser detects an error it enters panic mode.
 At this point the parser knows that at minimum one token is unexpected in the
 current state of applying a production rule from the grammar and that the parser's internal state and the remaining
@@ -123,7 +122,7 @@ However, this is an acceptable tradeoff for avoiding falsely reporting cascaded 
 simply a side effect of the initial error.
 
 
-\subsubsection{Synchronizing via exceptions}
+\paragraph{Synchronizing via exceptions}\mbox{}\\
 In a recursive descent parser like ours the parser's state is not explicitly stored but instead tracked with the call stack. 
 So to reset the parser's state we need to clear out the call frames on the stack.
 We achive this by using Java exceptions. Encountering a syntax error triggers a \texttt{ParseError} exception, which
