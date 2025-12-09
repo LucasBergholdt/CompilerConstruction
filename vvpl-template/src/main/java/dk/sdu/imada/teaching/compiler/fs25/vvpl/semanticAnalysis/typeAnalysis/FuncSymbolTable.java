@@ -14,14 +14,7 @@ public class FuncSymbolTable {
     public void define(String symbol, FunctionStmt functionStmt) {
         symbols.put(symbol, functionStmt);
     }
-
-    public void assign(String symbol, FunctionStmt functionStmt) {
-            symbols.put(symbol, functionStmt);
-            return;
-    }
-
     public FunctionStmt get(String symbol) {
         return symbols.get(symbol);
     }
-
 }

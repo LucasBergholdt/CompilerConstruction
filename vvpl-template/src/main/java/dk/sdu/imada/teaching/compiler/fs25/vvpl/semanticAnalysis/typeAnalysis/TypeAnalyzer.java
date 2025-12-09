@@ -73,10 +73,9 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
         if (exprType == Type.UNKNOWN) {
             return null;
         }
-
         Type castToType = convertVariableType(varDecl.typeToken.type);
 
-        if (exprType != castToType && exprType != Type.UNKNOWN) {
+        if (exprType != castToType) {
             VVPLController.error(varDecl.id.line, ErrorTypeStrings.TYPE_ERROR, String.format("Type %s does not match type of expression (%s)", exprType, castToType));
         }
         else {
@@ -104,7 +103,7 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
         }
         else {
             VVPLController.error(assign.ID.line, ErrorTypeStrings.TYPE_ERROR, "current type of identifier [insert name here] does not match the type of the given expression.");
-            return Type.UNKNOWN; // return identifier's current type.   #TODO return null?
+            return Type.UNKNOWN;
         }
     }
 
@@ -144,17 +143,7 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
     public Type visitBinaryExpr(Binary binary) {
         Type left = analyse(binary.left);
         Type right = analyse(binary.right);
-        /*
-        if (left == Type.UNKNOWN) {
-            return Type.UNKNOWN;
-        }
-        Type right = analyse(binary.right);
-        if (right == Type.UNKNOWN) {
-            return Type.UNKNOWN;
-        }
-        */
-        
-        
+
         if (left == Type.UNKNOWN || right == Type.UNKNOWN) {
             return Type.UNKNOWN;
         }
@@ -417,37 +406,17 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
                 return null;
             }
         }
-        // From now on and forward we know that the returnValue != null (e.g. return <expr>)
-
+        
+        // Handling non-void returns
         Type exprType = analyse(returnStmt.returnValue);
         if (exprType == Type.UNKNOWN) {
             return null;
         }
-
-/*         // Case: Vi læser et FunctionStmt (currFuncReturnType != unknown). Return Stmt matcher ikke krævede type.
-        if (currentFuncReturnType != Type.UNKNOWN && exprType != currentFuncReturnType) {
-            VVPLController.error(returnStmt.returnKeyword.line, ErrorTypeStrings.TYPE_ERROR, "Type of returned value does not match declared return type of function");
-            return null;
-        }
-        else if (currentFuncReturnType != Type.UNKNOWN && exprType == currentFuncReturnType) {
-            // Case: Vi læser et FunctionStmt (currFuncType != unknown), og typerne matcher.
-            return null;
-        }
-        else {  //currentFuncReturnType == Type.UNKNOWN. Ergo er return type NULL, og der må ikke forekomme et returnStmt med en type. Error!
-            VVPLController.error(returnStmt.returnKeyword.line, ErrorTypeStrings.TYPE_ERROR, "Cannot return a value from a void function");
-            return null;
-        } */
-
-        //? Ny version. Mere simpel og burde være samme logik som overstående udkommenteret if/elif/else.
-        //currentFuncReturnType == Type.UNKNOWN. Ergo er return type NULL, og der må ikke forekomme et returnStmt med en type. Error!
-        if (currentFuncReturnType == Type.UNKNOWN) { 
-            VVPLController.error(returnStmt.returnKeyword.line, ErrorTypeStrings.TYPE_ERROR, "Cannot return a value from a void function");
-            return null;
-        } else if (exprType != currentFuncReturnType) { // Case: Vi læser et FunctionStmt (currFuncReturnType != unknown). Return Stmt matcher ikke krævede type.
+        
+        if (exprType != currentFuncReturnType) {
             VVPLController.error(returnStmt.returnKeyword.line, ErrorTypeStrings.TYPE_ERROR, "Type of returned value does not match declared return type of function");
             return null;
         } else {
-            // Case: Vi læser et FunctionStmt (currFuncType != unknown), og typerne matcher.
             return null;
         }
 

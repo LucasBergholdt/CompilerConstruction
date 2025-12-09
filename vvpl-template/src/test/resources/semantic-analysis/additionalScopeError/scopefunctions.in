@@ -87,4 +87,18 @@ threeParams("hello", "no"); #error
 # unknown function call
 ################################
 
-true(); #error
+unknown(); #error
+
+################################
+# Calling a function inside a function or a block.
+################################
+
+function helper() {
+    write_to_console "I'm a helper function";
+}
+
+function callsHelper() {
+    helper();
+}
+
+callsHelper();

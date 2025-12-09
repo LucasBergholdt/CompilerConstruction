@@ -19,19 +19,10 @@ public class FuncSymbolTable {
         symbols.put(symbol, functionStmt);
     }
 
-    public void assign(String symbol, FunctionStmt functionStmt) throws SymbolTableException {
-        if (symbols.containsKey(symbol)) {
-            symbols.put(symbol, functionStmt);
-            return;
-        }
-        throw new SymbolTableException();
-    }
-
     public FunctionStmt get(String symbol) throws SymbolTableException {
         if (symbols.containsKey(symbol)) {
             return symbols.get(symbol);
         }
-
         throw new SymbolTableException();
     }
 
