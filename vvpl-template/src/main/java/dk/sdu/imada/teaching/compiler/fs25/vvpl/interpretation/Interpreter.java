@@ -75,10 +75,13 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
     @Override
     // Also evalutes reserved keywords. 
     public Object visitLiteralExpr(Literal literal) {
-        if ((literal.token.type == TokenType.TRUE) || (literal.token.type == TokenType.FALSE)) { 
-            return literal.token.lexeme;
+        if (literal.token.type == TokenType.TRUE) {
+            return true;
+        } else if (literal.token.type == TokenType.FALSE) {
+            return false;
+        } else {
+            return literal.token.literal; // Retrieve literal value from token.
         }
-        return literal.token.literal; // Retrieve literal value from token.
     }
 
     @Override
@@ -92,7 +95,7 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
                 return left;
 
         } else { // Must be AND.
-            // If AND, and left is not true, dont bother evluating right.
+            // If AND, and left is not true, dont bother evluating right.case
             if (!isTruthy(left))
                 return left;
         }
@@ -172,7 +175,10 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
         // TODO: Vigtigt at teste, om denne funktionalitet virker!
         if (object instanceof Number) {
             System.err.println("Number check:"+ object);
-            if (object.equals(13)) {
+            // Du havde her skrevet object.equals(13) før. Jeg tror ikke dette virker.
+            // Numbers opbevares som doubles i systemet så du ville sammenligne 13.0 med 13 hvilket ikke er equals så du ville få false.
+            // Sammenligner med 13.0 i stedet. Tror jeg vil virke. Men ved ikke om det er robust. Sikkert fint? /Lucas
+            if (object.equals(13.0)) {
                 return true;
             } else {
                 return false;
