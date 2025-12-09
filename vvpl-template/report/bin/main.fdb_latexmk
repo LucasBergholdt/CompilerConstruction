@@ -1,5 +1,5 @@
 # Fdb version 4
-["pdflatex"] 1765270695.20288 "/home/carlemil/Projekter/vvpl-interpreter/vvpl-template/report/main.tex" "bin/main.pdf" "main" 1765270696.39702 0
+["pdflatex"] 1765289991.03643 "/home/carlemil/Projekter/vvpl-interpreter/vvpl-template/report/main.tex" "bin/main.pdf" "main" 1765289991.7517 0
   "/etc/texmf/web2c/texmf.cnf" 1760302315.77753 475 c0e671620eb5563b2130f56340a5fde8 ""
   "/home/carlemil/Projekter/vvpl-interpreter/vvpl-template/report/main.tex" 1765270100.5731 477 8163885047c39e7f78fc7dcd3a319e63 ""
   "/usr/share/texlive/texmf-dist/fonts/map/fontname/texfonts.map" 1577235249 3524 cb3e574dea2d1052e39280babc910dc8 ""
@@ -133,15 +133,16 @@
   "/var/lib/texmf/web2c/pdftex/pdflatex.fmt" 1760302447 8213192 c2dee7d0ba9066bdb42075b74b2c8238 ""
   "0_titlepage.tex" 1765050324.95935 2059 2dc2e0d1c7c53be30415fef616a5d9dc ""
   "1_preliminaries.tex" 1765050324.95935 234 f1c580d82d9b4208c6e6a80295de4839 ""
-  "2_technical_description.tex" 1765270682.35055 2146 82a087e6c12b62f32e6457f29e403126 ""
+  "2_technical_description.tex" 1765277767.59303 2176 15d71f0fc7979896b9461b866d2b5fec ""
   "3_teamwork_organization.tex" 1765050324.95935 317 ebd364dc617f61545aeb70a8173462f8 ""
   "4_discussion.tex" 1765050324.95935 614 b771eb7d3b865e2de76b3190986810a2 ""
   "Preamble.tex" 1765270682.35055 2169 9aac6574a65f6fde72aa4a874f3ea80f ""
-  "bin/main.aux" 1765270696.2512 2266 bfbe4f9608e2402d97bb8b978390bcbe "pdflatex"
-  "bin/main.out" 1765270696.2512 2585 663e1404559bf911754b2e8306fdd505 "pdflatex"
+  "bin/main.aux" 1765289991.66695 2267 8dd8ba1fef6205944fced854b22ccbf2 "pdflatex"
+  "bin/main.out" 1765289991.66695 2585 663e1404559bf911754b2e8306fdd505 "pdflatex"
   "figures/SDU_logo.png" 1765050324.96751 11056 9a50a367ae7a0ce279f75918f11fad2b ""
   "main.tex" 1765270100.5731 477 8163885047c39e7f78fc7dcd3a319e63 ""
   "monitoring_and_logging.tex" 1765270682.35465 10697 a0f760a6369f117cf1881aa442e68a94 ""
+  "semantic_analysis.tex" 1765289990.7926 6183 e8dfc6040e77f126efd500887d4372cb ""
   (generated)
   "bin/main.aux"
   "bin/main.log"

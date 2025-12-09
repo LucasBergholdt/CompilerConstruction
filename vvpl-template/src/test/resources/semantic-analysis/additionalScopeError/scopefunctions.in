@@ -87,4 +87,4 @@ threeParams("hello", "no"); #error
 # unknown function call
 ################################
 
-darling(); #error
+true(); #error

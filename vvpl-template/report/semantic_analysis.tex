@@ -1,0 +1,141 @@
+After having making sure that the program is syntactically correct, we want to confirm that our context-sensitive grammar is also semantically correct, 
+i.e. perform context-sensitive checks and interpret the meaning of the program at its' syntactic level.
+VVPL is a statically typed language, which usually means that we perform context-sensitive checks at compile-time. 
+VVPL is however an interpreted language, meaning that we do not compile the code directly to native machine code, but let the interpreter execute the code.
+This means that in our case, "statically-typed" means that we perform the context-sensitive checks before interpreting the program (runtime evaluation).
+
+Context-sensitive checks are performed by constructing symbol tables upon entering a new scope.
+VVPL practises lexical (or static) scoping by using curly brackets to indicate a new scope. 
+An example of constructing a new symbol table to represent the scope of the current block can be seen in the visitBlockStmt:
+
+\begin{lstlisting}[language=java]
+public Void visitBlockStmt(BlockStmt blockStmt) {
+        SymbolTable oldTable = currentEnvironment;
+        currentEnvironment = new SymbolTable(currentEnvironment);
+        for (int i = 0; i < num_statements; i++) {
+            analyse(blockStmt.stmts.get(i));
+        }
+        currentEnvironment = oldTable;
+        return null;
+}
+\end{lstlisting}
+
+Here we construct a new symbol table which represents the scope of the current block. The new symboltable has the old symbol table as an attribute such
+that it is possible to access variables from outer scopes, where as variables in inner scopes will be unreachable.
+
+\textbf{Scope Analysis} \newline
+Roughly we handle three things in the scopeanalyzer, being variables, functions declarations and function calls. We will go through them step-by-step
+
+- \textbf{Variables}
+The following scopeing rules fall in this category (omitting the variables within functions for now):
+\begin{itemize}
+    \item Variable can only be declared once by a variable declaration
+    \item Variables can not be shadowed (i.e. defined in an inner scope to shadow the object in the outer scope)
+    \item Variable declarations needs to be initialized with a value
+    \item Variable must be visible in current scope before usage
+\end{itemize}
+
+scopeanalyzer.java enforces the first two bullet points in the logic of SymbolTable.java. Upon attempting to define, we check if the variable exists in the current or any outer tables to prevent shadowing.
+
+\begin{lstlisting}[language=java]
+    public void define(String symbol, Token token) throws SymbolTableException {
+        if (contains(symbol)) {
+            throw new SymbolTableException();
+        }
+        symbols.put(symbol, token);
+    }
+        public boolean contains(String symbol) {
+        if (symbols.containsKey(symbol)) {
+            return true;
+        }
+
+        if (outer != null) {
+            return outer.contains(symbol);
+        }
+        return false;
+    }
+\end{lstlisting}
+
+We that declarations needs to be initialized by a value in visitVarDecl:
+\begin{lstlisting}[language=java]
+if (varDecl.expr != null) {
+    analyse(varDecl.expr);
+}
+else {
+    VVPLController.error(varDecl.id.line, ErrorTypeStrings.SCOPE_ERROR, "declared variable must be initialized with a value.");
+}
+\end{lstlisting}
+
+In visitIdentifier we enforce the fourth bullet point by checking if the symbol table contains the identifier:
+
+\begin{lstlisting}[language=java]
+public Void visitIdentifierExpr(Identifier identifier) {
+    if (!currentEnvironment.contains(identifier.id.lexeme)) {
+        VVPLController.error(identifier.id.line, ErrorTypeStrings.SCOPE_ERROR, "variable [insert name here] does not exist in scope or any parent scopes.");
+    }
+}
+\end{lstlisting}
+
+- \textbf{Function Declarations}
+The following scopeing rules fall in this category:
+\begin{itemize}
+    \item Variables inside the function declaration cannot access any outer scopes. These must be \textbf{shadowed}
+    \item cannot be defined in inner scopes, only in the global scope
+    \item Unique function name (i.e. re-declarations are not possible)
+    \item Return statements can only occur in the context of a function
+    \item No statements can follow a return statement
+    \item Out-of-order declarations and calls allowed, i.e. a function call can precede its' declaration
+\end{itemize}
+
+In visitFunctionStmt, we enforce the first bulletpoint by constructing a new symbol table with no outer symboltable for functions. This way they cannot interact with any values defined outside of this block.
+The second bulletpoint is enforced by checking whether the current environment is the original defined environment for the program.
+This environment is made unique by adding a seperate constructor for a symbolTable marking it as the global environment.
+One could think we could check whether our global environment is global by seeing if there are no outer symbol tables linked to the current symboltable,
+but due to our solution for encapsulating functions in their own scope, this is not possible.
+
+We have constructed a seperate symbol table class to contain functions - this of course has the consequence that a variable and a function can share the same name, but it beautifies the implementation of our scopeanalyzer significantly.
+This new table maps a symbol not only to their token, but to their respective FunctionStmt AST node. This way 
+
+
+One could think this could be checked by seeing whether a symbol table has an outer table, but we will see later why this is not possible.
+We do this by having an attribute 
+
+
+
+
+- \textbf{Function Calls}
+The following scopeing rules fall in this category:
+\begin{itemize}
+    \item Function arguments must be within scope
+    \item Number of function arguments matches number of function parameters
+    \item Only declared and known functions can be called
+\end{itemize}
+
+
+
+
+
+lidt om lexical scoping...
+VVPL 
+We utilize lexical, or static, scoping by using 
+By using curly brackets to indicate a scope, we utilize lexical
+
+The Scope Analysis is performed by the class ScopeAnalyzer.java
+
+
+
+
+
+
+
+
+
+\textbf{Type Analysis} \newline
+
+
+
+
+
+
+
+
