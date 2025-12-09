@@ -1,0 +1,15 @@
+Our interpreter is designed using a multi-stage pipeline architecture. An overview of this pipeline can be seen in figure XX.
+
+At the center of both the figure and the flow of the interpreter is the VVPLController class which orchestrates the entire control flow.
+The class steers the entire compilation by invoking the classes responsible for each of the stages of the compilation.
+At each stage any discovered errors are reported to the controller which serves as a single centralized error manager
+ensuring that the next stage only occurs if the current stage reported no errors. This gurantees that later stages only operate on well-formed inputs
+preventing cascading errors.
+The use of this design promotes modularity and seperation of concerns, where each component is responsible for a distinct phase of the interpretation
+process. The components can focus on their specific responsibility without having to concern themselves with the details of the other components.
+
+Each of the different components surrounding this VVPLController in the figure are labeled with a number
+indicating the order of execution.
+
+%Input is VVPL source file.
+%Output is the result of program's execution.
