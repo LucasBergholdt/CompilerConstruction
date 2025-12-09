@@ -95,7 +95,7 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
                 return left;
 
         } else { // Must be AND.
-            // If AND, and left is not true, dont bother evluating right.case
+            // If AND, and left is not true, dont bother evluating right.
             if (!isTruthy(left))
                 return left;
         }
