@@ -31,17 +31,16 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
 
     public void analyse() {
         // Preprocessing: Analyse Function Statements first by going through the top-level program (e.g. not nested blocks) and modify List<Stmt> program by analysing and removing FunctionStmts.
-        ListIterator<Stmt> stmts = program.listIterator();
 
-        while (stmts.hasNext()) {
-            Stmt currentStmt = stmts.next();
-            if(currentStmt instanceof FunctionStmt) {
-                analyse(currentStmt);
-                stmts.remove(); 
+        // Pass 1: add all function declarations to functionsTable to support out of order calling
+        for (Stmt stmt : program) {
+            if (stmt instanceof FunctionStmt) {
+                FunctionStmt functionStmt = (FunctionStmt) stmt;
+                functionsTable.define(functionStmt.name.lexeme, functionStmt);
             }
         }
 
-        // Analyse rest of program
+        // Pass 2: Analyse rest of program
         for (Stmt stmt : program) {
             analyse(stmt);
         }
@@ -370,7 +369,6 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
 
     @Override
     public Void visitFunctionStmt(FunctionStmt functionStmt) {
-        functionsTable.define(functionStmt.name.lexeme, functionStmt);
 
         SymbolTable oldTable = currentEnvironment;
         currentEnvironment = new SymbolTable();
@@ -408,12 +406,25 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
 
     @Override
     public Void visitReturnStmt(ReturnStmt returnStmt) {
+
+        // Handling void returns (return;)
+        if (returnStmt.returnValue == null) {
+            // if current function has defined type then it should not be able to just return with no value
+            if (currentFuncReturnType != Type.UNKNOWN) {
+                VVPLController.error(returnStmt.returnKeyword.line, ErrorTypeStrings.TYPE_ERROR, "Function with return type must return a value.");
+            } else {
+                // Void function can return with no value so this is fine.
+                return null;
+            }
+        }
+        // From now on and forward we know that the returnValue != null (e.g. return <expr>)
+
         Type exprType = analyse(returnStmt.returnValue);
         if (exprType == Type.UNKNOWN) {
             return null;
         }
 
-        // Case: Vi læser et FunctionStmt (currFuncReturnType != unknown). Return Stmt matcher ikke krævede type.
+/*         // Case: Vi læser et FunctionStmt (currFuncReturnType != unknown). Return Stmt matcher ikke krævede type.
         if (currentFuncReturnType != Type.UNKNOWN && exprType != currentFuncReturnType) {
             VVPLController.error(returnStmt.returnKeyword.line, ErrorTypeStrings.TYPE_ERROR, "Type of returned value does not match declared return type of function");
             return null;
@@ -422,10 +433,24 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
             // Case: Vi læser et FunctionStmt (currFuncType != unknown), og typerne matcher.
             return null;
         }
-        else {  //currentFuncReturnType == Type.UNKNOWN. Ergo er return type NULL, og der må ikke forekomme et returnStmt i null statements. Error!
-            VVPLController.error(returnStmt.returnKeyword.line, ErrorTypeStrings.TYPE_ERROR, "A return stmt cannot occur in a void function.");
-            return null;    //#TODO
+        else {  //currentFuncReturnType == Type.UNKNOWN. Ergo er return type NULL, og der må ikke forekomme et returnStmt med en type. Error!
+            VVPLController.error(returnStmt.returnKeyword.line, ErrorTypeStrings.TYPE_ERROR, "Cannot return a value from a void function");
+            return null;
+        } */
+
+        //? Ny version. Mere simpel og burde være samme logik som overstående udkommenteret if/elif/else.
+        //currentFuncReturnType == Type.UNKNOWN. Ergo er return type NULL, og der må ikke forekomme et returnStmt med en type. Error!
+        if (currentFuncReturnType == Type.UNKNOWN) { 
+            VVPLController.error(returnStmt.returnKeyword.line, ErrorTypeStrings.TYPE_ERROR, "Cannot return a value from a void function");
+            return null;
+        } else if (exprType != currentFuncReturnType) { // Case: Vi læser et FunctionStmt (currFuncReturnType != unknown). Return Stmt matcher ikke krævede type.
+            VVPLController.error(returnStmt.returnKeyword.line, ErrorTypeStrings.TYPE_ERROR, "Type of returned value does not match declared return type of function");
+            return null;
+        } else {
+            // Case: Vi læser et FunctionStmt (currFuncType != unknown), og typerne matcher.
+            return null;
         }
+
     }
 
     @Override
