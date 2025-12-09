@@ -12,37 +12,42 @@ import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.TokenType;
 
 public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
 
-    private Environment env = new Environment(null);
+    // private Environment env = new Environment(null);
+
+    final Environment globals = new Environment(null);
+    private Environment env = globals; // Globals can only be changed in the outmost scope.
 
     public void interpret(List<Stmt> stmts) {
         // execute
         try {
-
+            // System.out.println("Lets try and execute.");
             for (Stmt s : stmts) {
                 execute(s);
             }
         } catch (Exception e) {
+            // System.out.println("Something went wrong.");
             // TODO: handle exception
+
             // Vi skal ikke håndtere runtime exceptions, right? /Lasse
         }
 
     }
 
-    // Overvej Stringify for at se output.
-    // private String stringify(Object object) {
-    // if (object == null)
-    // return "nil";
+    // Stringify for at se output.
+    private String stringify(Object object) {
+        if (object == null)
+            return "nil";
 
-    // if (object instanceof Double) {
-    // String text = object.toString();
-    // if (text.endsWith(".0")) {
-    // text = text.substring(0, text.length() - 2);
-    // }
-    // return text;
-    // }
+        if (object instanceof Double) {
+            String text = object.toString();
+            if (text.endsWith(".0")) {
+                text = text.substring(0, text.length() - 2);
+            }
+            return text;
+        }
 
-    // return object.toString();
-    // }
+        return object.toString();
+    }
 
     private void execute(Stmt s) {
         s.accept(this);
@@ -56,6 +61,7 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
     public Object visitAssignExpr(Assign assign) {
         Object value = evaluate(assign.expr);
         env.assign(assign.ID.lexeme, value);
+        // System.out.println("AssignExpr: "+ value + " to " +assign.ID.lexeme);
         return value;
     }
 
@@ -67,15 +73,18 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
     }
 
     @Override
+    // Also evalutes reserved keywords. 
     public Object visitLiteralExpr(Literal literal) {
+        if ((literal.token.type == TokenType.TRUE) || (literal.token.type == TokenType.FALSE)) { 
+            return literal.token.lexeme;
+        }
         return literal.token.literal; // Retrieve literal value from token.
     }
 
     @Override
     public Object visitLogicalExpr(Logical logical) {
-
+        
         Object left = evaluate(logical.left);
-        // Object right = evaluate(logical.right);
 
         if (logical.operator.type == TokenType.OR) {
             // Short-circuit: If OR and left is true, return immediatly.
@@ -96,8 +105,15 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
         Object left = evaluate(binary.left);
         Object right = evaluate(binary.right);
 
+        System.out.println("Visiting a binary expression");
+        
+        System.out.println("Left: "+left);
+        System.out.println("right: "+right);
+
+        // System.out.println("operator type: "+binary.operator.type);
+
         switch (binary.operator.type) {
-            case MINUS:
+            case SUB:
                 return (double) left - (double) right;
             case PLUS:
                 return (double) left + (double) right;
@@ -111,6 +127,13 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
                 return isEqual(left, right);
             case GREATER:
                 return (double) left > (double) right;
+            case GREATER_EQUAL: // Should not be implemented with "isEqual"?
+                return (double) left >= (double) right;
+            case LESS:
+                return (double) left < (double) right;
+            case LESS_EQUAL:
+                return (double) left <= (double) right;
+
         }
         return null;
     }
@@ -144,6 +167,17 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
             return false;
         if (object instanceof Boolean)
             return (boolean) object;
+
+        // TODO: LA: Overvej om dette er stedet til at evaluere 13 til true?
+        // TODO: Vigtigt at teste, om denne funktionalitet virker!
+        if (object instanceof Number) {
+            System.err.println("Number check:"+ object);
+            if (object.equals(13)) {
+                return true;
+            } else {
+                return false;
+            }
+        }
         return true;
     }
 
@@ -153,9 +187,9 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
         return null;
     }
 
-    /* Helper for visitBlockStmt. Create new environment for the blocks scope */
+    /* LA: Helper for visitBlockStmt. Create new environment for the blocks scope */
     void executeBlock(List<Stmt> body, Environment environment) {
-        Environment previous = this.env; // save current, so we can get back to it after. 
+        Environment previous = this.env; // save current, so we can get back to it after.
         try {
             this.env = environment;
 
@@ -163,7 +197,7 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
                 execute(statement);
             }
         } finally {
-            this.env = previous;
+            this.env = previous; // retore former environment.
         }
     }
 
@@ -174,6 +208,8 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
         if (varDecl.expr != null) {
             value = evaluate(varDecl.expr);
         }
+
+        System.out.println("varDecl: "+value+" is assigned to "+varDecl.id.lexeme);
         env.define(varDecl.id.lexeme, value);
         return null;
     }
@@ -195,8 +231,8 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
 
     @Override
     public Object visitCastExpr(Cast cast) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'visitCastExpr'");
+        evaluate(cast.expr);
+        return null;
     }
 
     @Override
@@ -231,6 +267,8 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
     }
 
     @Override
+    // Helps us unwind past the visit methods back to the code that began the
+    // executing body.
     public Void visitReturnStmt(ReturnStmt returnStmt) {
         Object value = null; // return null if no return value.
         if (returnStmt.returnValue != null)
@@ -242,9 +280,13 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
     }
 
     @Override
+    // Take compile time representation (node) and convert to runtime
+    // interpretation.
     public Void visitFunctionStmt(FunctionStmt functionStmt) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'visitFunctionStmt'");
+        VVPLFunction function = new VVPLFunction(functionStmt);
+        env.define(functionStmt.name.lexeme, function);
+        return null;
+
     }
 
     /*

@@ -36,7 +36,6 @@ public class VVPLController {
 			return errorMessages.stream().map(ErrorMessage::toString).toList(); // Converting List<ErrorMessage> to List<String>
 		}
 
-		// // print the tokens
 		// for (Token token : tokens) {
 		// System.out.println(token);
 		// }

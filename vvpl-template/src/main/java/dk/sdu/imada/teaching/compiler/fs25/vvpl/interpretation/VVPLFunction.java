@@ -27,18 +27,21 @@ class VVPLFunction implements VVPLCallable {
     VVPLFunction(Stmt.FunctionStmt funcDecl) {
         this.funcDecl = funcDecl;
     }
-}
+
 
 public Object call(Interpreter interpreter, List<Object> arguments) {
-    // Skal environment virkelig gøres "package"? 
-    // De om du kan finde yderligere info om det. 
-    Environment environment = new Environment(interpreter.env);
+
+    // De globale variable skal kunne tilgås i dette nye environment.
+    // CALL BY VALUE - the actual value of the original global must not change. 
+    
+    Environment functionScope = new Environment(interpreter.globals);
 
     for (int i = 0; i < funcDecl.params.size(); i++) {
-        environment.define(funcDecl.params.get(i).id.lexeme, arguments.get(i));
+        functionScope.define(funcDecl.params.get(i).id.lexeme, arguments.get(i)); // Define function parameter in this scope. 
     }
 
-    interpreter.executeBlock(funcDecl.body.stmts, environment);
+    interpreter.executeBlock(funcDecl.body.stmts, functionScope);
 
     return null;
+}
 }
