@@ -46,11 +46,11 @@ public class TestUtil {
                 List<String> actualLines = controller.execute(inputFile);
 
                 // C-E debug
-                FileWriter writer = new FileWriter("output.txt"); 
-                for(String str: actualLines) {
-                writer.write(str + System.lineSeparator());
-                }
-                writer.close();
+                // FileWriter writer = new FileWriter("output.txt"); 
+                // for(String str: actualLines) {
+                // writer.write(str + System.lineSeparator());
+                // }
+                // writer.close();
 
 
                 List<String> expectedLines = TestUtil.getExpectedLines(fileName, dir);

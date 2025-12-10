@@ -1,0 +1,13 @@
+#####################
+# Cast_To conversion
+#####################
+
+variable a has_type Number is 1;
+variable b has_type Number is 1;
+
+write_to_console add(a b);
+
+variable c has_type Number is cast_to Number "1";
+variable d has_type Number is cast_to Number "2";
+
+write_to_console add(c d);

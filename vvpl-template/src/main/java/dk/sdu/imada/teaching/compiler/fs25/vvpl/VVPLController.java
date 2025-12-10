@@ -68,6 +68,11 @@ public class VVPLController {
 		// Interpret semantically correct programs.
 		Interpreter interpreter = new Interpreter();
 		List<String> result = interpreter.interpret(stmts);
+		if (hadError) {
+			Collections.sort(errorMessages);
+			return errorMessages.stream().map(ErrorMessage::toString).toList();
+		}
+		
 		return result;
 
 		// List<String> errormessages = new LinkedList();

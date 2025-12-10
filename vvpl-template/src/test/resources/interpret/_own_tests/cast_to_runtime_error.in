@@ -1,0 +1,17 @@
+
+################################################
+# Example of behaviour when wrong format string 
+# is casted to number
+################################################
+
+
+# Just to illustrate, that the program runtime is interrupted
+
+# Correct code
+variable a has_type Number is cast_to Number "12";
+write_to_console a;
+
+# But we only see the error message for the wrong code (unlike the compile time errors, that are collected).
+variable b has_type Number is cast_to Number "abc";
+write_to_console b;
+

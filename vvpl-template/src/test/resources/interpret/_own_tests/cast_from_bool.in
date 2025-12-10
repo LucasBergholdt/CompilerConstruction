@@ -1,0 +1,15 @@
+#################################
+# Check casts from bool to string
+#################################
+
+
+variable a has_type Bool is true;
+
+variable b has_type String is cast_to String a;
+
+write_to_console b;
+
+## Ikke test dette, det kan aldrig finde sted grundet type error. 
+# variable c has_type String is "true";
+
+# variable d has_type Bool is cast_to Bool true;

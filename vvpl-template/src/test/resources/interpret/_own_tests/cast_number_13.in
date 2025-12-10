@@ -1,0 +1,14 @@
+######################################################
+# 13 must evalute to true when cast, all others false
+######################################################
+
+write_to_console cast_to Bool 13;
+write_to_console cast_to Bool 14;
+
+if (cast_to Bool 13) {
+    write_to_console "13 is true!";
+}
+
+if (NOT cast_to Bool 14) {
+    write_to_console "14 is false!";
+}
