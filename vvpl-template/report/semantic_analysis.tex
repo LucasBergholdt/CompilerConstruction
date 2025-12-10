@@ -10,13 +10,13 @@ An example of constructing a new symbol table to represent the scope of the curr
 
 \begin{lstlisting}[language=java]
 public Void visitBlockStmt(BlockStmt blockStmt) {
-        SymbolTable oldTable = currentEnvironment;
-        currentEnvironment = new SymbolTable(currentEnvironment);
-        for (int i = 0; i < num_statements; i++) {
-            analyse(blockStmt.stmts.get(i));
-        }
-        currentEnvironment = oldTable;
-        return null;
+    SymbolTable oldTable = currentEnvironment;
+    currentEnvironment = new SymbolTable(currentEnvironment);
+    for (int i = 0; i < num_statements; i++) {
+        analyse(blockStmt.stmts.get(i));
+    }
+    currentEnvironment = oldTable;
+    return null;
 }
 \end{lstlisting}
 
@@ -428,14 +428,14 @@ The third case is the block statement itself which constitutes the body of a fun
 
 \begin{lstlisting}[language=java]
 if (stmt instanceof BlockStmt) {
-            BlockStmt block = (BlockStmt) stmt;
-            for (Stmt s : block.stmts) {
-                if (alwaysReturns(s)) {
-                    return true;
-                }
-            }
-            return false;
+    BlockStmt block = (BlockStmt) stmt;
+    for (Stmt s : block.stmts) {
+        if (alwaysReturns(s)) {
+            return true;
         }
+    }
+    return false;
+}
 \end{lstlisting}
 Here, we use all cases to see if a block returns. 
 \begin{itemize}
