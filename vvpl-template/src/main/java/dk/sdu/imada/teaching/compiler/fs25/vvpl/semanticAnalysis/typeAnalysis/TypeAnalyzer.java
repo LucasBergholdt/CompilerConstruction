@@ -437,8 +437,8 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
             Type paramType = convertVariableType(params.get(i).typeToken.type);
             
             if (argumentType != paramType) {
-                VVPLController.error(call.id.line, ErrorTypeStrings.TYPE_ERROR, "Type of given argument [insert name here] does not match the required type [paramType]");
-                return Type.UNKNOWN; // #TODO
+                VVPLController.error(call.id.line, ErrorTypeStrings.TYPE_ERROR, String.format("Type of given argument %s does not match the required type %s", argumentType, paramType));
+                // DO not return. Report all argument type errors.
             }
         }
 

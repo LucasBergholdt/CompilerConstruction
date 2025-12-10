@@ -1,7 +1,7 @@
-TYPE_ERROR, line 11 Type of given argument [insert name here] does not match the required type [paramType]
-TYPE_ERROR, line 11 Type of given argument [insert name here] does not match the required type [paramType]
-TYPE_ERROR, line 12 Type of given argument [insert name here] does not match the required type [paramType]
-TYPE_ERROR, line 13 Type of given argument [insert name here] does not match the required type [paramType]
+TYPE_ERROR, line 11 Type of given argument NUMBER does not match the required type STRING
+TYPE_ERROR, line 11 Type of given argument NUMBER does not match the required type STRING
+TYPE_ERROR, line 12 Type of given argument BOOL does not match the required type STRING
+TYPE_ERROR, line 13 Type of given argument NUMBER does not match the required type STRING
 TYPE_ERROR, line 20 Type NUMBER does not match type of expression (BOOL)
 TYPE_ERROR, line 32 Type of returned value does not match declared return type of function
 TYPE_ERROR, line 36 Type of returned value does not match declared return type of function
