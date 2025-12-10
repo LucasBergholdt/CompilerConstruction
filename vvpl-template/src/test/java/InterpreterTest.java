@@ -3,7 +3,7 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 
 /**
- * @auhor Sandra Greiner
+ * @author Sandra Greiner
  * @version Compiler Construction FT 2025
  */
 public class InterpreterTest {
