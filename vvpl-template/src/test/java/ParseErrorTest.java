@@ -9,6 +9,7 @@ public class ParseErrorTest {
     @Test
     public void testErrors() {
         try {
+            TestUtil.runTestFiles("src/test/resources/parse/additional-tests/");
             TestUtil.runTestFiles("src/test/resources/parse/");
         } catch (IOException e) {
             e.printStackTrace();

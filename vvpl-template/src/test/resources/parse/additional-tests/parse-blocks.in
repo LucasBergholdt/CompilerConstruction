@@ -1,0 +1,4 @@
+{ variable a has_type Number is 1; variable b has_type String is "2"; }
+{ if (true) { } else { } }
+{ loop_while (1) }              # missing statement
+{ if false) }                   # missing (

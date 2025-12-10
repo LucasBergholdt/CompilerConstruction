@@ -1,0 +1,5 @@
+cast_to Number "hello";     # not a parse error
+cast_to String 123;
+cast_to Number;             # no primary after cast
+cast_to NonExistent 34;     # type differs from Number, String, Bool
+cast_to String add (2 3)    # missing () around expr

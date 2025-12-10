@@ -1,0 +1,6 @@
+func(a, 13);
+func();
+true();     # true is a reserved keyword, not an identifier
+foo(1 2);   # missing comma
+foo(1,);    # trailing comma -> missing second param
+foo(;       # missing ')'

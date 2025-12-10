@@ -1,0 +1,12 @@
+function validSimpleFunc() { }
+function validFullFunc(x has_type Number) has_type Number { }
+function one() has_type Number { return 1; }
+
+function (s has_type String) has_type Number { }    # missing identifier
+function oops b has_type Bool) { }                  # missing (
+function whoops (a has_type Number { }              # missing )
+function noParamType(a has_type Number, b) { }      # param b missing type
+function foo has_type NonExistent                   # type differs from Number, String, Bool
+function f() has_type Number {
+    return 1                                        # missing ;
+}

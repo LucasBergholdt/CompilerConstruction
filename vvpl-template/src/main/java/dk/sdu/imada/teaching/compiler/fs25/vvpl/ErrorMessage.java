@@ -1,5 +1,6 @@
 package dk.sdu.imada.teaching.compiler.fs25.vvpl;
 
+/** @author: Lucas Bergholdt Hansen */
 public class ErrorMessage implements Comparable<ErrorMessage> {
     int line;
     String errorType;

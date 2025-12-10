@@ -436,7 +436,7 @@ public class Parser {
         if (check(type)) {
             return advance();
         } else {
-            throw error(peek(), message);
+            throw error(previous(), message);
         }
     }
 

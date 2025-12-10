@@ -1,0 +1,7 @@
+variable foo has_type Number is 3;
+variable false has_type Bool;           # false is a reserved keyword, not an identifier
+variable x is 4;                        # missing "has_type"
+variable s has_type String              # missing ;
+variable bar has_type String is foo;
+
+false is true;                           # assigning to non-identifier
