@@ -73,10 +73,10 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
         if (exprType == Type.UNKNOWN) {
             return null;
         }
-        Type castToType = convertVariableType(varDecl.typeToken.type);
+        Type declaredType = convertVariableType(varDecl.typeToken.type);
 
-        if (exprType != castToType) {
-            VVPLController.error(varDecl.id.line, ErrorTypeStrings.TYPE_ERROR, String.format("Type %s does not match type of expression (%s)", exprType, castToType));
+        if (exprType != declaredType) {
+            VVPLController.error(varDecl.id.line, ErrorTypeStrings.TYPE_ERROR, String.format("Type %s does not match type of expression (%s)", exprType, declaredType));
         }
         else {
             currentEnvironment.define(varDecl.id.lexeme, exprType);
@@ -315,21 +315,6 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
         if (stmt instanceof ReturnStmt) {
             return true;
         }
-
-        // CASE 2: Block statement.
-        // HVILKEN SOM HELST af dens statements skal returnere. Vi skal bare returnere på et eller andet tidspunkt i en block.
-        // En if-else statement har flere blocks. Hver af disse blocks skal have bare ÈN statement der returnerer.
-        if (stmt instanceof BlockStmt) {
-            BlockStmt block = (BlockStmt) stmt;
-            // Return if ANY of the blocks statements return
-            for (Stmt s : block.stmts) {
-                if (alwaysReturns(s)) {
-                    return true;
-                }
-            }
-            return false;
-        }
-
         // CASE 3: If Statement
         // For at en if statmenet altid returner kræver det at:
         // 1. Else block eksisterer (ellers kan vi skippe if branch hvis condition ikke er satisfied og så retunerer vi måske ikke)
@@ -346,6 +331,21 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
                 // hvor vi skpper hele if statement og ikke returner fra ifStmt
                 return false;
             }
+        }
+
+        
+        // CASE 2: Block statement.
+        // HVILKEN SOM HELST af dens statements skal returnere. Vi skal bare returnere på et eller andet tidspunkt i en block.
+        // En if-else statement har flere blocks. Hver af disse blocks skal have bare ÈN statement der returnerer.
+        if (stmt instanceof BlockStmt) {
+            BlockStmt block = (BlockStmt) stmt;
+            // Return if ANY of the blocks statements return
+            for (Stmt s : block.stmts) {
+                if (alwaysReturns(s)) {
+                    return true;
+                }
+            }
+            return false;
         }
 
         // CASE 4: alle andre statements
@@ -424,15 +424,6 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
 
     @Override
     public Type visitCallExpr(Call call) {
-        
-        /*
-        // If Call Expr is not a function call.
-        if (call.paren == null) {
-            return analyse(call.callee);
-        }
-        */
-
-        // Else if Call Expr is a function call
         FunctionStmt functionStmt = functionsTable.get(call.id.lexeme);
 
         // ------------------ Fetch parameters ------------------
@@ -446,46 +437,18 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
             Type paramType = convertVariableType(params.get(i).typeToken.type);
             
             if (argumentType != paramType) {
-                VVPLController.error(call.id.line, ErrorTypeStrings.TYPE_ERROR, "Type of given argument [insert name here] does not match the required type [paramType]");
-                // return null;? Skal vi stoppe med funktionen her?
+                VVPLController.error(call.id.line, ErrorTypeStrings.TYPE_ERROR, String.format("Type of given argument %s does not match the required type %s", argumentType, paramType));
+                // DO not return. Report all argument type errors.
             }
         }
 
-        // Function has return type declared. No need to evaluate function again.
+        // Function has return type declared.
         if (functionStmt.typeToken != null) {
             return convertVariableType(functionStmt.typeToken.type);
-        } 
+        }
+        // Function is a void function
         else {
-            // CASE: Funktion har ikke angivet en type. Derfor må return type være null. #TODO Antagelse om opgaven.
             return Type.UNKNOWN;
         }
-
-        // Else, we need to return a type of a dynamically chosen return type. This is the interpreter's job.
-
-        /* ALT I KOMMENTAREN: Returnerer return typen på en arbitrær ReturnStmt i koden
-
-        currentFuncReturnType = Type.UNKNOWN; // function has no return type declared
-
-
-        SymbolTable oldTable = currentEnvironment;
-        currentEnvironment = new SymbolTable();
-  
-        // define (potentially shadowing) parameters in new environment.
-        for (int i = 0; i < params.size(); i++) {
-            Param currParam = params.get(i);
-            Type paramType = convertVariableType(currParam.typeToken.type);
-            
-            currentEnvironment.define(currParam.id.lexeme, paramType);
-        }
-        
-        analyse(functionStmt.body);
-        Type resultType = currentFuncReturnType;
-
-        // reset
-        currentFuncReturnType = Type.UNKNOWN;
-        currentEnvironment = oldTable;
-
-        return resultType;
-    */
     }
 }
