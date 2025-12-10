@@ -5,6 +5,6 @@ class ReturnExcep extends RuntimeException {
 
     ReturnExcep(Object value) {
         super(null, null, false, false); // unimportant exception implementation details.
-        this.value = value;
+        this.value = value; // The value to return to the top. 
     }
 }

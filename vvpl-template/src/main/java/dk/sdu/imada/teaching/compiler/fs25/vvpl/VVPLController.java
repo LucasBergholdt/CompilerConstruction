@@ -67,11 +67,11 @@ public class VVPLController {
 
 		// Interpret semantically correct programs.
 		Interpreter interpreter = new Interpreter();
-		interpreter.interpret(stmts);
+		List<String> result = interpreter.interpret(stmts);
+		return result;
 
-
-		List<String> errormessages = new LinkedList();
-		return errormessages;
+		// List<String> errormessages = new LinkedList();
+		// return errormessages;
 	}
 
 	// Custom error handler that sets hadError to true and adds the error message to the list of error messages

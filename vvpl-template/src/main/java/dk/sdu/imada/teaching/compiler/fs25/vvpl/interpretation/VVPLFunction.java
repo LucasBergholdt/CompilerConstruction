@@ -20,6 +20,7 @@ import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Stmt;
     Argument for choosing option 1: clean, extensible, less complex visitCallExpr, reuse callable interface to make native functions, søg på flere 
 */
 
+/* DET LIGNER IKKE, AT VI SKAL IMPLEMENTERE MED CLOSURE. SKRIV OM DET I DISKUSSIONEN? */
 
 class VVPLFunction implements VVPLCallable {
     private final Stmt.FunctionStmt funcDecl;
@@ -32,15 +33,20 @@ class VVPLFunction implements VVPLCallable {
 public Object call(Interpreter interpreter, List<Object> arguments) {
 
     // De globale variable skal kunne tilgås i dette nye environment.
-    // CALL BY VALUE - the actual value of the original global must not change. 
-    
+    // CALL BY VALUE - "copy" - the actual global must not change. 
     Environment functionScope = new Environment(interpreter.globals);
 
+    // Define the parameters inside the new scope. 
     for (int i = 0; i < funcDecl.params.size(); i++) {
-        functionScope.define(funcDecl.params.get(i).id.lexeme, arguments.get(i)); // Define function parameter in this scope. 
+        functionScope.define(funcDecl.params.get(i).id.lexeme, arguments.get(i));
     }
 
-    interpreter.executeBlock(funcDecl.body.stmts, functionScope);
+    try {
+        interpreter.executeBlock(funcDecl.body.stmts, functionScope);
+    } catch (ReturnExcep returnValue) {
+        return returnValue.value;
+    }
+
 
     return null;
 }

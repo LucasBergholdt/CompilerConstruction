@@ -1,5 +1,6 @@
 package dk.sdu.imada.teaching.compiler.fs25.vvpl.interpretation;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -12,12 +13,13 @@ import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.TokenType;
 
 public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
 
-    // private Environment env = new Environment(null);
+    // For at indfange vores output, så det kan testes. 
+    List<String> output = new ArrayList<String>();
 
     final Environment globals = new Environment(null);
     private Environment env = globals; // Globals can only be changed in the outmost scope.
 
-    public void interpret(List<Stmt> stmts) {
+    public List<String> interpret(List<Stmt> stmts) {
         // execute
         try {
             // System.out.println("Lets try and execute.");
@@ -30,22 +32,27 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
 
             // Vi skal ikke håndtere runtime exceptions, right? /Lasse
         }
+        return output;
 
     }
 
     // Stringify for at se output.
     private String stringify(Object object) {
         if (object == null)
-            return "nil";
+            return "null";
 
         if (object instanceof Double) {
             String text = object.toString();
             if (text.endsWith(".0")) {
                 text = text.substring(0, text.length() - 2);
             }
+
             return text;
         }
 
+        // System.out.println(object);
+
+        // TODO: Overvej om det er nødvendigt at printe det i vores debug.
         return object.toString();
     }
 
@@ -108,10 +115,10 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
         Object left = evaluate(binary.left);
         Object right = evaluate(binary.right);
 
-        System.out.println("Visiting a binary expression");
+        // System.out.println("Visiting a binary expression");
         
-        System.out.println("Left: "+left);
-        System.out.println("right: "+right);
+        // System.out.println("Left: "+left);
+        // System.out.println("right: "+right);
 
         // System.out.println("operator type: "+binary.operator.type);
 
@@ -193,7 +200,7 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
         return null;
     }
 
-    /* LA: Helper for visitBlockStmt. Create new environment for the blocks scope */
+    /* LA: Helper for visitBlockStmt. Executes the environment of the function. */
     void executeBlock(List<Stmt> body, Environment environment) {
         Environment previous = this.env; // save current, so we can get back to it after.
         try {
@@ -215,7 +222,7 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
             value = evaluate(varDecl.expr);
         }
 
-        System.out.println("varDecl: "+value+" is assigned to "+varDecl.id.lexeme);
+        // System.out.println("varDecl: "+value+" is assigned to "+varDecl.id.lexeme);
         env.define(varDecl.id.lexeme, value);
         return null;
     }
@@ -226,19 +233,19 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
 
         List<Object> evaluatedArgs = new LinkedList<>();
         for (Expr arg : call.arguments) {
-            evaluatedArgs.add(evaluate(arg));
+            evaluatedArgs.add(evaluate(arg)); // 
         }
 
         // ... RuntimeError not necessary
 
+        // Calls the function with the evaluated args. 
         VVPLCallable function = (VVPLCallable) callee;
         return function.call(this, evaluatedArgs);
     }
 
     @Override
     public Object visitCastExpr(Cast cast) {
-        evaluate(cast.expr);
-        return null;
+        return evaluate(cast.expr);
     }
 
     @Override
@@ -268,7 +275,10 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
     @Override
     public Void visitPrintStmt(PrintStmt printStmt) {
         Object value = evaluate(printStmt.expr);
+        // TODO: Overvej om det er nødvendigt at printe det i vores debug.
         System.out.println(stringify(value));
+        output.add(stringify(value));
+
         return null;
     }
 
@@ -279,15 +289,19 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
         Object value = null; // return null if no return value.
         if (returnStmt.returnValue != null)
             value = evaluate(returnStmt.returnValue);
-
+            
+ 
         // Getting from the top of the call stack back to call().
         // Unwind back to where the function call began.
+        
+        // Return value skal opbevares og returneres til environment, i stedet for returnExcep?
+
         throw new ReturnExcep(value);
     }
 
     @Override
     // Take compile time representation (node) and convert to runtime
-    // interpretation.
+    // interpretation. (store the function in the environment)
     public Void visitFunctionStmt(FunctionStmt functionStmt) {
         VVPLFunction function = new VVPLFunction(functionStmt);
         env.define(functionStmt.name.lexeme, function);
