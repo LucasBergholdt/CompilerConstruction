@@ -1,0 +1,4 @@
+variable a type String is "string spanning
+too many
+lines"
+a is bla<

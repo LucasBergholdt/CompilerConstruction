@@ -15,7 +15,6 @@ public abstract class Stmt {
 
     // --------- Nested Stmt Classes -------------
 
-
     /** @author: Carl-Emil Dons Christensen */
     public static class ExprStmt extends Stmt {
         public final Expr expr;
@@ -152,5 +151,6 @@ public abstract class Stmt {
         }
     }
 
+    
 }
 

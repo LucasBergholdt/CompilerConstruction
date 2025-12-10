@@ -1,12 +1,8 @@
 package dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.visitors;
 
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Expr.*;
-//import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Expr.Assign;
-
-
 
 /**
- * @author Sandra Greiner
  * @version CompilerConstruction FT 2025
  */
 

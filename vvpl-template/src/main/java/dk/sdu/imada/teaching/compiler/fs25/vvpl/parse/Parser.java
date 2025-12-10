@@ -17,7 +17,6 @@ import static dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.TokenType.*;
 
 
 /**
- * @author Sandra Greiner
  * @version CompilerConstruction FT 2025
  */
 
@@ -29,9 +28,6 @@ public class Parser {
     public Parser(List<Token> tokens) {
         this.tokens = tokens;
     }
-
-
-    // program := decl* EOF
 
     /** @author: Carl-Emil Dons Christensen */
     public List<Stmt> parse() {
@@ -66,53 +62,38 @@ public class Parser {
     private Stmt varDecl() {
         // When entering this method "variable" has already been consumed by match in decl()
         
-        // Case: "variable ____ 'has_type' ____
         // We expect an ID (name of variable):
-        Token id = consume(IDENTIFIER, "Expected identifier");
+        Token id = consume(IDENTIFIER, "Expected identifier in variable declaration");
 
         // We expect "has_type":
-        consume(TYPE_DEF, "Expected 'has_type'");
+        consume(TYPE_DEF, "Expected 'has_type' in variable declaration");
         
         // Expecting a NumberType, StringType or BoolType:
-        Token typeToken = null;
-
-        if (match(NUMBER_TYPE, STRING_TYPE, BOOL_TYPE)) {
-            typeToken = previous();
-        } else {
-            throw error(peek(), "Type specified should be NumberType, StringType or BoolType");
-        }
+        Token typeToken = consumeType();
 
         // Optional "is" expr:
         Expr expr = null;
         if (match(ASSIGN)) {
-            // Case: "variable ____ 'has_type' ____ 'is' expression()
             expr = expression();
         }
 
         // Expecting semicolon at end:
-        consume(SEMICOLON, "Expected ';'");
+        consume(SEMICOLON, "Expected ';' at the end of variable declaration");
 
         return new Stmt.VarDecl(id, typeToken, expr);
     }
 
-    // ------------------ All statements in statement except exprStmt -----------------------
-
     /** @author: Carl-Emil Dons Christensen */
     private Stmt statement() {
-        if (match(PRINT))
-            return printStmt();
+        if (match(PRINT)) return printStmt();
 
-        if (match(IF))
-            return ifStmt();
+        if (match(IF)) return ifStmt();
 
-        if (match(WHILE))
-            return whileStmt();
+        if (match(WHILE)) return whileStmt();
 
-        if (match(LEFT_BRACE))
-            return new Stmt.BlockStmt(block()); // Wraps result of block() in Stmt.BlockStmt
+        if (match(LEFT_BRACE)) return new Stmt.BlockStmt(block()); // Wraps result of block() in Stmt.BlockStmt
 
-        if (match(RETURN))
-            return returnStmt();
+        if (match(RETURN)) return returnStmt();
 
         return exprStmt();
     }
@@ -120,11 +101,10 @@ public class Parser {
     /** @author: Carl-Emil Dons Christensen */
     private Stmt printStmt() {
         Expr value = expression();
-        Token printtoken = previous();
-        consume(SEMICOLON, "Expected semicolon");
-        return new Stmt.PrintStmt(value, printtoken);
+        Token printToken = previous();
+        consume(SEMICOLON, "Expected ';' at the end of print statement");
+        return new Stmt.PrintStmt(value, printToken);
     }
-
 
     /** @author: Carl-Emil Dons Christensen */
     private Stmt ifStmt() {
@@ -134,6 +114,7 @@ public class Parser {
         consume(RIGHT_PAREN, "Expected ')'");
 
         Stmt thenBranch = statement();
+        // Optional else branch:
         Stmt elseBranch = null;
         if (match(ELSE)) {
             elseBranch = statement();
@@ -152,9 +133,10 @@ public class Parser {
     }
 
     /** @author: Carl-Emil Dons Christensen, Lucas Bergholdt Hansen */
-    private List<Stmt> block() { // TODO: allow syncs in blocks
+    private List<Stmt> block() {
         List<Stmt> statements = new LinkedList<>();
         
+        // Handle all statements in the block:
         while (!check(RIGHT_BRACE) && !isAtEnd()) {
             statements.add(decl());
         }
@@ -166,18 +148,15 @@ public class Parser {
     /** @author: Lucas Bergholdt Hansen */
     private Stmt returnStmt() {
         Token returnKeyword = previous(); // Kept for later error reporting
+        // Optional return value:
         Expr value = null;
         if (!check(SEMICOLON)) {
             value = expression();
         }
 
-        consume(SEMICOLON, "Expected ';'");
+        consume(SEMICOLON, "Expected ';' at the end of return statement");
         return new Stmt.ReturnStmt(returnKeyword, value);
     }
-
-
-    // ------------ ExprStmt and nested functions -----------------
-
 
     /** @author: Carl-Emil Dons Christensen */
     private Stmt exprStmt() {
@@ -203,11 +182,9 @@ public class Parser {
             if (expr instanceof Identifier) {
                 Token id = ((Identifier)expr).id;
                 return new Expr.Assign(id, value);
+            } else {
+                throw error(assignToken, "Invalid assignment target.");
             }
-
-            //TODO: Book doesn't throw error. Should we?
-            //TODO: Jeg tror blot det er en optimization de har lavet, men jeg synes det gør det hele lidt mere forvirrende egentlig.
-            throw error(assignToken, "Invalid assignment target.");
         }
         
         return expr;
@@ -289,52 +266,6 @@ public class Parser {
     }
 
     /** @author: Lucas Bergholdt Hansen */
-    private Stmt function() {
-        Token name = consume(IDENTIFIER, "Expected function name");
-        consume(LEFT_PAREN, "Expected '('");
-        // If we don't have a closing ')' right after we have params:
-        List<Param> params = new ArrayList<>();
-        if (!check(RIGHT_PAREN)) {
-            params = params();
-        }
-
-        consume(RIGHT_PAREN, "Expected ')'");
-        // Check if function "has_type" and handle it:
-        Token type = null;
-        if (match(TYPE_DEF)) {
-            if (match(NUMBER_TYPE, STRING_TYPE, BOOL_TYPE)) {
-                type = previous();
-            } else {
-                throw error(peek(), "Type specified should be NumberType, StringType or BoolType");
-            }
-        }
-
-        consume(LEFT_BRACE, "Expected '{'"); // block() assumes { has already been consumed
-        
-        Stmt.BlockStmt body = new Stmt.BlockStmt(block());
-        return new Stmt.FunctionStmt(name, params, type, body);
-    }
-
-    /** @author: Lucas Bergholdt Hansen */
-    private List<Param> params() {
-        List<Param> params = new ArrayList<>();
-
-        do {
-            Token id = consume(IDENTIFIER, "Expected identifier");
-            consume(TYPE_DEF, "Expected 'has_type'");
-            Token type = null;
-            if (match(NUMBER_TYPE, STRING_TYPE, BOOL_TYPE)) {
-                type = previous();
-            } else {
-                throw error(peek(), "Type specified should be NumberType, StringType or BoolType");
-            }
-            params.add(new Param(id, type));
-        } while (match(COMMA));
-
-        return params;
-    }
-
-    /** @author: Lucas Bergholdt Hansen */
     private Expr call() {
         Expr expr = primary();
 
@@ -371,17 +302,52 @@ public class Parser {
     }
 
     /** @author: Lucas Bergholdt Hansen */
-    // Handles the cast that might appear
+    private Stmt function() {
+        Token name = consume(IDENTIFIER, "Expected function name");
+        consume(LEFT_PAREN, "Expected '('");
+
+        // If we don't have a closing ')' right after, we have params:
+        List<Param> params = new ArrayList<>();
+        if (!check(RIGHT_PAREN)) {
+            params = params();
+        }
+        consume(RIGHT_PAREN, "Expected ')'");
+
+        // Check if function "has_type" and handle it:
+        Token typeToken = null;
+        if (match(TYPE_DEF)) {
+            typeToken = consumeType();
+        }
+
+        consume(LEFT_BRACE, "Expected '{'"); // block() assumes { has already been consumed
+        
+        Stmt.BlockStmt body = new Stmt.BlockStmt(block());
+        return new Stmt.FunctionStmt(name, params, typeToken, body);
+    }
+
+    /** @author: Lucas Bergholdt Hansen */
+    private List<Param> params() {
+        // Function parameters are stored as a list of Param objects.
+        List<Param> params = new ArrayList<>();
+
+        do {
+            Token id = consume(IDENTIFIER, "Expected identifier");
+            consume(TYPE_DEF, "Expected 'has_type'");
+            Token typeToken = consumeType();
+            params.add(new Param(id, typeToken));
+        } while (match(COMMA));
+
+        return params;
+    }
+
+    /** @author: Lucas Bergholdt Hansen 
+     * This method handles the cast that might appear before a primary
+    */
     private Expr primary() {
         // Check if cast is specified
         if (match(CAST)) {
             // Expecting a NumberType, StringType or BoolType:
-            Token typeToken = null;
-            if (match(NUMBER_TYPE, STRING_TYPE, BOOL_TYPE)) {
-                typeToken = previous();
-            } else {
-                throw error(peek(), "Type specified should be NumberType, StringType or BoolType");
-            }
+            Token typeToken = consumeType();
 
             // Create new Expr.Cast:
             Expr expr = primaryNoCast();
@@ -392,8 +358,9 @@ public class Parser {
         }
     }
 
-    /** @author: Carl-Emil Dons Christensen, Lucas Bergholdt Hansen */
-    // Handles the rest of primary
+    /** @author: Carl-Emil Dons Christensen, Lucas Bergholdt Hansen 
+     * Handles the rest of the 'primary' production rule
+    */
     private Expr primaryNoCast() {
         Expr expr;
         switch (peek().type) {
@@ -410,19 +377,19 @@ public class Parser {
                 current++;
                 return expr;
             
-            // TODO: Test om dette fungerer. -> Hvorfor er det nu vi ikke har grouping expression som bogen?
             case LEFT_PAREN:
                 advance(); // Consume the '('
                 expr = expression();
                 consume(RIGHT_PAREN, "Expected ')'");
                 return expr;
 
-            // Else we report that we expected an expression
             default:
                 throw error(peek(), "Expected expression.");
         }
     }
 
+
+    
     // -------------------------- Helper Functions -------------------------
     /** @author: Carl-Emil Dons Christensen, Lucas Bergholdt Hansen */
 
@@ -460,36 +427,48 @@ public class Parser {
         return previous();
     }
 
-    // Consumes if given token matches current token, otherwise throws error
+    private Token previous() {
+        return tokens.get(current - 1);
+    }
+
+    // Consumes if given token type matches current token, otherwise throws error
     private Token consume(TokenType type, String message) {
-        if (check(type)) { // If we recieve the token type we expect, move on. 
+        if (check(type)) {
             return advance();
         } else {
             throw error(peek(), message);
         }
     }
 
-    private Token previous() {
-        return tokens.get(current - 1);
+    private Token consumeType() {
+        if (match(NUMBER_TYPE, STRING_TYPE, BOOL_TYPE)) {
+            return previous();
+        } else {
+            throw error(peek(), "Type specified should be NumberType, StringType or BoolType");
+        }
     }
 
 
+
+    // -------------------------- Error recovery -------------------------
+
     private static class ParseError extends RuntimeException {}
 
-    //TODO: Currently this just returns the error. They do this in the book because sometimes you want to report an error without throwing. However, we currently don't use this.
+    /** @author: Lucas Bergholdt Hansen */
     private ParseError error(Token token, String message) {
         // Add the error to the list of errors in VVPLController and return a new ParseError
         VVPLController.error(token.line, ErrorTypeStrings.PARSE_ERROR, message);
         return new ParseError();
     }
 
+    /** @author: Lucas Bergholdt Hansen */
     private void synchronise() {
         // Consume the problematic token that triggered the error
         advance();
 
         // Discard tokens until we find a valid place to continue
         while (!isAtEnd()) {
-            // If we just passed a semicolon the next token is very likely the start of a new statement
+            // If we just passed a semicolon the next token is the start of a new statement
             if (previous().type == SEMICOLON) return;
 
             // Check if current token begins a new statement

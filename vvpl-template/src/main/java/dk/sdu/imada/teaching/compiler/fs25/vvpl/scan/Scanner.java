@@ -11,11 +11,9 @@ import dk.sdu.imada.teaching.compiler.fs25.vvpl.VVPLController;
 import static dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.TokenType.*;
 
 /**
- * @author Sandra Greiner
+ * @author Lucas Bergholdt Hansen
  * @version CompilerConstruction FT 2025
  */
-
-/** @author Lucas Bergholdt Hansen */ 
 public class Scanner {
     private static final Map<String, TokenType> keywords;
     	static {
@@ -107,8 +105,6 @@ public class Scanner {
                 string();
                 break;
 
-
-
             default:
                 if (isDigit(c)) {
                     number();
@@ -129,8 +125,9 @@ public class Scanner {
         scannedTokens.add(new Token(type, text, literal, line));
     }
 
-    //TODO: Find ud af hvordan flere newlines skal håndteres rigtigt.
+    // TODO: Denne version virker med hendes tests, men mytest filerne viser en weird implikation af denne implementering.
     private void string() {
+        int startLine = line; // keeping track of the line the string starts at
         int newlineCount = 0;
         
         while (peek() != '"' && !isAtEnd()) {
@@ -138,16 +135,8 @@ public class Scanner {
                 line++;
                 newlineCount++;
                 if (newlineCount > 1) {
-                    VVPLController.error(line, ErrorTypeStrings.SCAN_ERROR, "String spans too many lines.");
-
-                    // Scanner still continues on rest of inputString even though we saw an error. So we consume the rest of the invalid string.
-                    while (peek() != '"' && !isAtEnd()) {
-                        if (peek() == '\n') line++;
-                        advance();
-                    }
-
-                    // When exiting loop we either reached closing " or EOF. If reason is we reached closing " we need to consume it.
-                    if (!isAtEnd()) advance();
+                    VVPLController.error(startLine, ErrorTypeStrings.SCAN_ERROR, "String spans too many lines.");
+                    advance(); // consume the newline before returning
                     return;
                 }
             }
@@ -155,7 +144,7 @@ public class Scanner {
         }
 
         if (isAtEnd()) {
-            VVPLController.error(line, ErrorTypeStrings.SCAN_ERROR, "Unterminated string.");
+            VVPLController.error(startLine, ErrorTypeStrings.SCAN_ERROR, "Unterminated string.");
             return;
         }
         

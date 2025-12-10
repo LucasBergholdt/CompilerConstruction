@@ -24,12 +24,10 @@ import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Stmt.WhileStmt;
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.TokenType;
 
 /**
- * @author Sandra Greiner
+ * @author Lasse Arpe Kristensen
  * @version CompilerConstruction FT 2025
  */
 
-
- /**@author Lasse Arpe Kristensen*/
  public class ASTPrinter implements ExprVisitor<String>, StmtVisitor<String> {
   private int indent = 0;
 

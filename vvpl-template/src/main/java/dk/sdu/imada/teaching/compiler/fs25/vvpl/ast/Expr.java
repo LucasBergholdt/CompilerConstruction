@@ -6,7 +6,6 @@ import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.visitors.ExprVisitor;
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.Token;
 
 /**
- * @author Sandra Greiner
  * @version CompilerConstruction FT 2025
  */
 public abstract class Expr {
@@ -14,8 +13,6 @@ public abstract class Expr {
 
     
     // --------- Nested Expr Classes -------------
-
-
 
     /** @author: Carl-Emil Dons Christensen */
     public static class Assign extends Expr {
@@ -89,7 +86,6 @@ public abstract class Expr {
     public static class Literal extends Expr {
         public final Token token;
         
-
         public Literal(Token token) {
             this.token = token;
         }

@@ -3,7 +3,6 @@ package dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.visitors;
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Stmt.*;
 
 /**
- * @author Sandra Greiner
  * @version CompilerConstruction FT 2025
  */
 

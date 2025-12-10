@@ -1,13 +1,11 @@
 package dk.sdu.imada.teaching.compiler.fs25.vvpl.scan;
 
 /**
- * @author Sandra Greiner
+ * @author Lucas Bergholdt Hansen
  * @version CompilerConstruction FT 2025
  */
-
-/* Author: Lucas Bergholdt Hansen */ 
 public enum TokenType {
-    // Single-character tokens
+    // Single-character tokens:
     LEFT_PAREN, RIGHT_PAREN, 
     LEFT_BRACE, RIGHT_BRACE, 
     COMMA, SEMICOLON,
