@@ -1,19 +1,26 @@
 package dk.sdu.imada.teaching.compiler.fs25.vvpl.interpretation;
 
+import static dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.TokenType.BOOL_TYPE;
+import static dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.TokenType.NUMBER_TYPE;
+import static dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.TokenType.STRING_TYPE;
+
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Stmt;
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Stmt.*;
+import dk.sdu.imada.teaching.compiler.fs25.vvpl.ErrorTypeStrings;
+import dk.sdu.imada.teaching.compiler.fs25.vvpl.VVPLController;
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Expr;
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Expr.*;
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.visitors.*;
+import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.Token;
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.TokenType;
 
 public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
 
-    // For at indfange vores output, så det kan testes. 
+    // For at indfange vores output, så det kan testes.
     List<String> output = new ArrayList<String>();
 
     final Environment globals = new Environment(null);
@@ -80,7 +87,7 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
     }
 
     @Override
-    // Also evalutes reserved keywords. 
+    // Also evalutes reserved keywords.
     public Object visitLiteralExpr(Literal literal) {
         if (literal.token.type == TokenType.TRUE) {
             return true;
@@ -93,7 +100,7 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
 
     @Override
     public Object visitLogicalExpr(Logical logical) {
-        
+
         Object left = evaluate(logical.left);
 
         if (logical.operator.type == TokenType.OR) {
@@ -116,7 +123,7 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
         Object right = evaluate(binary.right);
 
         // System.out.println("Visiting a binary expression");
-        
+
         // System.out.println("Left: "+left);
         // System.out.println("right: "+right);
 
@@ -181,10 +188,12 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
         // TODO: LA: Overvej om dette er stedet til at evaluere 13 til true?
         // TODO: Vigtigt at teste, om denne funktionalitet virker!
         if (object instanceof Number) {
-            System.err.println("Number check:"+ object);
+            System.err.println("Number check:" + object);
             // Du havde her skrevet object.equals(13) før. Jeg tror ikke dette virker.
-            // Numbers opbevares som doubles i systemet så du ville sammenligne 13.0 med 13 hvilket ikke er equals så du ville få false.
-            // Sammenligner med 13.0 i stedet. Tror jeg vil virke. Men ved ikke om det er robust. Sikkert fint? /Lucas
+            // Numbers opbevares som doubles i systemet så du ville sammenligne 13.0 med 13
+            // hvilket ikke er equals så du ville få false.
+            // Sammenligner med 13.0 i stedet. Tror jeg vil virke. Men ved ikke om det er
+            // robust. Sikkert fint? /Lucas
             if (object.equals(13.0)) {
                 return true;
             } else {
@@ -233,18 +242,48 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
 
         List<Object> evaluatedArgs = new LinkedList<>();
         for (Expr arg : call.arguments) {
-            evaluatedArgs.add(evaluate(arg)); // 
+            evaluatedArgs.add(evaluate(arg)); //
         }
 
         // ... RuntimeError not necessary
 
-        // Calls the function with the evaluated args. 
+        // Calls the function with the evaluated args.
         VVPLCallable function = (VVPLCallable) callee;
         return function.call(this, evaluatedArgs);
     }
 
     @Override
+    // We assume we recieve a program with no errors.
+
     public Object visitCastExpr(Cast cast) {
+
+        if (cast.typeToken.type == BOOL_TYPE) {
+            Object value = evaluate(cast.expr);
+
+            return isTruthy(value);
+        }
+
+        if (cast.typeToken.type == NUMBER_TYPE) {
+            
+            // CHECK IF WE ARE ALLOWED TO CONVERT
+            Object value = evaluate(cast.expr);
+            String str = value.toString();
+            Double number = null;
+
+            try {
+                number = Double.parseDouble(str);
+            } catch (NumberFormatException e) {
+                throw error(cast.typeToken, ": String \""+ str + "\" is not right format to convert to Number.");
+            }
+
+            return number;
+        }
+        
+        if (cast.typeToken.type == STRING_TYPE) {
+            Object value = evaluate(cast.expr);
+            return value.toString();
+        }
+        
         return evaluate(cast.expr);
     }
 
@@ -275,7 +314,7 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
     @Override
     public Void visitPrintStmt(PrintStmt printStmt) {
         Object value = evaluate(printStmt.expr);
-        // TODO: Overvej om det er nødvendigt at printe det i vores debug.
+        // TODO: Evt. fjern debug print. 
         System.out.println(stringify(value));
         output.add(stringify(value));
 
@@ -289,13 +328,11 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
         Object value = null; // return null if no return value.
         if (returnStmt.returnValue != null)
             value = evaluate(returnStmt.returnValue);
-            
- 
+
         // Getting from the top of the call stack back to call().
         // Unwind back to where the function call began.
-        
-        // Return value skal opbevares og returneres til environment, i stedet for returnExcep?
 
+        // Return value skal opbevares og returneres til environment.
         throw new ReturnExcep(value);
     }
 
@@ -308,6 +345,16 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
         return null;
 
     }
+
+    private static class RuntimeError extends RuntimeException {}
+
+    //TODO: Currently this just returns the error. They do this in the book because sometimes you want to report an error without throwing. However, we currently don't use this.
+    private RuntimeError error(Token token, String message) {
+        // Add the error to the list of errors in VVPLController and return a new ParseError
+        VVPLController.error(token.line, ErrorTypeStrings.RUNTIME_ERROR, message);
+        return new RuntimeError();
+    }
+
 
     /*
      * CE: Dette havde hun i sin interpreter
