@@ -18,11 +18,12 @@ import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.visitors.*;
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.Token;
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.TokenType;
 
+/** @author: Lasse Arpe Kristensen  */
 public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
 
-    // For at indfange vores output, så det kan testes.
     List<String> output = new ArrayList<String>();
 
+    // The internal state.
     final Environment globals = new Environment(null);
     private Environment env = globals; // Globals can only be changed in the outmost scope.
 
@@ -33,11 +34,9 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
             for (Stmt s : stmts) {
                 execute(s);
             }
-        } catch (Exception e) {
-            // System.out.println("Something went wrong.");
-            // TODO: handle exception
-
-            // Vi skal ikke håndtere runtime exceptions, right? /Lasse
+        } catch (RuntimeError e) {
+            //TODO: Måske implementer noget her? Lige nu tror jeg, at vores error handling fungerer fint uden?
+            // TODO: Se implementeringen nederst i denne fil. 
         }
         return output;
 
@@ -57,9 +56,8 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
             return text;
         }
 
-        // System.out.println(object);
+        System.out.println(object);
 
-        // TODO: Overvej om det er nødvendigt at printe det i vores debug.
         return object.toString();
     }
 
@@ -75,7 +73,6 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
     public Object visitAssignExpr(Assign assign) {
         Object value = evaluate(assign.expr);
         env.assign(assign.ID.lexeme, value);
-        // System.out.println("AssignExpr: "+ value + " to " +assign.ID.lexeme);
         return value;
     }
 
@@ -94,7 +91,7 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
         } else if (literal.token.type == TokenType.FALSE) {
             return false;
         } else {
-            return literal.token.literal; // Retrieve literal value from token.
+            return literal.token.literal; 
         }
     }
 
@@ -122,20 +119,19 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
         Object left = evaluate(binary.left);
         Object right = evaluate(binary.right);
 
-        // System.out.println("Visiting a binary expression");
-
-        // System.out.println("Left: "+left);
-        // System.out.println("right: "+right);
-
-        // System.out.println("operator type: "+binary.operator.type);
-
         switch (binary.operator.type) {
             case SUB:
                 return (double) left - (double) right;
             case PLUS:
                 return (double) left + (double) right;
             case DIV:
+                // if (right.equals(0)) {
+                //     throw error(binary.operator, ": Dividing by zero is not allowed.");
+                // }
+
+                // Overvej at tjekke for om right er 0? Dette håndterer java måske per default. 
                 return (double) left / (double) right;
+
             case MULT:
                 return (double) left * (double) right;
             case NOT_EQUALS:
@@ -188,12 +184,6 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
         // TODO: LA: Overvej om dette er stedet til at evaluere 13 til true?
         // TODO: Vigtigt at teste, om denne funktionalitet virker!
         if (object instanceof Number) {
-            System.err.println("Number check:" + object);
-            // Du havde her skrevet object.equals(13) før. Jeg tror ikke dette virker.
-            // Numbers opbevares som doubles i systemet så du ville sammenligne 13.0 med 13
-            // hvilket ikke er equals så du ville få false.
-            // Sammenligner med 13.0 i stedet. Tror jeg vil virke. Men ved ikke om det er
-            // robust. Sikkert fint? /Lucas
             if (object.equals(13.0)) {
                 return true;
             } else {
@@ -245,7 +235,7 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
             evaluatedArgs.add(evaluate(arg)); //
         }
 
-        // ... RuntimeError not necessary
+        // We assume type and number of args are correct.
 
         // Calls the function with the evaluated args.
         VVPLCallable function = (VVPLCallable) callee;
@@ -254,7 +244,6 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
 
     @Override
     // We assume we recieve a program with no errors.
-
     public Object visitCastExpr(Cast cast) {
 
         if (cast.typeToken.type == BOOL_TYPE) {
@@ -346,6 +335,7 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
 
     }
 
+    // Copied from ParseError in our Parse-section. 
     private static class RuntimeError extends RuntimeException {}
 
     //TODO: Currently this just returns the error. They do this in the book because sometimes you want to report an error without throwing. However, we currently don't use this.
@@ -355,14 +345,4 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
         return new RuntimeError();
     }
 
-
-    /*
-     * CE: Dette havde hun i sin interpreter
-     * 
-     * @Override
-     * public Object visitVar(Variable variable) {
-     * return null;
-     * // return env.get(variable.name);
-     * }
-     */
 }

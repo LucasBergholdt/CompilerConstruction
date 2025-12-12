@@ -1,6 +1,6 @@
-#####################
-# Cast_To conversion
-#####################
+#############################
+# Casting strings to numbers
+#############################
 
 variable a has_type Number is 1;
 variable b has_type Number is 1;

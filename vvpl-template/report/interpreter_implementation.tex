@@ -1,0 +1,47 @@
+Our interpreter evaluates our program by walking the abstract syntax tree. 
+
+sektion skal som min svare på:
+• How do you handle the casting of types?
+• How do you handle functions?
+• What tasks are performed by the interpreter?
+• How and when do you report errors?
+
+\textbf{--KORT SEKTION OM GENEREL IMPLEMENTERING OG INTERPRETERS--} \\
+The interpreter is the section of our program actually evaluating the preprocessed source code and producing the results for the user.
+In essence, this is where the program output is produced. 
+We are interested in executing the statements and evaluating the expressions. 
+
+Importantly, this requires an environment that manages variables and the scope dynamically during program execution. This environment can be considered a runtime equivalent of the beforementioned Symbol Table, and is therefore implemented likewise.
+This stores our runtime binding of variables and represents the internal state of our interpreter. The statements changes the internal state and the expressions evalautes to an \verb|Object|.
+\verb|Object| is an important runtime artifact, as we need to evaluate the actual value later when interpreting statements. 
+The functionality is implemented, as in the scanner and parser, via a new implementation of the visitors.
+
+The fact that in our implementation of VVPL, the semantic analysis has already handled scope and type checking leaves us with much fewer concerns regarding error handling in this section. 
+But importantly, there are some unique concerns for our interpreter. Instead of reporting all errors as in the scanner and parser, by letting the program continue, we need to abort the program immediatly upon a runtime error. 
+Some errors can only be detected at runtime; errors relating to the actual literal value of variables after being evaluated. We have decided to implement the handling of one type of error, namely the conversion of \verb|String| to \verb|Number| after consultation with Sandra.
+A small note is that dividing by zero is handled per default in Java, but refering to the project description, we can assume no such behaviour (\textbf{Synes i det er relevant med "/0"?}). We do a test for this, just to document the behaviour. 
+
+\textbf{--SECTION OMKRING DE MEST RELEVANTE OVERVEJELSER IFT *VORES* INTERPRETER--}
+Other notable things to consider in the implementation of our interpreter has been boolean representation of literals, functions, the call-by-value parameters of functions and casting.
+
+Uddybes:
+
+boolean representation of literals
+
+functions
+
+The important thing is to get back to the top of the call stack with the return value of the function. This is implemented with the help of the \verb|ReturnExcep| class. 
+
+call by value parameters, and not by reference
+
+casting (and 13)
+
+
+Other 
+As our functions does not support closure, we only dis..
+
+
+
+
+\textbf{Testing the interpreter}
+

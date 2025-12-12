@@ -1,0 +1,21 @@
+#################################
+# Remaining untested expressions
+#################################
+
+# This represents a test of all the expressions, 
+# that have not been tested in Sandra's tests.
+
+# BEMÆRK: jeg fandt kun denne, som hun ikke tester?
+
+# Binary expression, bool
+write_to_console 1 GREATER 0;
+
+
+# The above was the only missing i could find.
+# Måske skal denne test så ikke være der? :) /Lasse
+
+# Function 
+# Convered sufficient in her program?
+# Same with statements in general?
+
+# Jeg synes, at hendes egne tests dækker functions og statements meget godt.

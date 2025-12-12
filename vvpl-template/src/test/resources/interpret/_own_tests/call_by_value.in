@@ -1,0 +1,18 @@
+######################
+# Call by value check
+######################
+
+# Here we check if the function parameters are "call by value" - their global value is maintained, after being used in a function
+
+function foo(param has_type Number) {
+    add(param 1); 
+}
+
+variable a has_type Number is 4;    # Global variable 
+
+write_to_console a;     # 4
+
+foo(a);
+
+write_to_console a;     # should still be 4
+
