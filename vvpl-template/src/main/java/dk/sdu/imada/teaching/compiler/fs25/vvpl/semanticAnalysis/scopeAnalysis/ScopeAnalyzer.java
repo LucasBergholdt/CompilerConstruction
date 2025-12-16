@@ -96,6 +96,7 @@ public class ScopeAnalyzer implements ExprVisitor<Void>, StmtVisitor<Void> {
      * Analyses a variable declaration.
      * @param varDecl the variable declaration statement
      */
+    @Override
     public Void visitVarDecl(VarDecl varDecl) {
         try {
             currentEnvironment.define(varDecl.id.lexeme, varDecl.id); 
@@ -117,6 +118,7 @@ public class ScopeAnalyzer implements ExprVisitor<Void>, StmtVisitor<Void> {
      * Analyses an assignment expression.
      * @param assign the assignment expression
      */
+    @Override
     public Void visitAssignExpr(Assign assign) {
         if (!currentEnvironment.contains(assign.ID.lexeme)) {
             VVPLController.error(assign.ID.line, ErrorTypeStrings.SCOPE_ERROR, String.format("Variable %s does not exist in scope or any parent scopes.", assign.ID.lexeme));
@@ -130,6 +132,7 @@ public class ScopeAnalyzer implements ExprVisitor<Void>, StmtVisitor<Void> {
      * Analyses an identifier reference expression.
      * @param identifier the identifier expression
      */
+    @Override
     public Void visitIdentifierExpr(Identifier identifier) {
         if (!currentEnvironment.contains(identifier.id.lexeme)) {
             VVPLController.error(identifier.id.line, ErrorTypeStrings.SCOPE_ERROR, String.format("Variable %s does not exist in scope or any parent scopes.", identifier.id.lexeme));
@@ -142,6 +145,7 @@ public class ScopeAnalyzer implements ExprVisitor<Void>, StmtVisitor<Void> {
      * Analyses a literal expression
      * @param literal the literal expression
      */
+    @Override
     public Void visitLiteralExpr(Literal literal) {
         return null;
     }
@@ -150,6 +154,7 @@ public class ScopeAnalyzer implements ExprVisitor<Void>, StmtVisitor<Void> {
      * Analyses a unary expression
      * @param unary the unary expression
      */
+    @Override
     public Void visitUnaryExpr(Unary unary) {
         analyse(unary.expr);
         return null;
@@ -158,6 +163,7 @@ public class ScopeAnalyzer implements ExprVisitor<Void>, StmtVisitor<Void> {
      * Analyses a binary expression
      * @param binary the binary expression
      */
+    @Override
     public Void visitBinaryExpr(Binary binary) {
         analyse(binary.left);
         analyse(binary.right);
@@ -168,6 +174,7 @@ public class ScopeAnalyzer implements ExprVisitor<Void>, StmtVisitor<Void> {
      * Analyses a logical expression
      * @param logical the logical expression
      */
+    @Override
     public Void visitLogicalExpr(Logical logical) {
         analyse(logical.left);
         analyse(logical.right);
@@ -189,6 +196,7 @@ public class ScopeAnalyzer implements ExprVisitor<Void>, StmtVisitor<Void> {
      * Analyses an expression statement
      * @param exprStmt the expression statement
      */
+    @Override
     public Void visitExprStmt(ExprStmt exprStmt) {
         analyse(exprStmt.expr);
         return null;
@@ -198,6 +206,7 @@ public class ScopeAnalyzer implements ExprVisitor<Void>, StmtVisitor<Void> {
      * Analyses a while statement
      * @param whileStmt the while statement
      */
+    @Override
     public Void visitWhileStmt(WhileStmt whileStmt) {
         analyse(whileStmt.conditional);
         analyse(whileStmt.body);
@@ -208,6 +217,7 @@ public class ScopeAnalyzer implements ExprVisitor<Void>, StmtVisitor<Void> {
      * Analyses an if else statement
      * @param ifStmt the if else statement
      */
+    @Override
     public Void visitIfStmt(IfStmt ifStmt) {
         analyse(ifStmt.cond);
         analyse(ifStmt.thenBlock);
@@ -221,6 +231,7 @@ public class ScopeAnalyzer implements ExprVisitor<Void>, StmtVisitor<Void> {
      * Analyses a print statement
      * @param printStmt the print statement
      */
+    @Override
     public Void visitPrintStmt(PrintStmt printStmt) {
         analyse(printStmt.expr);
         return null;
@@ -232,6 +243,7 @@ public class ScopeAnalyzer implements ExprVisitor<Void>, StmtVisitor<Void> {
      * If one of the non-final statements are a return statement, an error is raised.
      * @param blockStmt the block statement
      */
+    @Override
     public Void visitBlockStmt(BlockStmt blockStmt) {
         SymbolTable oldTable = currentEnvironment;
         currentEnvironment = new SymbolTable(currentEnvironment);
