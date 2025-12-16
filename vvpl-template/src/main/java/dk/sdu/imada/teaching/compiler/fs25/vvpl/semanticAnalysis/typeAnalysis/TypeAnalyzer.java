@@ -11,45 +11,90 @@ import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.TokenType;
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.ErrorTypeStrings;
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.VVPLController;
 
+/**
+ * TypeAnalyzer class that implements the {@link #analyse()} method. 
+ * 
+ * @author Carl-Emil Dons Christensen
+ */
 public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
 
+    /**
+     * Symbol table for variables
+     */
     private SymbolTable currentEnvironment = new SymbolTable();
+
+    /**
+     * Symbol table for functions
+     */
     private FuncSymbolTable functionsTable = new FuncSymbolTable();
+
+    /**
+     * Set by {@link #visitFunctionStmt()} upon declared type, used by {@link #visitReturnStmt()}.
+     */
     private Type currentFuncReturnType = Type.UNKNOWN;
 
+    /**
+     * List of statements to be analysed.
+     */
     private List<Stmt> program;
 
+    /**
+     * Initializes the type analyser with a set of statements to analyse
+     * @param program the list of statements to be analysed
+     */
     public TypeAnalyzer(List<Stmt> program) {
         this.program = new ArrayList<>(program);
     }
 
-    /** @author: Carl-Emil Dons Christensen */
+    /**
+     * Performs type analysis for the entire program.
+     * 
+     * This method analyzes all top-level function declarations first,
+     * and then analyzes the remaining statements in program order.
+     *
+     * Any type-related errors are reported via {@link VVPLController#error}.
+     * @author Carl-Emil Dons Christensen
+     */
     public void analyse() {
-        // Analyse FunctionStmts before any other Stmt
         for (Stmt stmt : program) {
             if (stmt instanceof FunctionStmt) {
                 FunctionStmt functionStmt = (FunctionStmt) stmt;
                 functionsTable.define(functionStmt.name.lexeme, functionStmt);
             }
         }
-
-        // Analyse rest of program
         for (Stmt stmt : program) {
             analyse(stmt);
         }
         return;
     }
 
+    /**
+     * Performs type analysis for a single statement node using the visitor interface.
+     *
+     * @param stmt the statement to analyze
+     */
     private void analyse(Stmt stmt) {
         stmt.accept(this);
     }
 
+    /**
+     * Performs type analysis for a single expression node using the visitor interface.
+     *
+     * @param stmt the expression to analyze
+     * @return type of the expression
+     */
     private Type analyse(Expr expr) {
         return expr.accept(this);
     }
 
-    // #TODO: Add Documentation.
-    /** @author: Carl-Emil Dons Christensen */
+    /**
+     * Converts (i.e. casts) a {@link TokenType} to a {@link Type}.
+     * @param variableType the TokenType to be casted. The following types are allowed as parameters:
+     *  - {@link TokenType#NUMBER_TYPE}
+     *  - {@link TokenType#STRING_TYPE}
+     *  - {@link TokenType#BOOL_TYPE}
+     * @return resulting type
+     * @author: Carl-Emil Dons Christensen */
     public Type convertVariableType(TokenType variableType) {
         return switch (variableType) {
             case NUMBER_TYPE -> Type.NUMBER;
@@ -60,7 +105,12 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
         }
 
     /* ------------------------------------- Identifier Declarations, Assignments and Referencing ------------------------------------- */
-    /** @author: Carl-Emil Dons Christensen */
+    /**
+     * Analyses a variable declaration.
+     * Error is raised if the declared type does not match the type of the given expression
+     * @param varDecl the variable declaration statement
+     * @author Carl-Emil Dons Christensen
+     */
     @Override
     public Void visitVarDecl(VarDecl varDecl) {
         Type exprType = analyse(varDecl.expr); 
@@ -78,7 +128,13 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
         return null;
         }
 
-    /** @author: Carl-Emil Dons Christensen */
+    /**
+     * Analyses an assignment expression.
+     * An error is raised if the type of the new expression does not match the type of the identifier
+     * @param assign the assignment expression
+     * @return the type of the expression; {@link Type#UNKNOWN} if an error has occurred
+     * @author Carl-Emil Dons Christensen
+     */
     @Override
     public Type visitAssignExpr(Assign assign) {
         Type currType = currentEnvironment.get(assign.ID.lexeme);
@@ -96,7 +152,12 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
         }
     }
 
-    /** @author: Carl-Emil Dons Christensen */
+    /**
+     * Analyses an identifier reference expression.
+     * @param identifier the identifier expression
+     * @return the type of the expression; {@link Type#UNKNOWN} if an error has occurred
+     * @author Carl-Emil Dons Christensen
+     */
     @Override
     public Type visitIdentifierExpr(Identifier identifier) {
         return currentEnvironment.get(identifier.id.lexeme);
@@ -104,7 +165,12 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
 
 
     /* ------------------------------------- Expressions ------------------------------------- */
-    /** @author: Carl-Emil Dons Christensen */
+    /**
+     * Analyses a literal expression by casting the {@link TokenType} to a {@link Type}
+     * @param literal the literal expression
+     * @return the type of the literal;
+     * @author Carl-Emil Dons Christensen
+     */
     @Override 
     public Type visitLiteralExpr(Literal literal) {
         switch (literal.token.type) {
@@ -121,7 +187,13 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
         }
     }
 
-    /** @author: Carl-Emil Dons Christensen */
+    /**
+     * Analyses a unary expression
+     * Raises an error if the expression is preceded by NOT whilst not being of type {@link Type#BOOL}
+     * @param unary the unary expression
+     * @return the type of the expression; {@link Type#UNKNOWN} if an error has occured
+     * @author Carl-Emil Dons Christensen
+     */
     @Override 
     public Type visitUnaryExpr(Unary unary) {
         Type exprType = analyse(unary.expr);
@@ -138,7 +210,15 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
         }
     }
 
-    /** @author: Carl-Emil Dons Christensen */
+    /**
+     * Analyses a binary expression.
+     * Raises an error if:
+     *  - arithmetic operations and numerical comparators are used between other than {@link Type#NUMBER}
+     *  - logical comparators are used between two elements not of same type
+     * @param binary the binary expression
+     * @return the type of the expression; {@link Type#UNKNOWN} if an error has occured
+     * @author Carl-Emil Dons Christensen
+     */
     @Override 
     public Type visitBinaryExpr(Binary binary) {
         Type left = analyse(binary.left);
@@ -186,7 +266,13 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
         }
     }
 
-    /** @author: Carl-Emil Dons Christensen */
+    /**
+     * Analyses a logical expression
+     * Raises an error if logical operator is used between other than {@link Type#BOOL}s
+     * @param logical the logical expression
+     * @return the type of the expression; {@link Type#UNKNOWN} if an error has occured
+     * @author Carl-Emil Dons Christensen
+     */
     @Override   
     public Type visitLogicalExpr(Logical logical) {
         Type left = analyse(logical.left);
@@ -211,11 +297,19 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
         }
     }
 
-    /** @author: Carl-Emil Dons Christensen */
+    /**
+     * Analyses a cast expression
+     * Raises an error if the cast is not possible
+     * @param cast the cast expression
+     * @return the type of the resulting expression after being casted; {@link Type#UNKNOWN} if an error has occured
+     * @author Carl-Emil Dons Christensen
+     */
     @Override 
     public Type visitCastExpr(Cast cast) {
-        Type cast_from = analyse(cast.expr);    // Type of expression before cast
-        TokenType cast_to = cast.typeToken.type;    // The type that we want to cast to. 
+        Type cast_from = analyse(cast.expr);
+        TokenType cast_to = cast.typeToken.type;
+
+        
         if (cast_from == Type.UNKNOWN) {
             return Type.UNKNOWN;
         }
@@ -256,14 +350,23 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
     }
 
     /* ------------------------- Statements ---------------------------- */
-    /** @author: Carl-Emil Dons Christensen */
+    /**
+     * Analyses an expression statement
+     * @param exprStmt the expression statement
+     * @author Carl-Emil Dons Christensen
+     */
     @Override
     public Void visitExprStmt(ExprStmt exprStmt) {
         analyse(exprStmt.expr);
         return null;
     }
 
-    /** @author: Carl-Emil Dons Christensen */
+    /**
+     * Analyses a while statement
+     * Raises an error if the conditional is not of type {@link Type#BOOL}
+     * @param whileStmt the while statement
+     * @author Carl-Emil Dons Christensen
+     */
     @Override
     public Void visitWhileStmt(WhileStmt whileStmt) {
         Type condType = analyse(whileStmt.conditional);
@@ -275,7 +378,12 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
         return null;
     }
 
-    /** @author: Carl-Emil Dons Christensen */
+    /**
+     * Analyses an if else statement
+     * Raises an error if the conditional is not of type {@link Type#BOOL}
+     * @param ifStmt the if else statement
+     * @author Carl-Emil Dons Christensen
+     */
     @Override
     public Void visitIfStmt(IfStmt ifStmt) {
         Type condType = analyse(ifStmt.cond);
@@ -290,14 +398,23 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
         return null;
     }
 
-    /** @author: Carl-Emil Dons Christensen */
+    /**
+     * Analyses a print statement
+     * @param printStmt the print statement
+     * @author Carl-Emil Dons Christensen
+     */
     @Override
     public Void visitPrintStmt(PrintStmt printStmt) {
         analyse(printStmt.expr);
         return null;
     }
 
-    /** @author: Carl-Emil Dons Christensen */
+    /**
+     * Analyses a block statement by constructing a new environment for the block,
+     * subsequently analysing each statement within this scope.
+     * @param blockStmt the block statement
+     * @author Carl-Emil Dons Christensen
+     */
     @Override
     public Void visitBlockStmt(BlockStmt blockStmt) {
         SymbolTable oldTable = currentEnvironment;
@@ -361,7 +478,12 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
         return false;
     }
 
-    /** @author: Carl-Emil Dons Christensen, Lucas Bergholdt Hansen */
+    /** 
+     * Analyses a Function Statement by setting the variable {@link #currentFuncReturnType} for {@link #visitReturnStmt()} to use, subsequently analysing the body of the function.
+     * An error is raised if the function body is not guaranteed to return the declared type.
+     * @param functionStmt the function declaration statement
+     * @author: Carl-Emil Dons Christensen, Lucas Bergholdt Hansen
+     */
     @Override
     public Void visitFunctionStmt(FunctionStmt functionStmt) {
 
@@ -376,7 +498,6 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
             currentEnvironment.define(currParam.id.lexeme, paramType);
         }
 
-        // Set currentFuncReturnType for ReturnStmts to use.
         if (functionStmt.typeToken != null) {
             currentFuncReturnType = convertVariableType(functionStmt.typeToken.type);
         }
@@ -396,6 +517,14 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
     }
 
     /** @author: Carl-Emil Dons Christensen, Lucas Bergholdt Hansen */
+    /**
+     * Analyses a return statement by using {@link #currentFuncReturnType} set by {@link #visitFunctionStmt(FunctionStmt)}.
+     * Error is raised if:
+     *  - A non-void type is returned in a void function
+     *  - type of return statement does not match declared type
+     * @param returnStmt the return statement
+     * @author: Carl-Emil Dons Christensen, Lucas Bergholdt Hansen
+     */
     @Override
     public Void visitReturnStmt(ReturnStmt returnStmt) {
         // Handling void returns (return;)
@@ -407,7 +536,6 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
                 return null;
             }
         }
-        
         // Handling non-void returns
         Type exprType = analyse(returnStmt.returnValue);
         if (exprType == Type.UNKNOWN) {
@@ -422,7 +550,13 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
         }
     }
 
-    /** @author: Carl-Emil Dons Christensen */
+      /** 
+     * Analyses a Call Statement.
+     * An error is raised if type of arguments does not match type of declared parameters
+     * @param call the call expression
+     * @return the type of the call expression; {@link Type#UNKNOWN} if an error has occured
+     * @author Carl-Emil Dons Christensen
+     */
     @Override
     public Type visitCallExpr(Call call) {
         FunctionStmt functionStmt = functionsTable.get(call.id.lexeme);
@@ -440,7 +574,6 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
             }
         }
 
-        // Return declared type
         if (functionStmt.typeToken != null) {
             return convertVariableType(functionStmt.typeToken.type);
         }

@@ -39,9 +39,8 @@ public class ScopeAnalyzer implements ExprVisitor<Void>, StmtVisitor<Void> {
      */
     private List<Stmt> program;
     
-
     /**
-     * Initializes the scopeanalyzer with a set of statements to analyse
+     * Initializes the scope analyser with a set of statements to analyse
      * @param program the list of statements to be analysed
      */
     public ScopeAnalyzer(List<Stmt> program) {
@@ -65,7 +64,6 @@ public class ScopeAnalyzer implements ExprVisitor<Void>, StmtVisitor<Void> {
                 stmts.remove(); 
             }
         }
-
         for (Stmt stmt : program) {
             analyse(stmt);
         }
@@ -94,6 +92,9 @@ public class ScopeAnalyzer implements ExprVisitor<Void>, StmtVisitor<Void> {
     
     /**
      * Analyses a variable declaration.
+     * Error is raised if:
+     *  - declared variable already exists in scope 
+     *  - variable is not declared with a value
      * @param varDecl the variable declaration statement
      */
     @Override
@@ -116,6 +117,7 @@ public class ScopeAnalyzer implements ExprVisitor<Void>, StmtVisitor<Void> {
 
     /**
      * Analyses an assignment expression.
+     * An error is raised if variable does not exist in scope
      * @param assign the assignment expression
      */
     @Override
@@ -130,6 +132,7 @@ public class ScopeAnalyzer implements ExprVisitor<Void>, StmtVisitor<Void> {
 
     /**
      * Analyses an identifier reference expression.
+     * An error is raised if variable does not exist in scope.
      * @param identifier the identifier expression
      */
     @Override
@@ -240,7 +243,7 @@ public class ScopeAnalyzer implements ExprVisitor<Void>, StmtVisitor<Void> {
     /**
      * Analyses a block statement by constructing a new environment for the block,
      * subsequently analysing each statement within this scope.
-     * If one of the non-final statements are a return statement, an error is raised.
+     * Raises an error if one of the non-final statements is a return statement.
      * @param blockStmt the block statement
      */
     @Override
@@ -272,10 +275,9 @@ public class ScopeAnalyzer implements ExprVisitor<Void>, StmtVisitor<Void> {
      *  - the function statement occurs in a non-global environment
      *  - the function has already been declared
      *  - the function parameters are named similarly
-     * If no error is raised, the global flag global {@link is_function_env} is set and the body of the function is analysed. 
+     * If no error is raised, the global flag global {@link #is_function_env} is set and the body of the function is analysed. 
      * @param functionStmt the function declaration statement
      */
-
     @Override
     public Void visitFunctionStmt(FunctionStmt functionStmt) {
         if (!currentEnvironment.isGlobal) {
@@ -315,7 +317,7 @@ public class ScopeAnalyzer implements ExprVisitor<Void>, StmtVisitor<Void> {
 
     /**
      * Analyses a return statement.
-     * Reports an error if a return statement occurs outside of a function body.
+     * Error is raised if a return statement occurs outside of a function body.
      * @param returnStmt the return statement
      */
     @Override
