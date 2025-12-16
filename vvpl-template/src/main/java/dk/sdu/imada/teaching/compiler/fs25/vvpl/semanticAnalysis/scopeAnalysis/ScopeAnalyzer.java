@@ -48,8 +48,15 @@ public class ScopeAnalyzer implements ExprVisitor<Void>, StmtVisitor<Void> {
         this.program = new ArrayList<>(program);
     }
 
+    /**
+     * Performs scope analysis for the entire program.
+     * 
+     * This method analyzes all top-level function declarations first,
+     * and then analyzes the remaining statements in program order.
+     *
+     * Any scope-related errors are reported via {@link VVPLController#error}.
+     */
     public void analyse() {
-        // Analyse FunctionStmts before any other Stmt
         ListIterator<Stmt> stmts = program.listIterator();
         while (stmts.hasNext()) {
             Stmt currentStmt = stmts.next();
@@ -59,22 +66,36 @@ public class ScopeAnalyzer implements ExprVisitor<Void>, StmtVisitor<Void> {
             }
         }
 
-        // Analyse rest of program
         for (Stmt stmt : program) {
             analyse(stmt);
         }
         return;
     }
 
+    /**
+     * Performs scope analysis for a single statement node using the visitor interface.
+     *
+     * @param stmt the statement to analyze
+     */
     private void analyse(Stmt stmt) {
         stmt.accept(this);
     }
 
+    /**
+     * Performs scope analysis for a single expression node using the visitor interface.
+     *
+     * @param stmt the expression to analyze
+     */
     private void analyse(Expr expr) {
         expr.accept(this);
     }
 
     /* ------------------------------------- Identifier Declarations, Assignments and Referencing ------------------------------------- */
+    
+    /**
+     * Analyses a variable declaration.
+     * @param varDecl the variable declaration statement
+     */
     public Void visitVarDecl(VarDecl varDecl) {
         try {
             currentEnvironment.define(varDecl.id.lexeme, varDecl.id); 
@@ -92,6 +113,10 @@ public class ScopeAnalyzer implements ExprVisitor<Void>, StmtVisitor<Void> {
         return null;
     }
 
+    /**
+     * Analyses an assignment expression.
+     * @param assign the assignment expression
+     */
     public Void visitAssignExpr(Assign assign) {
         if (!currentEnvironment.contains(assign.ID.lexeme)) {
             VVPLController.error(assign.ID.line, ErrorTypeStrings.SCOPE_ERROR, String.format("Variable %s does not exist in scope or any parent scopes.", assign.ID.lexeme));
@@ -101,6 +126,10 @@ public class ScopeAnalyzer implements ExprVisitor<Void>, StmtVisitor<Void> {
         return null;
     }
 
+    /**
+     * Analyses an identifier reference expression.
+     * @param identifier the identifier expression
+     */
     public Void visitIdentifierExpr(Identifier identifier) {
         if (!currentEnvironment.contains(identifier.id.lexeme)) {
             VVPLController.error(identifier.id.line, ErrorTypeStrings.SCOPE_ERROR, String.format("Variable %s does not exist in scope or any parent scopes.", identifier.id.lexeme));
@@ -109,46 +138,76 @@ public class ScopeAnalyzer implements ExprVisitor<Void>, StmtVisitor<Void> {
     }
 
     /* ------------------------------------- Expressions ------------------------------------- */
-    public Void visitLiteralExpr(Literal literals) {
+    /**
+     * Analyses a literal expression
+     * @param literal the literal expression
+     */
+    public Void visitLiteralExpr(Literal literal) {
         return null;
     }
 
+    /**
+     * Analyses a unary expression
+     * @param unary the unary expression
+     */
     public Void visitUnaryExpr(Unary unary) {
         analyse(unary.expr);
         return null;
     }
-
+    /**
+     * Analyses a binary expression
+     * @param binary the binary expression
+     */
     public Void visitBinaryExpr(Binary binary) {
         analyse(binary.left);
         analyse(binary.right);
         return null;
     }
 
+    /**
+     * Analyses a logical expression
+     * @param logical the logical expression
+     */
     public Void visitLogicalExpr(Logical logical) {
         analyse(logical.left);
         analyse(logical.right);
         return null;
     }
 
+    /**
+     * Analyses a cast expression
+     * @param cast the cast expression
+     */
     @Override
     public Void visitCastExpr(Cast cast) {
         analyse(cast.expr);
         return null;
     }
 
-
     /* ------------------------------------- Statements ------------------------------------- */
+    /**
+     * Analyses an expression statement
+     * @param exprStmt the expression statement
+     */
     public Void visitExprStmt(ExprStmt exprStmt) {
         analyse(exprStmt.expr);
         return null;
     }
     
+    /**
+     * Analyses a while statement
+     * @param whileStmt the while statement
+     */
     public Void visitWhileStmt(WhileStmt whileStmt) {
         analyse(whileStmt.conditional);
         analyse(whileStmt.body);
         return null;
     }
     
+    /**
+     * Analyses an if else statement
+     * @param ifStmt the if else statement
+     */
     public Void visitIfStmt(IfStmt ifStmt) {
         analyse(ifStmt.cond);
         analyse(ifStmt.thenBlock);
@@ -158,11 +217,21 @@ public class ScopeAnalyzer implements ExprVisitor<Void>, StmtVisitor<Void> {
         return null;
     }
     
+    /**
+     * Analyses a print statement
+     * @param printStmt the print statement
+     */
     public Void visitPrintStmt(PrintStmt printStmt) {
         analyse(printStmt.expr);
         return null;
     }
 
+    /**
+     * Analyses a block statement by constructing a new environment for the block,
+     * subsequently analysing each statement within this scope.
+     * If one of the non-final statements are a return statement, an error is raised.
+     * @param blockStmt the block statement
+     */
     public Void visitBlockStmt(BlockStmt blockStmt) {
         SymbolTable oldTable = currentEnvironment;
         currentEnvironment = new SymbolTable(currentEnvironment);
@@ -184,6 +253,17 @@ public class ScopeAnalyzer implements ExprVisitor<Void>, StmtVisitor<Void> {
     }
 
     /* ------------------------------------- Functions Related (visitBlockStmt are also related to this section.) ------------------------------------- */
+
+    /** 
+     * Analyses a Function Statement.
+     * An error is raised if:
+     *  - the function statement occurs in a non-global environment
+     *  - the function has already been declared
+     *  - the function parameters are named similarly
+     * If no error is raised, the global flag global {@link is_function_env} is set and the body of the function is analysed. 
+     * @param functionStmt the function declaration statement
+     */
+
     @Override
     public Void visitFunctionStmt(FunctionStmt functionStmt) {
         if (!currentEnvironment.isGlobal) {
@@ -191,7 +271,6 @@ public class ScopeAnalyzer implements ExprVisitor<Void>, StmtVisitor<Void> {
             return null;
         }
 
-        // Define function
         try {
             functionsTable.define(functionStmt.name.lexeme, functionStmt);
         } 
@@ -199,7 +278,6 @@ public class ScopeAnalyzer implements ExprVisitor<Void>, StmtVisitor<Void> {
             VVPLController.error(functionStmt.name.line, ErrorTypeStrings.SCOPE_ERROR, String.format("Function %s already exist in scope.", functionStmt.name.lexeme));
         }
 
-        // Analyse parameters
         SymbolTable oldTable = currentEnvironment;
         currentEnvironment = new SymbolTable();
 
@@ -215,7 +293,6 @@ public class ScopeAnalyzer implements ExprVisitor<Void>, StmtVisitor<Void> {
             }
         }
 
-        // Analyse body
         is_function_env = true;
         analyse(functionStmt.body);
         is_function_env = false;
@@ -223,6 +300,12 @@ public class ScopeAnalyzer implements ExprVisitor<Void>, StmtVisitor<Void> {
         currentEnvironment = oldTable;
         return null;
     }
+
+    /**
+     * Analyses a return statement.
+     * Reports an error if a return statement occurs outside of a function body.
+     * @param returnStmt the return statement
+     */
     @Override
     public Void visitReturnStmt(ReturnStmt returnStmt) {
         if (!is_function_env) {
@@ -234,6 +317,14 @@ public class ScopeAnalyzer implements ExprVisitor<Void>, StmtVisitor<Void> {
         return null;
     }
 
+    /** 
+     * Analyses a Call Statement.
+     * An error is raised if:
+     *  - the function name is not defined
+     *  - the number of given arguments does not match the number of necessary parameters.
+     * If no error is raised, the arguments are analysed. 
+     * @param call the call expression
+     */
     @Override
     public Void visitCallExpr(Call call) {
         FunctionStmt functionStmt;
