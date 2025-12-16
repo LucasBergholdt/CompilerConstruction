@@ -29,7 +29,7 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
     private FuncSymbolTable functionsTable = new FuncSymbolTable();
 
     /**
-     * Set by {@link #visitFunctionStmt()} upon declared type, used by {@link #visitReturnStmt()}.
+     * Set by {@link #visitFunctionStmt(FunctionStmt)} upon declared type, used by {@link #visitReturnStmt(ReturnStmt)}.
      */
     private Type currentFuncReturnType = Type.UNKNOWN;
 
@@ -479,7 +479,7 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
     }
 
     /** 
-     * Analyses a Function Statement by setting the variable {@link #currentFuncReturnType} for {@link #visitReturnStmt()} to use, subsequently analysing the body of the function.
+     * Analyses a Function Statement by setting the variable {@link #currentFuncReturnType} for {@link #visitReturnStmt(ReturnStmt)} to use, subsequently analysing the body of the function.
      * An error is raised if the function body is not guaranteed to return the declared type.
      * @param functionStmt the function declaration statement
      * @author: Carl-Emil Dons Christensen, Lucas Bergholdt Hansen
