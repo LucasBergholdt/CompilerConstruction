@@ -1,15 +1,63 @@
-Our interpreter is designed using a multi-stage pipeline architecture. An overview of this pipeline can be seen in figure XX.
+\subsubsection{Control flow}
+The architecture of the VVPL interpreter follows a multi-stage pipeline closely aligned with the control flow recommended
+in the project description. Each stage performs a distinct task and depends on the successful completion of the previous stage.
+If errors are detected in a stage, subsequent stages are not executed.
+An overview of the control flow is depicted on figure \ref{fig:architecture}, which shows how different
+components are coordinated during interpretation.
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.5\textwidth]{architecture.png}
+\caption{An illustration of the interpreters control flow}
+\label{fig:architecture}
+\end{figure}
 
-At the center of both the figure and the flow of the interpreter is the VVPLController class which orchestrates the entire control flow.
-The class steers the entire compilation by invoking the classes responsible for each of the stages of the compilation.
-At each stage any discovered errors are reported to the controller which serves as a single centralized error manager
-ensuring that the next stage only occurs if the current stage reported no errors. This gurantees that later stages only operate on well-formed inputs
-preventing cascading errors.
-The use of this design promotes modularity and seperation of concerns, where each component is responsible for a distinct phase of the interpretation
-process. The components can focus on their specific responsibility without having to concern themselves with the details of the other components.
+At the center of both the figure and the architecture is the \texttt{VVPLController} class, which orchestrates the
+entire interpretation process.
+It does this by invoking the classes in the order depicted on the figure and if all things go well
+it outputs the result of the program's execution.
 
-Each of the different components surrounding this VVPLController in the figure are labeled with a number
-indicating the order of execution.
+% Dette afsnit kan måske godt cuttes fra. Hvis vi gør det tilføj eventuelt "Controller recieves VVPL source file" til overstående.
+The controller recieves the VVPL source file as input and passes this to the Scanner, which detects any
+lexical errors as it translates the stream of characters into a sequence of tokens.
+These tokens are passed to the Parser, which by utilizing the grammar rules assembles these tokens into syntactic units
+and builds the abstract syntax tree (AST).
+Once a valid AST has been obtained, the controller initiates semantic analysis in two seperate stages.
+The \texttt{ScopeAnalyzer} checks declaration and scope related constraints and, only if these checks succeed, the
+\texttt{TypeAnalyzer} verifies type correctness.
+Finally, the \texttt{Interpreter} traverses the AST and executes the program.
 
-%Input is VVPL source file.
-%Output is the result of program's execution.
+
+
+Importantly, none of the individual components communicate directly with eachother. 
+As depicted by the arrows in figure \ref{fig:architecture}, they are each invoked by the controller and report their results back to the controller.
+In this way all interaction is mediated by the controller, which avoids tight coupling between the stages.
+The design promotes modularity and seperation of concerns, where each component is responsible for a distinct phase of the interpretation process.
+The components can focus on their specific responsibility without having to concern themselves with the details of the other components.
+This makes the system both easier to extend and test.
+
+
+
+
+\subsubsection{Error handling}
+The architecture naturally supports structured error handling.
+Each of the stages identify errors and notify the \texttt{VVPLController}, which in turn is responsible for 
+handling how these errors are stored and reported to the user.
+This seperation decouples error \emph{detection} from error \emph{reporting}.
+
+Errors are sent to the controller with their line number, an error category from the \texttt{ErrorTypeStrings} class
+and a description. When this happens the \texttt{hadError} flag in the controller is set.
+The controller checks this flag between stages and terminates if any error was detected.
+Halting the interpreter as soon as a single stage fails is part of a fail fast strategy which
+prevents later stages from operating 
+on invalid data which would otherwise cause a cascade of confusing and possibly misleading errors.
+At the same time each individual stage is designed to detect as many errors as possible before returning
+control to the \texttt{VVPLController} in order to provide the user with as comprehensive a report of their errors as possible.
+
+Reported errors are stored as structured \texttt{ErrorMessage} objects rather than plain strings.
+The line number, error type and message is stored in seperate fields which allows for easy post-processing.
+In particular, errors can be sorted by their occurence in the program by having the \texttt{ErrorMessage} class
+implement the \texttt{Comparable} interface, ensuring the user receive feedback in a logical and actionable order.
+
+
+
+\subsubsection{Traversing the AST (visitor pattern)}
