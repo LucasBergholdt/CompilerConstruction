@@ -1,0 +1,9 @@
+TYPE_ERROR, line 11 Type of given argument NUMBER does not match the required type STRING
+TYPE_ERROR, line 11 Type of given argument NUMBER does not match the required type STRING
+TYPE_ERROR, line 12 Type of given argument BOOL does not match the required type STRING
+TYPE_ERROR, line 13 Type of given argument NUMBER does not match the required type STRING
+TYPE_ERROR, line 20 Type NUMBER does not match type of expression (BOOL)
+TYPE_ERROR, line 32 Type of returned value does not match declared return type of function
+TYPE_ERROR, line 36 Type of returned value does not match declared return type of function
+TYPE_ERROR, line 47 Function returnNewNumber must return a value in all code paths
+TYPE_ERROR, line 51 Function returnNewString must return a value in all code paths

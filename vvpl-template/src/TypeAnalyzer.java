@@ -251,7 +251,6 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
         }
     }
 
-
     /* ------------------------- Statements ---------------------------- */
     @Override
     public Void visitExprStmt(ExprStmt exprStmt) {

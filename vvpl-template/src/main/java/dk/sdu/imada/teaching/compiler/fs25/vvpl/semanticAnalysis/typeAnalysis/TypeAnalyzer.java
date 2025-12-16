@@ -1,14 +1,8 @@
 package dk.sdu.imada.teaching.compiler.fs25.vvpl.semanticAnalysis.typeAnalysis;
-import static dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.TokenType.BOOL_TYPE;
-import static dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.TokenType.GREATER_EQUAL;
-import static dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.TokenType.NOT;
-import static dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.TokenType.NUMBER_TYPE;
-import static dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.TokenType.STRING_TYPE;
+import static dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.TokenType.*;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.ListIterator;
-
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.*;
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Stmt.*;
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Expr.*;
@@ -29,10 +23,9 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
         this.program = new ArrayList<>(program);
     }
 
+    /** @author: Carl-Emil Dons Christensen */
     public void analyse() {
-        // Preprocessing: Analyse Function Statements first by going through the top-level program (e.g. not nested blocks) and modify List<Stmt> program by analysing and removing FunctionStmts.
-
-        // Pass 1: add all function declarations to functionsTable to support out of order calling
+        // Analyse FunctionStmts before any other Stmt
         for (Stmt stmt : program) {
             if (stmt instanceof FunctionStmt) {
                 FunctionStmt functionStmt = (FunctionStmt) stmt;
@@ -40,7 +33,7 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
             }
         }
 
-        // Pass 2: Analyse rest of program
+        // Analyse rest of program
         for (Stmt stmt : program) {
             analyse(stmt);
         }
@@ -55,9 +48,8 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
         return expr.accept(this);
     }
 
-    /* ------------------------------------- Expressions / Statements relateret til Symbol Table. ALL COMPLETED -------------------------  */
-    /* Type Error Policy: If new type is not compatible with old type, return the old type. If not possible (e.g. in binary expressions), return Type.UNKNOWN. */
-
+    // #TODO: Add Documentation.
+    /** @author: Carl-Emil Dons Christensen */
     public Type convertVariableType(TokenType variableType) {
         return switch (variableType) {
             case NUMBER_TYPE -> Type.NUMBER;
@@ -67,6 +59,8 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
             };
         }
 
+    /* ------------------------------------- Identifier Declarations, Assignments and Referencing ------------------------------------- */
+    /** @author: Carl-Emil Dons Christensen */
     @Override
     public Void visitVarDecl(VarDecl varDecl) {
         Type exprType = analyse(varDecl.expr); 
@@ -84,30 +78,33 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
         return null;
         }
 
-    @Override
-    public Type visitIdentifierExpr(Identifier identifier) {
-        return currentEnvironment.get(identifier.id.lexeme);
-    }
-
+    /** @author: Carl-Emil Dons Christensen */
     @Override
     public Type visitAssignExpr(Assign assign) {
         Type currType = currentEnvironment.get(assign.ID.lexeme);
         Type exprType = analyse(assign.expr);
 
         if (exprType == Type.UNKNOWN) {
-            // Do not report error if given type is invalid
             return Type.UNKNOWN;
         }
         if (currType == exprType) {
             return currType;   
         }
         else {
-            VVPLController.error(assign.ID.line, ErrorTypeStrings.TYPE_ERROR, "current type of identifier [insert name here] does not match the type of the given expression.");
+            VVPLController.error(assign.ID.line, ErrorTypeStrings.TYPE_ERROR, String.format("current type of %s does not match the type of the given expression.", assign.ID.lexeme));
             return Type.UNKNOWN;
         }
     }
 
-  /* ---------------------------- Expressions, nedefra og op af grammaren. ------------------------ */
+    /** @author: Carl-Emil Dons Christensen */
+    @Override
+    public Type visitIdentifierExpr(Identifier identifier) {
+        return currentEnvironment.get(identifier.id.lexeme);
+    }
+
+
+    /* ------------------------------------- Expressions ------------------------------------- */
+    /** @author: Carl-Emil Dons Christensen */
     @Override 
     public Type visitLiteralExpr(Literal literal) {
         switch (literal.token.type) {
@@ -119,10 +116,12 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
             case STRING:
                 return Type.STRING;
             default:
-                return Type.UNKNOWN;
+                // Unreachable
+                throw new UnsupportedOperationException();
         }
     }
 
+    /** @author: Carl-Emil Dons Christensen */
     @Override 
     public Type visitUnaryExpr(Unary unary) {
         Type exprType = analyse(unary.expr);
@@ -139,6 +138,7 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
         }
     }
 
+    /** @author: Carl-Emil Dons Christensen */
     @Override 
     public Type visitBinaryExpr(Binary binary) {
         Type left = analyse(binary.left);
@@ -157,7 +157,7 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
                     return Type.NUMBER;
                 }
                 else {
-                    VVPLController.error(binary.operator.line, ErrorTypeStrings.TYPE_ERROR, "operator [insert name here] only accepts numbers.");
+                    VVPLController.error(binary.operator.line, ErrorTypeStrings.TYPE_ERROR, String.format("operator %s only accepts numbers.", binary.operator.lexeme));
                     return Type.UNKNOWN;
                 }
             case GREATER:
@@ -168,7 +168,7 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
                     return Type.BOOL;
                 }
                 else {
-                    VVPLController.error(binary.operator.line, ErrorTypeStrings.TYPE_ERROR, "operator [insert name here] only accepts numbers.");
+                    VVPLController.error(binary.operator.line, ErrorTypeStrings.TYPE_ERROR, String.format("operator %s only accepts numbers.", binary.operator.lexeme));
                     return Type.UNKNOWN;
                 }
             case EQUALS:
@@ -177,15 +177,16 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
                     return Type.BOOL;
                 }
                 else {
-                    VVPLController.error(binary.operator.line, ErrorTypeStrings.TYPE_ERROR, "operator [insert name here] can only compare two expressions of the same type.");
+                    VVPLController.error(binary.operator.line, ErrorTypeStrings.TYPE_ERROR, String.format("operator %s can only compare two expressions of the same type.", binary.operator.lexeme));
                     return Type.UNKNOWN;
                 }
             default:
-                // Unreachable #debugger siger noget andet. #TODO return null?
-                return null;
+                // Unreachable
+                throw new UnsupportedOperationException();
         }
     }
 
+    /** @author: Carl-Emil Dons Christensen */
     @Override   
     public Type visitLogicalExpr(Logical logical) {
         Type left = analyse(logical.left);
@@ -201,7 +202,7 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
                     return Type.BOOL;
                 }
                 else {
-                    VVPLController.error(logical.operator.line, ErrorTypeStrings.TYPE_ERROR, "operator [insert name here] only accepts booleans.");
+                    VVPLController.error(logical.operator.line, ErrorTypeStrings.TYPE_ERROR, String.format("operator %s only accepts Bools.", logical.operator.lexeme));
                     return Type.UNKNOWN;
                 }
             default:
@@ -210,10 +211,14 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
         }
     }
 
+    /** @author: Carl-Emil Dons Christensen */
     @Override 
     public Type visitCastExpr(Cast cast) {
         Type cast_from = analyse(cast.expr);    // Type of expression before cast
         TokenType cast_to = cast.typeToken.type;    // The type that we want to cast to. 
+        if (cast_from == Type.UNKNOWN) {
+            return Type.UNKNOWN;
+        }
 
         switch (cast_from) {
             case Type.NUMBER:
@@ -233,7 +238,7 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
                     return Type.NUMBER;
                 }
                 else {
-                    VVPLController.error(cast.typeToken.line, ErrorTypeStrings.TYPE_ERROR, "can only cast string to number.");
+                    VVPLController.error(cast.typeToken.line, ErrorTypeStrings.TYPE_ERROR, "can only cast STRING to NUMBER.");
                     return cast_from;
                 }
             case Type.BOOL:
@@ -245,18 +250,20 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
                     return cast_from;
                 }
             default:
-                // Reachable if current type is UNKNOWN (an error has happened before this clause). 
-                return Type.UNKNOWN;
+                // Unreachable 
+                throw new UnsupportedOperationException();
         }
     }
 
     /* ------------------------- Statements ---------------------------- */
+    /** @author: Carl-Emil Dons Christensen */
     @Override
     public Void visitExprStmt(ExprStmt exprStmt) {
         analyse(exprStmt.expr);
         return null;
     }
 
+    /** @author: Carl-Emil Dons Christensen */
     @Override
     public Void visitWhileStmt(WhileStmt whileStmt) {
         Type condType = analyse(whileStmt.conditional);
@@ -268,6 +275,7 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
         return null;
     }
 
+    /** @author: Carl-Emil Dons Christensen */
     @Override
     public Void visitIfStmt(IfStmt ifStmt) {
         Type condType = analyse(ifStmt.cond);
@@ -282,18 +290,14 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
         return null;
     }
 
+    /** @author: Carl-Emil Dons Christensen */
     @Override
     public Void visitPrintStmt(PrintStmt printStmt) {
-        /* DEPRECATED (PrintStmt can print any type). Only here for reference.
-        Type exprType = analyse(printStmt.expr);
-
-        if (exprType != Type.STRING && exprType != Type.UNKNOWN) {
-            VVPLController.error(printStmt.token.line, ErrorTypeStrings.TYPE_ERROR, "PrintStmt only accepts strings.");
-        }
-        */
+        analyse(printStmt.expr);
         return null;
     }
 
+    /** @author: Carl-Emil Dons Christensen */
     @Override
     public Void visitBlockStmt(BlockStmt blockStmt) {
         SymbolTable oldTable = currentEnvironment;
@@ -307,15 +311,16 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
     }
 
 
-    /* --------------------- Function Related --------------------- */
+    /* ------------------------------------- Functions Related (visitBlockStmt are also related to this section.) ------------------------------------- */
 
+    /** @author: Lucas Bergholdt Hansen */
     public boolean alwaysReturns(Stmt stmt) {
         // CASE 1: Hvis vi ser en return statement ved vi at denne branch/path returnerer.
         // Base case
         if (stmt instanceof ReturnStmt) {
             return true;
         }
-        // CASE 3: If Statement
+        // CASE 2: If Statement
         // For at en if statmenet altid returner kræver det at:
         // 1. Else block eksisterer (ellers kan vi skippe if branch hvis condition ikke er satisfied og så retunerer vi måske ikke)
         // 2. Både then-branch OG else-branch skal returnere.
@@ -334,7 +339,7 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
         }
 
         
-        // CASE 2: Block statement.
+        // CASE 3: Block statement.
         // HVILKEN SOM HELST af dens statements skal returnere. Vi skal bare returnere på et eller andet tidspunkt i en block.
         // En if-else statement har flere blocks. Hver af disse blocks skal have bare ÈN statement der returnerer.
         if (stmt instanceof BlockStmt) {
@@ -356,13 +361,13 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
         return false;
     }
 
+    /** @author: Carl-Emil Dons Christensen, Lucas Bergholdt Hansen */
     @Override
     public Void visitFunctionStmt(FunctionStmt functionStmt) {
 
         SymbolTable oldTable = currentEnvironment;
         currentEnvironment = new SymbolTable();
 
-        // define (potentially shadowing) parameters in new environment.
         List<Param> params = functionStmt.params;
         for (int i = 0; i < params.size(); i++) {
             Param currParam = params.get(i);
@@ -371,38 +376,34 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
             currentEnvironment.define(currParam.id.lexeme, paramType);
         }
 
-        // if function type is declared, tell returnStmts which type this is.
+        // Set currentFuncReturnType for ReturnStmts to use.
         if (functionStmt.typeToken != null) {
             currentFuncReturnType = convertVariableType(functionStmt.typeToken.type);
         }
         else {
             currentFuncReturnType = Type.UNKNOWN;
         }
-
-        // analyse. 
+ 
         analyse(functionStmt.body);
 
-        //: Check that functions with return types actually return
         if (functionStmt.typeToken != null && !alwaysReturns(functionStmt.body)) {
-            VVPLController.error(functionStmt.name.line, ErrorTypeStrings.TYPE_ERROR, "Function must return a value in all code paths");
+            VVPLController.error(functionStmt.name.line, ErrorTypeStrings.TYPE_ERROR, String.format("Function %s must return a value in all code paths", functionStmt.name.lexeme));
         }
 
-        // ---- reset ----
         currentEnvironment = oldTable;
         currentFuncReturnType = Type.UNKNOWN;
         return null;
     }
 
+    /** @author: Carl-Emil Dons Christensen, Lucas Bergholdt Hansen */
     @Override
     public Void visitReturnStmt(ReturnStmt returnStmt) {
-
         // Handling void returns (return;)
         if (returnStmt.returnValue == null) {
-            // if current function has defined type then it should not be able to just return with no value
             if (currentFuncReturnType != Type.UNKNOWN) {
-                VVPLController.error(returnStmt.returnKeyword.line, ErrorTypeStrings.TYPE_ERROR, "Function with return type must return a value.");
-            } else {
-                // Void function can return with no value so this is fine.
+                VVPLController.error(returnStmt.returnKeyword.line, ErrorTypeStrings.TYPE_ERROR, "Function is not a void function.");
+            } 
+            else {
                 return null;
             }
         }
@@ -412,41 +413,37 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
         if (exprType == Type.UNKNOWN) {
             return null;
         }
-        
-        if (exprType != currentFuncReturnType) {
+        else if (exprType != currentFuncReturnType) {
             VVPLController.error(returnStmt.returnKeyword.line, ErrorTypeStrings.TYPE_ERROR, "Type of returned value does not match declared return type of function");
             return null;
-        } else {
+        } 
+        else {
             return null;
         }
-
     }
 
+    /** @author: Carl-Emil Dons Christensen */
     @Override
     public Type visitCallExpr(Call call) {
         FunctionStmt functionStmt = functionsTable.get(call.id.lexeme);
 
-        // ------------------ Fetch parameters ------------------
         List<Param> params = functionStmt.params;
         List<Expr> args = call.arguments;
 
-        // Check om typen af arguments matcher typen af erklærede function parameters
         for (int i = 0; i < args.size(); i++) {
             Type argumentType = analyse(args.get(i));
-            
             Type paramType = convertVariableType(params.get(i).typeToken.type);
             
             if (argumentType != paramType) {
                 VVPLController.error(call.id.line, ErrorTypeStrings.TYPE_ERROR, String.format("Type of given argument %s does not match the required type %s", argumentType, paramType));
-                // DO not return. Report all argument type errors.
+                // Do not return. Report all argument type errors.
             }
         }
 
-        // Function has return type declared.
+        // Return declared type
         if (functionStmt.typeToken != null) {
             return convertVariableType(functionStmt.typeToken.type);
         }
-        // Function is a void function
         else {
             return Type.UNKNOWN;
         }

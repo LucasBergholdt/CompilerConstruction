@@ -1,40 +1,60 @@
 package dk.sdu.imada.teaching.compiler.fs25.vvpl.semanticAnalysis.scopeAnalysis;
 
+import dk.sdu.imada.teaching.compiler.fs25.vvpl.semanticAnalysis.SymbolTableException;
 import java.util.HashMap;
 import java.util.Map;
-
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.Token;
 
+/**
+* Symbol Table used in scope analysis for mapping symbols to their token.
+* @author Carl-Emil Dons Christensen
+*/
 public class SymbolTable {
-    private Map<String, Token> symbols = new HashMap<>();       // Maps a name/identifier (=symbol) their Token. #OBS: Vi anvender aldrig denne Token. Evt blot lav LinkedList<String> i stedet for et Table.
+    private Map<String, Token> symbols = new HashMap<>();
     public SymbolTable outer = null;
     public Boolean isGlobal = false;
 
-    /* Constructors */
-
-    // Used for functions. Not global, no outer environment.
-    public SymbolTable() {
-    }
-
-    // Used in global scope only.
+    /**
+     * Creates a new symbol table with no enclosing scope and marks it as the global scope. 
+     * Only used once.
+     */
     public SymbolTable(Boolean isGlobal) {
         this.isGlobal = isGlobal;
     }
 
-    // Used for nested blocks.
+    /**
+     * Creates a new symbol table with an enclosing scope.
+     * Used for all nested blocks except blocks being used in a FunctionStmt.
+     */
     public SymbolTable(SymbolTable outer) {
         this.outer = outer;
     }
 
-    /* Methods */
+    /**
+     * Creates a new symbol table with no enclosing scope. 
+     * Only used for blocks directly used in a FunctionStmt.
+     */
+    public SymbolTable() {
+    }
+
+
+    /**
+     * Defines a new mapping in the symbol table
+     * @param symbol name of symbol to be stored
+     * @param token token to be associated with symbol
+     */
     public void define(String symbol, Token token) throws SymbolTableException {
         if (contains(symbol)) {
-            throw new SymbolTableException();
-            // Return error if Symbol is in current or any outer scope. Redefinition of symbol is not allowed unless in function.
+            throw new SymbolTableException("Variable is already defined in scope.");
         }
         symbols.put(symbol, token);
     }
 
+    /**
+     * Assigns a token to an existing symbol
+     * @param symbol name of symbol to assign
+     * @param token token to associate with the symbol
+     */
     public void assign(String symbol, Token token) throws SymbolTableException {
         if (symbols.containsKey(symbol)) {
             symbols.put(symbol, token);
@@ -45,9 +65,14 @@ public class SymbolTable {
             outer.assign(symbol, token);
             return;
             }
-        throw new SymbolTableException();
+        throw new SymbolTableException("Variable is not defined in scope.");
     }
 
+    /**
+     * Returns the token associated with the given symbol
+     * @param symbol symbol name to look up
+     * @return the associated token
+     */
     public Token get(String symbol) throws SymbolTableException {
     if (symbols.containsKey(symbol)) {
         return symbols.get(symbol);
@@ -56,9 +81,14 @@ public class SymbolTable {
     if (outer != null) {
         return outer.get(symbol);
     }
-    throw new SymbolTableException();
-}
+    throw new SymbolTableException("Variable is not defined in scope.");
+    }
 
+    /**
+     * Checks if symbol is in the current scope
+     * @param symbol symbol name to look up
+     * @return true if symbol is in scope, otherwise false
+     */
     public boolean contains(String symbol) {
         if (symbols.containsKey(symbol)) {
             return true;
@@ -71,31 +101,3 @@ public class SymbolTable {
         return false;
     }
 }
-
-class SymbolTableException extends Exception {
-    // TODO create constructor with string for cause
-}
-
-
-
-
-
-/* DEPRECATED: Only here for reference. */
-/*
-class Attributes {
-    public final TokenType type;
-    public final Object literal;
-
-    // Constructs attributes given a Token.
-    public Attributes(Token token) {
-        this.type = token.type;
-        this.literal = token.literal;
-    }
-
-    // C-E: Unødvendigt for nu. Ordinary constructor for the sake of it. Can be deleted.
-    public Attributes(TokenType type, Object literal) {
-    this.type = type;
-    this.literal = literal;
-    }
-}
-*/
