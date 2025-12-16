@@ -316,7 +316,7 @@ public class ScopeAnalyzer implements ExprVisitor<Void>, StmtVisitor<Void> {
     }
 
     /**
-     * Analyses a return statement.
+     * Analyses a return statement by using {@link #is_function_env} set by {@link #visitFunctionStmt(FunctionStmt)}.
      * Error is raised if a return statement occurs outside of a function body.
      * @param returnStmt the return statement
      */
