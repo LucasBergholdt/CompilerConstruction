@@ -29,9 +29,8 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
     private Environment env = globals;
 
     public List<String> interpret(List<Stmt> stmts) {
-        // execute
+
         try {
-            // System.out.println("Lets try and execute.");
             for (Stmt s : stmts) {
                 execute(s);
             }
@@ -316,9 +315,9 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
         throw new ReturnExcep(value);
     }
 
-    @Override
     /*Take compile time representation (node) and convert to runtime
-      interpretation. (stores the function in the environment) */ 
+    interpretation. (stores the function in the environment) */ 
+    @Override
     public Void visitFunctionStmt(FunctionStmt functionStmt) {
         VVPLFunction function = new VVPLFunction(functionStmt);
         env.define(functionStmt.name.lexeme, function);
