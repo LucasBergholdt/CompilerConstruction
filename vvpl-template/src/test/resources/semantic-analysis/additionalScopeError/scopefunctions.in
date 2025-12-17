@@ -12,12 +12,12 @@ function laterDefinedFunction() {
 ################################
 
 {
-    function definedOutsideGlobal1() {   #error
+    function definedOutsideGlobal1() {                  # error
     }
 }
 
 if (10 EQUALS 4) {
-    function definedOutsideGlobal2() {   #error
+    function definedOutsideGlobal2() {                  # error
     }
 	write_to_console 4;
 }
@@ -26,14 +26,14 @@ if (10 EQUALS 4) {
 # return statement outside of function
 ################################
 
-return 50; #error
+return 50;                                              # error
 
 ################################
 # return statement as non-final statement in block
 ################################
 
 function nonFinalReturnStmt() { 
-    return 50;  #error
+    return 50;                                          # error
     write_to_console "Unreachable";
 }
 
@@ -47,7 +47,7 @@ variable y has_type Number is 50;
 function printAdd(x has_type Number, y has_type Number) {
     write_to_console add(x y);
 }
-printAdd(10, 10); # should return 20, not 100.
+printAdd(10, 10);                                       # should return 20, not 100.
 
 ################################
 # Variables in function block
@@ -57,12 +57,12 @@ variable a has_type Number is 50;
 variable b has_type Number is 50;
 
 function return1000() {
-    variable b has_type Number is 1000; # should shadow variable outside of function
+    variable b has_type Number is 1000;                 # shadows variable outside of function
     
-    write_to_console a; #error. outside of scope
-    write_to_console b; #should print 1000, not 50
+    write_to_console a;                                 # error. outside of scope
+    write_to_console b;                                 # prints shadowed value of 1000, not 50
 }
-write_to_console return1000();  #should print 1000, not 50 as defined outside of scope.
+write_to_console return1000();
 
 ################################
 # uniqueness of function name
@@ -71,7 +71,7 @@ write_to_console return1000();  #should print 1000, not 50 as defined outside of
 function myFunction() {
 }
 
-function myFunction() {     #error
+function myFunction() {                                 # error
 }
 
 ################################
@@ -81,13 +81,20 @@ function myFunction() {     #error
 function threeParams(a has_type String, b has_type String, c has_type String) {
 }
 
-threeParams("hello", "no"); #error
+threeParams("hello", "no");                             # error
+
+################################
+# function parameter duplicates
+################################
+
+function duplicateParams(a has_type Number, a has_type String) {    # error
+}
 
 ################################
 # unknown function call
 ################################
 
-unknown(); #error
+unknown();                                              # error
 
 ################################
 # Calling a function inside a function or a block.

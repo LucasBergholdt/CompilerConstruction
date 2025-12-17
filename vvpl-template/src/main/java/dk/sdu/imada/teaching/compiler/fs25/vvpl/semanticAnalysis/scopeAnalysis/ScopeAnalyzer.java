@@ -256,6 +256,7 @@ public class ScopeAnalyzer implements ExprVisitor<Void>, StmtVisitor<Void> {
             // If any returnstatement is non-final statement of block, return error
             if (blockStmt.stmts.get(i) instanceof ReturnStmt && i != num_statements - 1 ) {
                 VVPLController.error(((ReturnStmt)blockStmt.stmts.get(i)).returnKeyword.line, ErrorTypeStrings.SCOPE_ERROR, "Return statement must be last statement of block.");
+                currentEnvironment = oldTable;
                 return null;
             }
             else {
@@ -303,6 +304,7 @@ public class ScopeAnalyzer implements ExprVisitor<Void>, StmtVisitor<Void> {
             } 
             catch (SymbolTableException e) {
                 VVPLController.error(paramToken.line, ErrorTypeStrings.SCOPE_ERROR, String.format("Parameter %s has already been defined.", paramToken.lexeme));
+                currentEnvironment = oldTable;
                 return null;
             }
         }

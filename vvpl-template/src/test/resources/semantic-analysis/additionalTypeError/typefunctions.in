@@ -8,16 +8,16 @@ function printStrings(x has_type String, y has_type String) {
 }
 
 printStrings("Print me!", "Also me!");
-printStrings(5, 10);                        #error
-printStrings(true, "Greetings");            #error
-printStrings("Onion", 10);                  #error
+printStrings(5, 10);                                # error
+printStrings(true, "Greetings");                    # error
+printStrings("Onion", 10);                          # error
 
 ################################
 # Type checking declarations
 ################################
 
 function invalidFunction() {
-    variable a has_type Bool is 50;         #error
+    variable a has_type Bool is 50;                 # error
 }
 
 ################################
@@ -29,11 +29,11 @@ function returnString() has_type String{
 }
 
 function returnNumber() has_type Number{
-    return "I don't feel very validated...";    #error
+    return "I don't feel very validated...";        # error
 }
 
 function noReturnStmt() {
-    return "We cannot return a string in a void function.";     #error
+    return "We cannot return a string in a void function.";     # error
 }
 
 function voidReturnt() {
@@ -44,11 +44,11 @@ function voidReturnt() {
 # Type checking that function must return declared value
 ################################
 
-function returnNewNumber() has_type Number{                             #error. function does not return number.
+function returnNewNumber() has_type Number{                     # error. function does not return number.
     write_to_console "Function has no return statement. Oops!";     
 }
 
-function returnNewString() has_type String{                             #error. function has the option to not return a value
+function returnNewString() has_type String{                     # error. function has the option to not return a value
     if (10 EQUALS 5) {
         return "Hello.";
     }

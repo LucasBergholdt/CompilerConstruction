@@ -2,7 +2,7 @@
 # declaration without value
 ################################
 
-variable noVal has_type Number; #error
+variable noVal has_type Number;                     # error
 
 ################################
 # variables and scopes
@@ -10,15 +10,15 @@ variable noVal has_type Number; #error
 
 variable outer has_type Number is 50;
 
-variable outer has_type Number is 100; #error. variables can only be declare once in scope.
+variable outer has_type Number is 100;              # error. variables can only be declare once in scope.
 
 {
     variable inner has_type String is "Inner";
 
-    write_to_console outer;                 #allowed. var can access outer scope.
-    outer is 100;                           #allowed. var can reassign.
-    variable outer has_type Number is 100;  #error. Attempting to shadow variable from outer scope.
+    write_to_console outer;                         # allowed. var can access outer scope.
+    outer is 100;                                   # allowed. var can reassign.
+    variable outer has_type Number is 100;          # error. Attempting to shadow variable from outer scope.
 }
 
-write_to_console inner; #error. out of scope.
-write_to_console outer; #allowed. should print 100 (assigned value in inner scope)
+write_to_console inner;                             # error. out of scope.
+write_to_console outer;                             # prints 100 (assigned value in inner scope)

@@ -44,15 +44,6 @@ public class TestUtil {
 
                 VVPLController controller = new VVPLController();
                 List<String> actualLines = controller.execute(inputFile);
-
-                // C-E debug
-                // FileWriter writer = new FileWriter("output.txt"); 
-                // for(String str: actualLines) {
-                // writer.write(str + System.lineSeparator());
-                // }
-                // writer.close();
-
-
                 List<String> expectedLines = TestUtil.getExpectedLines(fileName, dir);
 
                 for (int i = 0; i < expectedLines.size(); i++) {
