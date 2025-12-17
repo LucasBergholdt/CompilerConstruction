@@ -3,9 +3,10 @@ package dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.visitors;
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Stmt.*;
 
 /**
+ * Visitor interface for traversing and operating on statement AST nodes.
+ * @param <T> the return type of the visitor methods
  * @version CompilerConstruction FT 2025
  */
-
 public interface StmtVisitor<T> {
 
     T visitExprStmt(ExprStmt exprStmt);

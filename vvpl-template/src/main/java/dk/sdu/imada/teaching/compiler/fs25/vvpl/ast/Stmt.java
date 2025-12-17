@@ -4,12 +4,20 @@ import java.util.List;
 
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.visitors.StmtVisitor;
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.Token;
+
 /**
- * @author Sandra Greiner
+ * Abstract base class for all statement AST nodes.
+ * Each subclass represents a specific kind of statement and implemets the 
+ * accept method by redirecting the call to the proper visitor method.
  * @version CompilerConstruction FT 2025
  */
-
 public abstract class Stmt {
+    /**
+     * Accepts a visitor that implements operations for this statement node.
+     * @param <T> the return type of the visitor
+     * @param visitor the visitor to accept
+     * @return the result of the visitor's operation
+     */
     public abstract <T> T accept(StmtVisitor<T> visitor);
 
 

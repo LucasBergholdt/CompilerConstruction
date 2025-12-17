@@ -1,6 +1,11 @@
 package dk.sdu.imada.teaching.compiler.fs25.vvpl;
 
-/** @author: Lucas Bergholdt Hansen */
+/** 
+ * This class represents an error message with line number, error type and message.
+ * It implements the Comparable interface for efficient sorting and overrides the 
+ * toString method for easy reporting in the format: <error-type>, line <lineNo> <message>
+ * @author: Lucas Bergholdt Hansen 
+ */
 public class ErrorMessage implements Comparable<ErrorMessage> {
     int line;
     String errorType;

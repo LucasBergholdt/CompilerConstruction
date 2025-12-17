@@ -6,13 +6,22 @@ import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.visitors.ExprVisitor;
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.Token;
 
 /**
+ * Abstract base class for all expression AST nodes.
+ * Each subclass represents a specific kind of expression and implemets the 
+ * accept method by redirecting the call to the proper visitor method.
  * @version CompilerConstruction FT 2025
  */
 public abstract class Expr {
+    /**
+     * Accepts a visitor that implements operations for this expression node.
+     * @param <T> the return type of the visitor
+     * @param visitor the visitor to accept
+     * @return the result of the visitor's operation
+     */
     public abstract <T> T accept(ExprVisitor<T> visitor);
 
     
-    // --------- Nested Expr Classes -------------
+    // ------------- Nested Expr Classes -------------
 
     /** @author: Carl-Emil Dons Christensen */
     public static class Assign extends Expr {

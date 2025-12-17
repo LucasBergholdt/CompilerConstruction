@@ -5,6 +5,9 @@ package dk.sdu.imada.teaching.compiler.fs25.vvpl.scan;
  * @version CompilerConstruction FT 2025
  */
 
+/**
+ * The class representing tokens.
+ */
 public class Token {
 
     public final TokenType type;

@@ -2,9 +2,10 @@ package dk.sdu.imada.teaching.compiler.fs25.vvpl.ast;
 
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.Token;
 
-/** @author Lucas Bergholdt Hansen 
- * This class is used to store the parameters of a function.
- * See class FunctionStmt in Stmt.java.
+/** 
+ * This class is used to store the parameters of a 
+ * function in the {@link Stmt.FunctionStmt} node.
+ * @author Lucas Bergholdt Hansen 
 */
 public class Param {
     public final Token id;

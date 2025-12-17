@@ -17,19 +17,37 @@ import static dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.TokenType.*;
 
 
 /**
+ * The Parser class performs syntactic analysis of a VVPL program.
+ * Consumes a list of {@link Token}s and constructs an AST consiting
+ * of {@link Expr} and {@link Stmt} nodes.
+ * 
  * @version CompilerConstruction FT 2025
  */
-
 public class Parser {
 
+    /**
+     * The input list of tokens produced by the scanner.
+     */
     private List<Token> tokens;
+
+    /**
+     * Index of current token being parsed.
+     */
     int current = 0;
 
+    /**
+     * Constructs a new parser for the given token stream.
+     */
     public Parser(List<Token> tokens) {
         this.tokens = tokens;
     }
 
-    /** @author: Carl-Emil Dons Christensen */
+    /**
+     * Parses the complete token stream, by repeatedly parsing top-level declarations until EOF token.
+     * Recovers from syntax errors to allow continued parsing.
+     * @return a list of statements forming the AST
+     * @author: Carl-Emil Dons Christensen 
+     */
     public List<Stmt> parse() {
         List<Stmt> statements = new ArrayList<>();
         
@@ -47,7 +65,11 @@ public class Parser {
 
     // ------------------ decl := funcDecl | varDecl | statement --------------------
 
-    /** @author: Carl-Emil Dons Christensen */
+    /**
+     * Parses the 'decl' grammar rule.
+     * @return the parsed statement
+     * @author: Carl-Emil Dons Christensen 
+     */
     private Stmt decl() {
         if (match(FUNCTION)) {
             return function();
@@ -58,7 +80,11 @@ public class Parser {
         }
     }
 
-    /** @author: Carl-Emil Dons Christensen, Lucas Bergholdt Hansen */
+    /**
+     * Parses the 'varDecl' grammar rule.
+     * @return a {@link Stmt.VarDecl} AST node
+     * @author: Carl-Emil Dons Christensen, Lucas Bergholdt Hansen
+     */
     private Stmt varDecl() {
         // When entering this method "variable" has already been consumed by match in decl()
         
@@ -83,7 +109,11 @@ public class Parser {
         return new Stmt.VarDecl(id, typeToken, expr);
     }
 
-    /** @author: Carl-Emil Dons Christensen */
+    /**
+     * Parses the 'statement' grammar rule.
+     * @return the parsed statement.
+     * @author: Carl-Emil Dons Christensen
+     */
     private Stmt statement() {
         if (match(PRINT)) return printStmt();
 
@@ -98,7 +128,11 @@ public class Parser {
         return exprStmt();
     }
 
-    /** @author: Carl-Emil Dons Christensen */
+    /**
+     * Parses the 'printStmt' grammar rule
+     * @return a {@link Stmt.PrintStmt} AST node.
+     * @author: Carl-Emil Dons Christensen
+     */
     private Stmt printStmt() {
         Expr value = expression();
         Token printToken = previous();
@@ -106,7 +140,11 @@ public class Parser {
         return new Stmt.PrintStmt(value, printToken);
     }
 
-    /** @author: Carl-Emil Dons Christensen */
+    /**
+     * Parses the 'ifStmt' grammar rule
+     * @return a {@link Stmt.IfStmt} AST node
+     * @author: Carl-Emil Dons Christensen
+     */
     private Stmt ifStmt() {
         Token ifToken = previous();
         consume(LEFT_PAREN, "Expected '('");
@@ -122,7 +160,11 @@ public class Parser {
         return new Stmt.IfStmt(ifToken, cond, thenBranch, elseBranch);
     }
 
-    /** @author: Carl-Emil Dons Christensen */
+    /** 
+     * Parses the 'whileStmt' grammar rule
+     * @return a {@link Stmt.WhileStmt} AST node
+     * @author: Carl-Emil Dons Christensen 
+     */
     private Stmt whileStmt() {
         Token whileToken = previous();
         consume(LEFT_PAREN, "Expected '('");
@@ -132,7 +174,11 @@ public class Parser {
         return new Stmt.WhileStmt(whileToken, cond, body);
     }
 
-    /** @author: Carl-Emil Dons Christensen, Lucas Bergholdt Hansen */
+    /** 
+     * Parses the 'block' grammar rule.
+     * @return a list of statements inside the block
+     * @author: Carl-Emil Dons Christensen, Lucas Bergholdt Hansen 
+     */
     private List<Stmt> block() {
         List<Stmt> statements = new LinkedList<>();
         
@@ -145,7 +191,11 @@ public class Parser {
         return statements;
     }
 
-    /** @author: Lucas Bergholdt Hansen */
+    /** 
+     * Parses the 'returnStmt' grammar rule.
+     * @return a {@link Stmt.ReturnStmt} AST node
+     * @author: Lucas Bergholdt Hansen 
+     */
     private Stmt returnStmt() {
         Token returnKeyword = previous(); // Kept for later error reporting
         // Optional return value:
@@ -158,7 +208,11 @@ public class Parser {
         return new Stmt.ReturnStmt(returnKeyword, value);
     }
 
-    /** @author: Carl-Emil Dons Christensen */
+    /** 
+     * Parses the 'exprStmt' grammar rule.
+     * @return a {@link Stmt.ExprStmt} AST node
+     * @author: Carl-Emil Dons Christensen 
+     */
     private Stmt exprStmt() {
         Expr expr = expression();
         consume(SEMICOLON, "Expected ';'");
@@ -166,12 +220,21 @@ public class Parser {
         return new Stmt.ExprStmt(expr);
     }
 
-    /** @author: Carl-Emil Dons Christensen */
+    /** 
+     * Parses the 'expr' grammar rule
+     * @return the parsed expression
+     * @author: Carl-Emil Dons Christensen 
+     */
     private Expr expression() {
         return assignment();
     }
 
-    /** @author: Carl-Emil Dons Christensen, Lucas Bergholdt Hansen */
+    /** 
+     * Parses the 'assignment' grammar rule
+     * Throws an error if trying to assign something other than an identifier.
+     * @return the parsed expression.
+     * @author: Carl-Emil Dons Christensen, Lucas Bergholdt Hansen 
+     */
     private Expr assignment() {
         Expr expr = logicalOr();
 
@@ -190,7 +253,11 @@ public class Parser {
         return expr;
     }
 
-    /** @author: Carl-Emil Dons Christensen */
+    /** 
+     * Parses the 'logicalOr' grammar rule
+     * @return the parsed expression.
+     * @author: Carl-Emil Dons Christensen
+     */
     private Expr logicalOr() {
         Expr expr = logicalAnd();
 
@@ -202,7 +269,11 @@ public class Parser {
         return expr;
     }
 
-    /** @author: Carl-Emil Dons Christensen */
+    /** 
+     * Parses the 'logicalAnd' grammar rule
+     * @return the parsed expression.
+     * @author: Carl-Emil Dons Christensen
+     */
     private Expr logicalAnd() {
         Expr expr = equality();
 
@@ -214,7 +285,11 @@ public class Parser {
         return expr;
     }
 
-    /** @author: Carl-Emil Dons Christensen */
+    /** 
+     * Parses the 'equality' grammar rule
+     * @return the parsed expression.
+     * @author: Carl-Emil Dons Christensen
+     */
     private Expr equality() {
         Expr expr = compr();
 
@@ -227,7 +302,11 @@ public class Parser {
         return expr;
     }
 
-    /** @author: Carl-Emil Dons Christensen */
+    /** 
+     * Parses the 'compr' grammar rule
+     * @return the parsed expression.
+     * @author: Carl-Emil Dons Christensen
+     */
     private Expr compr() {
         Expr expr = term();
 
@@ -240,7 +319,11 @@ public class Parser {
         return expr;
     }
 
-    /** @author: Carl-Emil Dons Christensen */
+    /** 
+     * Parses the 'term' grammar rule
+     * @return the parsed expression.
+     * @author: Carl-Emil Dons Christensen
+     */
     private Expr term () {
         if (match(SUB, PLUS, MULT, DIV)) {
             Token operator = previous();
@@ -254,7 +337,11 @@ public class Parser {
         }
     }
 
-    /** @author: Carl-Emil Dons Christensen */
+    /** 
+     * Parses the 'unary' grammar rule
+     * @return the parsed expression.
+     * @author: Carl-Emil Dons Christensen
+     */
     private Expr unary () {
         if (match(NOT, MINUS)) {
             Token operator = previous();
@@ -265,7 +352,12 @@ public class Parser {
         }
     }
 
-    /** @author: Lucas Bergholdt Hansen */
+    /** 
+     * Parses the 'call' grammar rule
+     * Throws an error if trying to call something other than an identifier.
+     * @return the parsed expression.
+     * @author: Lucas Bergholdt Hansen 
+     */
     private Expr call() {
         Expr expr = primary();
 
@@ -289,7 +381,11 @@ public class Parser {
         return expr;
     }
 
-    /** @author: Lucas Bergholdt Hansen */
+    /** 
+     * Parses the 'args' grammar rule
+     * @return a list of argument expressions.
+     * @author: Lucas Bergholdt Hansen 
+     */
     private List<Expr> args() {
         List<Expr> arguments = new ArrayList<>();
         arguments.add(expression()); // handling first "expr" in grammar
@@ -301,7 +397,11 @@ public class Parser {
         return arguments;
     }
 
-    /** @author: Lucas Bergholdt Hansen */
+    /** 
+     * Parses the 'function' grammar rule
+     * @return a {@link Stmt.FunctionStmt} AST node.
+     * @author: Lucas Bergholdt Hansen
+     */
     private Stmt function() {
         Token name = consume(IDENTIFIER, "Expected function name");
         consume(LEFT_PAREN, "Expected '('");
@@ -325,7 +425,11 @@ public class Parser {
         return new Stmt.FunctionStmt(name, params, typeToken, body);
     }
 
-    /** @author: Lucas Bergholdt Hansen */
+    /** 
+     * Parses the 'params' grammar rule
+     * @return a list of function parameters as {@link Param} objects.
+     * @author: Lucas Bergholdt Hansen 
+     */
     private List<Param> params() {
         // Function parameters are stored as a list of Param objects.
         List<Param> params = new ArrayList<>();
@@ -340,9 +444,11 @@ public class Parser {
         return params;
     }
 
-    /** @author: Lucas Bergholdt Hansen 
-     * This method handles the cast that might appear before a primary
-    */
+    /** 
+     * Parses the cast that might appear in the 'primary' grammar rule.
+     * @return the parsed expression, optionally wrapped in an {@link Expr.Cast} node.
+     * @author: Lucas Bergholdt Hansen 
+     */
     private Expr primary() {
         // Check if cast is specified
         if (match(CAST)) {
@@ -358,8 +464,11 @@ public class Parser {
         }
     }
 
-    /** @author: Carl-Emil Dons Christensen, Lucas Bergholdt Hansen 
-     * Handles the rest of the 'primary' production rule
+    /**
+    * Parses the non-cast part of the 'primary' grammar rule.
+    * End of recursion, if we can't match token throw an error.
+    * @return the parsed primary expression
+    * @author: Carl-Emil Dons Christensen, Lucas Bergholdt Hansen
     */
     private Expr primaryNoCast() {
         Expr expr;
@@ -393,15 +502,26 @@ public class Parser {
     // -------------------------- Helper Functions -------------------------
     /** @author: Carl-Emil Dons Christensen, Lucas Bergholdt Hansen */
 
+    /**
+     * @return the current token
+     */
     Token peek() {
         return tokens.get(current);
     }
 
+    /**
+     * Checks whether parser has reached end of token stream.
+     * @return true if type of current token is EOF, otherwise false
+     */
     private boolean isAtEnd() {
         return peek().type == EOF;
     }
 
-    // Checks if current token has any of the given types. If so consume it and return true. Otherwise return false.
+    /**
+     * Attempts to match and consume one of the given token types.
+     * @param types the different token types to match
+     * @return true if a token was matched, otherwise false
+     */
     private boolean match(TokenType... types) {
         for (TokenType type : types) {
             if (check(type)) {
@@ -413,6 +533,11 @@ public class Parser {
         return false;
     }
 
+    /**
+     * Checks whether the current token matches the given type.
+     * @param type the expected token type
+     * @return true if types match, otherwise false
+     */
     private boolean check(TokenType type) {
         if (isAtEnd()) {
             return false;
@@ -421,17 +546,31 @@ public class Parser {
         }
     }
 
-    // Consume current token and return it
+    /**
+     * Consumes the current token and advances the parser.
+     * @return the consumed token.
+     */
     private Token advance() {
         if (!isAtEnd()) current++;
         return previous();
     }
 
+    /**
+     * Fetches the previously consumed token
+     * @return the previous token
+     */
     private Token previous() {
         return tokens.get(current - 1);
     }
 
     // Consumes if given token type matches current token, otherwise throws error
+    /**
+     * Consumes current token if it matches the expected type.
+     * Otherwise reports and throws an error.
+     * @param type the expected token type
+     * @param message the error message if token does not match
+     * @return the consumed token
+     */
     private Token consume(TokenType type, String message) {
         if (check(type)) {
             return advance();
@@ -440,6 +579,11 @@ public class Parser {
         }
     }
 
+    /**
+     * Consumes the current token if it is a type token.
+     * Otherwise reports and throws an error.
+     * @return the consumed type token
+     */
     private Token consumeType() {
         if (match(NUMBER_TYPE, STRING_TYPE, BOOL_TYPE)) {
             return previous();
@@ -452,16 +596,28 @@ public class Parser {
 
     // -------------------------- Error recovery -------------------------
 
+    /**
+     * Exception used to mark an error for parser error recovery through synchronization.
+     */
     private static class ParseError extends RuntimeException {}
 
-    /** @author: Lucas Bergholdt Hansen */
+    /**
+     * Reports a parse error to the {@link VVPLController} class.
+     * @param token the token at which the error occured
+     * @param message the error message
+     * @return a {@link ParseError} instance to be thrown.
+     * @author: Lucas Bergholdt Hansen
+     */
     private ParseError error(Token token, String message) {
-        // Add the error to the list of errors in VVPLController and return a new ParseError
         VVPLController.error(token.line, ErrorTypeStrings.PARSE_ERROR, message);
         return new ParseError();
     }
 
-    /** @author: Lucas Bergholdt Hansen */
+    /** 
+     * Synchronizes the parser after an error occured by discarding tokens
+     * until reaching a token that can begin a new statement.
+     * @author: Lucas Bergholdt Hansen 
+     */
     private void synchronise() {
         // Consume the problematic token that triggered the error
         advance();

@@ -26,8 +26,9 @@ import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.TokenType;
 /**
  * @author Lasse Arpe Kristensen
  * @version CompilerConstruction FT 2025
+ * The ASTPrinter utilizes the visitor pattern to traverse the AST 
+ * while building a string that visualizes the tree.
  */
-
  public class ASTPrinter implements ExprVisitor<String>, StmtVisitor<String> {
   private int indent = 0;
 

@@ -1,15 +1,7 @@
-/* C-E: Ikke tag denne fil for gode varer. Har blot kopieret SPL koden herind (de har somewhat samme funktionalitet) */
-
 package dk.sdu.imada.teaching.compiler.fs25.vvpl;
-
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
-
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Stmt;
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.interpretation.Interpreter;
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.parse.Parser;
@@ -18,153 +10,95 @@ import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.Token;
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.semanticAnalysis.scopeAnalysis.ScopeAnalyzer;
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.semanticAnalysis.typeAnalysis.TypeAnalyzer;
 
+/**
+ * This class coordinates the entire interpretation process by invoking
+ * the next stage only if the previous succeeded without errors.
+ * It centralizes error handling as it handles collecting and reporting
+ * errors back to the user in a sorted list.
+ */
 public class VVPLController {
+	/**
+	 * A flag used to detect if an error has been detected in the current stage.
+	 */
 	private static boolean hadError = false;
+	
+	/**
+	 * The list of error messages stored as {@link ErrorMessage} objects.
+	 */
 	private static List<ErrorMessage> errorMessages = new ArrayList<>();
 
+	/**
+	 * Executes the interpretation pipeline on the given input file.
+	 * If errors are encountered at any stage, returns a sorted list of error messages.
+	 * @param inputFile the source program to interpret
+	 * @return a list of output strings as a result of the source programs execution or error messages.
+	 */
 	public List<String> execute(String inputFile) {
 		// Reset error state for a new run
 		hadError = false;
 		errorMessages.clear();
 
+		// Perform lexical analysis
 		Scanner scanner = new Scanner(inputFile);
 		List<Token> tokens = scanner.scanTokens();
 		// Proceed ONLY if no failure.
 		if (hadError) {
-			Collections.sort(errorMessages); // Possible because errorMessages implements Comparable
-			//! https://stackoverflow.com/questions/4581407/how-can-i-convert-arraylistobject-to-arrayliststring
-			return errorMessages.stream().map(ErrorMessage::toString).toList(); // Converting List<ErrorMessage> to List<String>
+			return sortedErrors();
 		}
 
-		// for (Token token : tokens) {
-		// System.out.println(token);
-		// }
-
-
-		// Parser ...
+		// Perform syntactic analysis
 		Parser parser = new Parser(tokens);
 		List<Stmt> stmts = parser.parse();
 		if (hadError) {
-			Collections.sort(errorMessages);
-			return errorMessages.stream().map(ErrorMessage::toString).toList();
+			return sortedErrors();
 		}
 
-		// ScopeAnalyzer
+		// Perform semantic analysis: Check scopes
 		ScopeAnalyzer scopeanalyzer = new ScopeAnalyzer(stmts);
 		scopeanalyzer.analyse();
 		if (hadError) {
-			Collections.sort(errorMessages);
-			return errorMessages.stream().map(ErrorMessage::toString).toList();
+			return sortedErrors();
 		}
 
-		// TypeAnalyzer
+		// Perform semantic analysis: Check types
 		TypeAnalyzer typeAnalyzer = new TypeAnalyzer(stmts);
 		typeAnalyzer.analyse();
 		if (hadError) {
-			Collections.sort(errorMessages);
-			return errorMessages.stream().map(ErrorMessage::toString).toList();
+			return sortedErrors();
 		}
 
-		// Interpret semantically correct programs.
+		// Interpret semantically correct program.
 		Interpreter interpreter = new Interpreter();
 		List<String> result = interpreter.interpret(stmts);
 		if (hadError) {
-			Collections.sort(errorMessages);
-			return errorMessages.stream().map(ErrorMessage::toString).toList();
+			return sortedErrors();
 		}
 		
+		// Return the result of the program's execution
 		return result;
-
-		// List<String> errormessages = new LinkedList();
-		// return errormessages;
 	}
 
-	// Custom error handler that sets hadError to true and adds the error message to the list of error messages
+	/**
+	 * Helper method for sorting the list of error messages
+	 * and converting them to strings.
+	 * @return a list of the sorted error message strings.
+	 */
+	private List<String> sortedErrors() {
+		Collections.sort(errorMessages); // ErrorMessage implements Comparable
+		return errorMessages.stream().map(ErrorMessage::toString).toList(); // Converting List<ErrorMessage> to List<String>
+	}
+
+	/**
+	 * Adds the error to the list of errors in the VVPLController.
+	 * Called from other classes that detect errors.
+	 * Sets the hadError flag to indicate an error was detected.
+	 * @param line the line of the error
+	 * @param errorType the type of the error
+	 * @param message the error message
+	 */
 	public static void error(int line, String errorType, String message) {
 		hadError = true;
 		errorMessages.add(new ErrorMessage(line, errorType, message));
 	}
 
-	
-	// ERROR HANDLERS FROM THE BOOK:
-	// NOT USED CURRENTLY
-/* 	static void error(int line, String message) {
-		report(line, "", message);
-	}
-
-	private static void report(int line, String where, String message) {
-		System.err.println("[line " + line + "] Error" + where + ": " + message);
-		hadError = true;
-	}
-
-	static void error(Token token, String message) {
-		if (token.type  == TokenType.EOF) {
-			report(token.line, " at end", message);
-		} else {
-			report(token.line, " at '" + token.lexeme + "'" , message);
-		}
-	} */
-
-
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-	/*
-	// Expects a single file that comprises a SPL program as argument
-	public static void main(String[] args) throws IOException {
-		runFile(args[0]);
-	}
-
-	private static void runFile(String path) throws IOException {
-		byte[] bytes = Files.readAllBytes(Paths.get(path));
-		run(new String(bytes));
-	}
-
-
-
-
-	private static void run(String source) {
-		Scanner scanner = new Scanner(source);
-		List<Token> tokens = scanner.scanTokens();
-
-		// // print the tokens
-		// for (Token token : tokens) {
-		// System.out.println(token);
-		// }
-
-		// Parser ...
-		Parser parser = new Parser(tokens);
-		List<Stmt> stmts = parser.parse();
-
-		//intpret and perform semantic analysis
-
-		//C-E: har lavet disse 2 linjer. Inden da skal vi nok scope/type checke.
-		Interpreter interpreter = new Interpreter();
-		interpreter.interpret(stmts);
-		
-	}
-
-	public static void error(int line, String message) {
-		report(line, "", message);
-	}
-
-	private static void report(int line, String where, String message) {
-		errorHappened = true;
-		System.err.println("[line " + line + "] Error" + where + ": " + message);
-	}
-
-}
-
-*/

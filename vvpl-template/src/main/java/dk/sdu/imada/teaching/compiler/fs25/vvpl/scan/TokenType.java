@@ -1,6 +1,7 @@
 package dk.sdu.imada.teaching.compiler.fs25.vvpl.scan;
 
 /**
+ * The different types of tokens.
  * @author Lucas Bergholdt Hansen
  * @version CompilerConstruction FT 2025
  */
@@ -32,7 +33,7 @@ public enum TokenType {
 
     // 'Functional' keywords:
     IF, // "if"
-    ELSE,
+    ELSE, // "else"
     WHILE, // "loop_while"
     PRINT, // "write_to_console""
     RETURN, // "return"
