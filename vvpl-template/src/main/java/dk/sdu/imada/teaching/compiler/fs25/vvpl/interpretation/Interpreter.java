@@ -25,7 +25,8 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
 
     // The internal state.
     final Environment globals = new Environment(null);
-    private Environment env = globals; // Globals can only be changed in the outmost scope.
+     // Globals can only be changed in the outmost scope.
+    private Environment env = globals;
 
     public List<String> interpret(List<Stmt> stmts) {
         // execute
@@ -35,14 +36,13 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
                 execute(s);
             }
         } catch (RuntimeError e) {
-            //TODO: Måske implementer noget her? Lige nu tror jeg, at vores error handling fungerer fint uden?
-            // TODO: Se implementeringen nederst i denne fil. 
+            // See error implementation below. 
         }
         return output;
 
     }
 
-    // Stringify for at se output.
+    /*Stringify to see input */
     private String stringify(Object object) {
         if (object == null)
             return "null";
@@ -55,8 +55,6 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
 
             return text;
         }
-
-        System.out.println(object);
 
         return object.toString();
     }
@@ -76,15 +74,14 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
         return value;
     }
 
-    // C-E: Skal returnere den Expr som assignment er bundet til.
+    /* Returns the expr that an assignment is bound to. */ 
     @Override
     public Object visitIdentifierExpr(Identifier identifier) {
         return env.get(identifier.id.lexeme);
-
     }
 
+    /*Also evalutes reserved keywords.*/
     @Override
-    // Also evalutes reserved keywords.
     public Object visitLiteralExpr(Literal literal) {
         if (literal.token.type == TokenType.TRUE) {
             return true;
@@ -100,8 +97,9 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
 
         Object left = evaluate(logical.left);
 
+        // Short-circuit: If OR and left is true, return immediatly.
         if (logical.operator.type == TokenType.OR) {
-            // Short-circuit: If OR and left is true, return immediatly.
+
             if (isTruthy(left))
                 return left;
 
@@ -125,13 +123,8 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
             case PLUS:
                 return (double) left + (double) right;
             case DIV:
-                // if (right.equals(0)) {
-                //     throw error(binary.operator, ": Dividing by zero is not allowed.");
-                // }
-
-                // Overvej at tjekke for om right er 0? Dette håndterer java måske per default. 
+                // Java handles division by 0.
                 return (double) left / (double) right;
-
             case MULT:
                 return (double) left * (double) right;
             case NOT_EQUALS:
@@ -140,17 +133,19 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
                 return isEqual(left, right);
             case GREATER:
                 return (double) left > (double) right;
-            case GREATER_EQUAL: // Should not be implemented with "isEqual"?
+            case GREATER_EQUAL:
                 return (double) left >= (double) right;
             case LESS:
                 return (double) left < (double) right;
             case LESS_EQUAL:
                 return (double) left <= (double) right;
+            default:
+                return null; // Unreachable.
 
         }
-        return null;
     }
 
+    /* Helper for binary expression */
     private boolean isEqual(Object left, Object right) {
         if (left == null && right == null)
             return true;
@@ -168,22 +163,19 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
                 return -(double) right;
             case NOT:
                 return !isTruthy(right);
-        }
-        // Unreachable.
-        return null;
+            default:
+                return null; //Unreachable
+            }
+
     }
 
-    // C-E: Hjælpefunktion til visitUnary. Gør at alle datatyper kan anses som
-    // Booleans.
+    /* Helper for deciding the boolean value of an object */
     private boolean isTruthy(Object object) {
         if (object == null)
             return false;
         if (object instanceof Boolean)
             return (boolean) object;
-
-        // TODO: LA: Overvej om dette er stedet til at evaluere 13 til true?
-        // TODO: Vigtigt at teste, om denne funktionalitet virker!
-        if (object instanceof Number) {
+        if (object instanceof Number) { // 13 should evaluate to true. 
             if (object.equals(13.0)) {
                 return true;
             } else {
@@ -199,9 +191,9 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
         return null;
     }
 
-    /* LA: Helper for visitBlockStmt. Executes the environment of the function. */
+    /* Helper for visitBlockStmt. Executes the environment of the function. */
     void executeBlock(List<Stmt> body, Environment environment) {
-        Environment previous = this.env; // save current, so we can get back to it after.
+        Environment previous = this.env; // save current environment, so we can get back to it after.
         try {
             this.env = environment;
 
@@ -209,19 +201,17 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
                 execute(statement);
             }
         } finally {
-            this.env = previous; // retore former environment.
+            this.env = previous;  // restore former environment.
         }
     }
 
     @Override
     public Void visitVarDecl(VarDecl varDecl) {
         Object value = null;
-        /* Hvis VarDecl har fået en expr med, så evaluér denne. */
-        if (varDecl.expr != null) {
+        if (varDecl.expr != null) {   // If varDecl has an expr, evalaute that first.
             value = evaluate(varDecl.expr);
         }
 
-        // System.out.println("varDecl: "+value+" is assigned to "+varDecl.id.lexeme);
         env.define(varDecl.id.lexeme, value);
         return null;
     }
@@ -236,7 +226,6 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
         }
 
         // We assume type and number of args are correct.
-
         // Calls the function with the evaluated args.
         VVPLCallable function = (VVPLCallable) callee;
         return function.call(this, evaluatedArgs);
@@ -244,16 +233,19 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
 
     @Override
     // We assume we recieve a program with no errors.
+    // EXCEPT in the cast of String -> Number, where we do a check. 
     public Object visitCastExpr(Cast cast) {
 
+        // Conversion to Boolean. 
         if (cast.typeToken.type == BOOL_TYPE) {
             Object value = evaluate(cast.expr);
 
             return isTruthy(value);
         }
 
+        // Conversion to Bumber. 
         if (cast.typeToken.type == NUMBER_TYPE) {
-            
+    
             // CHECK IF WE ARE ALLOWED TO CONVERT
             Object value = evaluate(cast.expr);
             String str = value.toString();
@@ -262,12 +254,13 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
             try {
                 number = Double.parseDouble(str);
             } catch (NumberFormatException e) {
-                throw error(cast.typeToken, ": String \""+ str + "\" is not right format to convert to Number.");
+                throw error(cast.typeToken, ": String \""+ str + "\" is not in the right format to convert to Number.");
             }
 
             return number;
         }
         
+        // Conversion to String
         if (cast.typeToken.type == STRING_TYPE) {
             Object value = evaluate(cast.expr);
             return value.toString();
@@ -303,16 +296,14 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
     @Override
     public Void visitPrintStmt(PrintStmt printStmt) {
         Object value = evaluate(printStmt.expr);
-        // TODO: Evt. fjern debug print. 
-        System.out.println(stringify(value));
         output.add(stringify(value));
 
         return null;
     }
 
+    /* Helps us unwind past the visit methods back to the code that began the
+       executing body. */
     @Override
-    // Helps us unwind past the visit methods back to the code that began the
-    // executing body.
     public Void visitReturnStmt(ReturnStmt returnStmt) {
         Object value = null; // return null if no return value.
         if (returnStmt.returnValue != null)
@@ -321,27 +312,26 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
         // Getting from the top of the call stack back to call().
         // Unwind back to where the function call began.
 
-        // Return value skal opbevares og returneres til environment.
+        // We store the return value in order to pass it to the environment.
         throw new ReturnExcep(value);
     }
 
     @Override
-    // Take compile time representation (node) and convert to runtime
-    // interpretation. (store the function in the environment)
+    /*Take compile time representation (node) and convert to runtime
+      interpretation. (stores the function in the environment) */ 
     public Void visitFunctionStmt(FunctionStmt functionStmt) {
         VVPLFunction function = new VVPLFunction(functionStmt);
         env.define(functionStmt.name.lexeme, function);
         return null;
-
     }
 
-    // Copied from ParseError in our Parse-section. 
+    /* Same implementation as our own ParseError. */
     private static class RuntimeError extends RuntimeException {}
 
-    //TODO: Currently this just returns the error. They do this in the book because sometimes you want to report an error without throwing. However, we currently don't use this.
     private RuntimeError error(Token token, String message) {
-        // Add the error to the list of errors in VVPLController and return a new ParseError
+        // Add the error to the list of errors in VVPLController.
         VVPLController.error(token.line, ErrorTypeStrings.RUNTIME_ERROR, message);
+
         return new RuntimeError();
     }
 

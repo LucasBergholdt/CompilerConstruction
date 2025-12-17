@@ -19,7 +19,7 @@ The functionality is implemented, as in the scanner and parser, via a new implem
 The fact that in our implementation of VVPL, the semantic analysis has already handled scope and type checking leaves us with much fewer concerns regarding error handling in this section. 
 But importantly, there are some unique concerns for our interpreter. Instead of reporting all errors as in the scanner and parser, by letting the program continue, we need to abort the program immediatly upon a runtime error. 
 Some errors can only be detected at runtime; errors relating to the actual literal value of variables after being evaluated. We have decided to implement the handling of one type of error, namely the conversion of \verb|String| to \verb|Number| after consultation with Sandra.
-A small note is that dividing by zero is handled per default in Java, but refering to the project description, we can assume no such behaviour (\textbf{Synes i det er relevant med "/0"?}). We do a test for this, just to document the behaviour. 
+A small note is that dividing by zero is handled per default in Java, but refering to the project description, we can in general assume no runtime exceptions (\textbf{Synes i det er relevant med "/ 0"?}). We do a test for this, just to document the behaviour. 
 
 \textbf{--SECTION OMKRING DE MEST RELEVANTE OVERVEJELSER IFT *VORES* INTERPRETER--}
 Other notable things to consider in the implementation of our interpreter has been boolean representation of literals, functions, the call-by-value parameters of functions and casting.
