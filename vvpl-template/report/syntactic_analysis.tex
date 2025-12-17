@@ -4,8 +4,40 @@
 %TODO: Husk at nævn afvigelser fra tests.
 
 
+% Idéer til afsnit
+% 1. Overordnet om parser
+%   - performs syntactic analysis of VVPL programs
+%   - Uses tokens from scanner to construct an AST
+%   - What this AST consists of (Expr, Stmt, polymorphism)
+%   - A tree that matches the grammatical structure of the language
+%   - A recursive descent parser. 
+%   - Noget med at forklare den overordnede rekursive natur og hvordan parser blot mapper tokens til den rekursive grammar
+% 2. Error recovery (synchronization)
+%   - Tænker dette er noget af det lidt fede ved parseren og god blanding af teori og det tekniske
+%   - Kan genbruge mange af idéerne fra monitoring and logging afsnttet, som ikke længere skal bruges.
+% 3. Detaljer
+%   - Flet nogle af detaljerne ind undervejs. 
+%   - Vigtigste er: håndtering af casts, consume rapporterer previous og måske true()
 
 
 
+The parser performs syntactic analysis of VVPL programs.
+
+Recursive-descent parser based directly on the VVPL grammar.
+
+Consumes a list of Tokens produced by the Scanner and constructs an abstract syntax tree (AST).
+This conists of Expr and Stmt nodes.
+We use polymorphism to allow the use of the more detailed subclasses.
 
 
+Detaljer som måske er værd at nævne:
+- Wrapper block stmt. Kan ikke helt huske hvorfor dette var smart, men mener også bogen gør det.
+- Håndtering af casts. Vi har valgt at have en seperat CAST node.
+- Vi håndterer true() som en parse error selvom det er beskrevet som en scope error i projektbeskrivelsen
+- Vi bruger en custom "Param" klasse til at håndterer funktioners parametre.
+- Consume rapporterer error på previous().
+    Er fint fordi vi altid matcher inden vi kalder consume. Så vi ved altid at mindst én token er
+    fundet inden vi kalder consume. Så vi kan ikke komme out of bounds.
+    Valget er taget for at manglende semikoloner bliver rapporteret på den rigtige linje.
+    Lidt ulogisk i forhold til at vi ikke rapporterer error på den token der faktisk skabte fejlen.
+    Men pga. vi kun rapporterer linje, så virker det godt i dette tilfælde.

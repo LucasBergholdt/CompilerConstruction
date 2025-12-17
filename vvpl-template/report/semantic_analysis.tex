@@ -1,3 +1,13 @@
+%- Den version af string håndtering Sandra gerne ville har en lidt mærkelig implikation på dette tilfælde hvor vi rapporterer fejl på linje 1 og 3.
+%Fordi vi ser " efter lines som start på en ny streng og rapporterer en "forkert" fejl. Lige i dette eksempel betyder det faktisk også at vi misser
+%den rigtige fejl at < er et ulovligt tegn.
+%    variable a type String is "string spanning
+%    too many
+%    lines"
+%    a is bla<
+
+
+
 After having making sure that the program is syntactically correct, we want to confirm that our context-sensitive grammar is also semantically correct, 
 i.e. perform context-sensitive checks and interpret the meaning of the program at its' syntactic level.
 VVPL is a statically typed language, which usually means that we perform context-sensitive checks at compile-time. 
