@@ -60,4 +60,23 @@ implement the \texttt{Comparable} interface, ensuring the user receive feedback 
 
 
 
-\subsubsection{Traversing the AST (visitor pattern)}
+\subsubsection{Traversing the AST with the Visitor pattern}
+
+After lexing, the parser outputs an AST as an intermediate representation. Abstractly representing our source code allows us to implement the methods necessary for translating the identified tokens of the grammar into program output.
+Ideally, our AST is abstracting away language specific details and carry just enough information to maintain the semantic meaning of the program allowing us to check for semantic errors, interpret its content or, if necessary in the future, do further optimization.
+ 
+The program structure is represented via nodes and, if childless, leaves, which are implemented via their own classes. This allows us gradually unpack the semantic meaning following the given order and rules of the grammar.
+Doing our traversal, we want to perform specific operations on each node, based on the current phase of the semantic analysis or the interpretation, and instead of implementing all these different behaviours associated with each phase directly in methods on the classes themselves, we do so by implementing a \verb|Visitor| interface for each distinct traversal. 
+The visitor pattern is meant to help us achieve openness for extension and separation of responsibility by seperating the storage of data from the use of that data.  
+Now, we delegate the responsibility of the concrete implementation to a \textit{visitor} of a class, and not the class itself. The key facet is, that we can add one \verb|accept()| method to each class, then use this for as many different implementations of visitors as we want, essentially allowing us to implement different behaviour on different traversals of the tree, depending on our goal with that traversal.
+
+This utilizes a \textit{double dispatch} where the operation executed depends on both the type of visitor class and within that visitor, the type of node to call \verb|accept| upon.
+For example, the evaluation of the node \verb|CallExpr| in the visitor class \verb|ScopeAnalyzer| is concerned about the correct binding of variables while another in another visitor class, \verb|TypeAnalyzer|, \verb|CallExpr| is concerned about the correct type of arguments used.
+
+\begin{figure}[H]
+    \makebox[\textwidth][c]{%
+    \includegraphics[width=1.25\textwidth]{udkast_ast_visitor.png}}
+    \caption{AST with Visitor Pattern}
+    \label{fig:ast-visitor}
+\end{figure}
+
