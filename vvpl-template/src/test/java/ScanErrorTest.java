@@ -10,6 +10,7 @@ public class ScanErrorTest {
     @Test
     public void testerrors() {
         try {
+            TestUtil.runTestFiles("src/test/resources/scan/additional-tests/");
             TestUtil.runTestFiles("src/test/resources/scan/");
         } catch (IOException e) {
             e.printStackTrace();

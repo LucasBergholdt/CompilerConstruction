@@ -1,0 +1,8 @@
+variable a has_type String is "a multiline
+string";
+variable b has_type String is "";
+
+variable a type String is "string spanning
+too many
+lines"
+a is bla<

@@ -1,0 +1,6 @@
+variable a has_type Number is 12.34.56;
+variable b has_type Number is .12;
+variable c has_type Number is 34.;
+
+variable d has_type Number is 12.34;    # valid
+variable e has_type Stirng is --13;     # valid

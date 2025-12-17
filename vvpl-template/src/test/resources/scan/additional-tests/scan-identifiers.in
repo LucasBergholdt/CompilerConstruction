@@ -1,0 +1,7 @@
+variable _abc has_type Bool;    # valid
+variable ____ has_type String;  # valid
+variable 1a has_type Number;    # valid but 1a is not recognized as an identifier
+
+variable a?b has_type Number is 1;
+variable a@b has_type String is "oops";
+variable a.b has_type Bool;
