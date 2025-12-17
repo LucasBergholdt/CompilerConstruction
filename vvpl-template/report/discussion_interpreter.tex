@@ -6,3 +6,28 @@ Undersøtte implicit type conversion vs unspecifed type error
 (e.g python vs c)
 
 Håndtering af udefinerede variable / unexpected input
+
+Kopieret fra noter i koden:
+// Skriv i rapport: "Handling function calls is an important design decision when implementing an interpreter"
+
+// OPtion 1: Outsourcing execution logic
+/* Seperate function class 
+   
+*/ 
+
+// Option 2: Executing function calls directly using the functions AST node
+/* Executed in place, no wrapping in runtime object 
+   Function call interprets AST node directly (new env, bind arguments, execute body) - no separet function class
+*/
+
+/* Write pros and cons i report.  
+    Argument for choosing option 1: clean, extensible, less complex visitCallExpr, reuse callable interface to make native functions, søg på flere 
+*/
+
+/* DET LIGNER IKKE, AT VI SKAL IMPLEMENTERE MED CLOSURE. SKRIV OM DET I DISKUSSIONEN? */
+
+fra VVPL callable:
+
+    // Jeg antager, at vi ikke skal implementere et "arity()"-check, da vi ikke skal checke for runtime fejl?
+    
+    // arity () ville normalt bruges til at checke om antallet er parametre er tilstrækkelige i runtime. 

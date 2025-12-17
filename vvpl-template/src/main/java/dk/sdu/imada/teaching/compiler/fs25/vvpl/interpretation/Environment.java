@@ -3,6 +3,13 @@ package dk.sdu.imada.teaching.compiler.fs25.vvpl.interpretation;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Stores our state. 
+ * 
+ * Follows the book implementation. 
+ * 
+ * @author Lasse Arpe Kristensen
+ */
 public class Environment {
 
     private Map<String, Object> symbols = new HashMap<>();
@@ -43,7 +50,7 @@ public class Environment {
         return null;
     }
 
-    // contains. Looks in current and outer scopes.
+    // Looks in current and outer scopes.
     public boolean contains(String symbol) {
         if (symbols.containsKey(symbol)) {
             return true;

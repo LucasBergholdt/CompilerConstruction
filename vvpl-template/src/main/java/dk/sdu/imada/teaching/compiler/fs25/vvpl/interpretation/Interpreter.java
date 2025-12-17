@@ -18,16 +18,39 @@ import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.visitors.*;
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.Token;
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.TokenType;
 
-/** @author: Lasse Arpe Kristensen  */
+/**
+ * Interpreter that implements the execute method.
+ * 
+ * @author: Lasse Arpe Kristensen
+ */
 public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
 
+    /**
+     * Stores the output of the interpreter.
+     */
     List<String> output = new ArrayList<String>();
 
-    // The internal state.
+    /**
+     * The environments stores the internal state of the interpreter.
+     */
     final Environment globals = new Environment(null);
-     // Globals can only be changed in the outmost scope.
+
+    /**
+     * Globals can only be changed in the outmost environnment.
+     */
     private Environment env = globals;
 
+    /**
+     * 
+     * Executes a program, represented as a list of Statements.
+     * We assume that the TypeAnalyzer and ScopeAnalyser has ran beforehand.
+     * 
+     * Will however report a runtimeError if there is an incorrect casting of String
+     * to Number.
+     * 
+     * @param stmts
+     * @return
+     */
     public List<String> interpret(List<Stmt> stmts) {
 
         try {
@@ -35,13 +58,15 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
                 execute(s);
             }
         } catch (RuntimeError e) {
-            // See error implementation below. 
+            // See error implementation below.
         }
         return output;
 
     }
 
-    /*Stringify to see input */
+    /**
+     * Helper, used to Stringify objects in order to make them visible for printing.
+     */
     private String stringify(Object object) {
         if (object == null)
             return "null";
@@ -58,14 +83,24 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
         return object.toString();
     }
 
+    /**
+     * Executing statements.
+     */
     private void execute(Stmt s) {
         s.accept(this);
     }
 
+    /**
+     * Evaluating expressions.
+     */
     private Object evaluate(Expr e) {
         return e.accept(this);
     }
 
+    /**
+     * Evaluates assignment expression.
+     * Assigns the expression to the identifier in the environment.
+     */
     @Override
     public Object visitAssignExpr(Assign assign) {
         Object value = evaluate(assign.expr);
@@ -73,13 +108,18 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
         return value;
     }
 
-    /* Returns the expr that an assignment is bound to. */ 
+    /**
+     * Returns the expr that an assignment is bound to.
+     */
     @Override
     public Object visitIdentifierExpr(Identifier identifier) {
         return env.get(identifier.id.lexeme);
     }
 
-    /*Also evalutes reserved keywords.*/
+    /**
+     * Evalutes Literals.
+     * Also evalutes reserved keywords "true" and "false".
+     */
     @Override
     public Object visitLiteralExpr(Literal literal) {
         if (literal.token.type == TokenType.TRUE) {
@@ -87,10 +127,14 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
         } else if (literal.token.type == TokenType.FALSE) {
             return false;
         } else {
-            return literal.token.literal; 
+            return literal.token.literal;
         }
     }
 
+    /**
+     * Evaluates logical expressions.
+     * Uses a "short circuit" to detect OR verus AND.
+     */
     @Override
     public Object visitLogicalExpr(Logical logical) {
 
@@ -111,6 +155,9 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
         return evaluate(logical.right);
     }
 
+    /**
+     * Evaluates binary expressions.
+     */
     @Override
     public Object visitBinaryExpr(Binary binary) {
         Object left = evaluate(binary.left);
@@ -144,7 +191,9 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
         }
     }
 
-    /* Helper for binary expression */
+    /**
+     * Helper for binary expression
+     */
     private boolean isEqual(Object left, Object right) {
         if (left == null && right == null)
             return true;
@@ -153,6 +202,9 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
         return left.equals(right);
     }
 
+    /**
+     * Evaluates unary expressions.
+     */
     @Override
     public Object visitUnaryExpr(Unary unary) {
         Object right = evaluate(unary.expr);
@@ -163,18 +215,20 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
             case NOT:
                 return !isTruthy(right);
             default:
-                return null; //Unreachable
-            }
+                return null; // Unreachable
+        }
 
     }
 
-    /* Helper for deciding the boolean value of an object */
+    /**
+     * Helper for deciding the boolean value of an object.
+     */
     private boolean isTruthy(Object object) {
         if (object == null)
             return false;
         if (object instanceof Boolean)
             return (boolean) object;
-        if (object instanceof Number) { // 13 should evaluate to true. 
+        if (object instanceof Number) { // 13 should evaluate to true.
             if (object.equals(13.0)) {
                 return true;
             } else {
@@ -184,13 +238,18 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
         return true;
     }
 
+    /**
+     * Executes block statements.
+     */
     @Override
     public Void visitBlockStmt(BlockStmt blockStmt) {
         executeBlock(blockStmt.stmts, new Environment(env));
         return null;
     }
 
-    /* Helper for visitBlockStmt. Executes the environment of the function. */
+    /**
+     * Helper for visitBlockStmt. Executes the environment of the function.
+     */
     void executeBlock(List<Stmt> body, Environment environment) {
         Environment previous = this.env; // save current environment, so we can get back to it after.
         try {
@@ -200,14 +259,19 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
                 execute(statement);
             }
         } finally {
-            this.env = previous;  // restore former environment.
+            this.env = previous; // restore former environment.
         }
     }
 
+    /**
+     * Executes a variable declaration.
+     * Evaluate a containing expression, if one is present.
+     * Then save it in the environment.
+     */
     @Override
     public Void visitVarDecl(VarDecl varDecl) {
         Object value = null;
-        if (varDecl.expr != null) {   // If varDecl has an expr, evalaute that first.
+        if (varDecl.expr != null) { // If varDecl has an expr, evalaute that first.
             value = evaluate(varDecl.expr);
         }
 
@@ -215,6 +279,11 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
         return null;
     }
 
+    /**
+     * Evaluates a function call.
+     * Evaluates each argument beforehand,
+     * and then adds these to an VVPLCallable function instance.
+     */
     @Override
     public Object visitCallExpr(Call call) {
         Object callee = evaluate(call.callee);
@@ -230,21 +299,24 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
         return function.call(this, evaluatedArgs);
     }
 
+    /**
+     * Evaluates a casting expression. 
+     * 
+     * In the cast of String -> Number, we do error checking. 
+     */
     @Override
-    // We assume we recieve a program with no errors.
-    // EXCEPT in the cast of String -> Number, where we do a check. 
     public Object visitCastExpr(Cast cast) {
 
-        // Conversion to Boolean. 
+        // Conversion to Boolean.
         if (cast.typeToken.type == BOOL_TYPE) {
             Object value = evaluate(cast.expr);
 
             return isTruthy(value);
         }
 
-        // Conversion to Bumber. 
+        // Conversion to Bumber.
         if (cast.typeToken.type == NUMBER_TYPE) {
-    
+
             // CHECK IF WE ARE ALLOWED TO CONVERT
             Object value = evaluate(cast.expr);
             String str = value.toString();
@@ -253,27 +325,33 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
             try {
                 number = Double.parseDouble(str);
             } catch (NumberFormatException e) {
-                throw error(cast.typeToken, ": String \""+ str + "\" is not in the right format to convert to Number.");
+                throw error(cast.typeToken,
+                        ": String \"" + str + "\" is not in the right format to convert to Number.");
             }
 
             return number;
         }
-        
+
         // Conversion to String
         if (cast.typeToken.type == STRING_TYPE) {
             Object value = evaluate(cast.expr);
             return value.toString();
         }
-        
+
         return evaluate(cast.expr);
     }
-
+    /**
+     * Evaluates an expression statement. 
+     */
     @Override
     public Void visitExprStmt(ExprStmt exprStmt) {
         evaluate(exprStmt.expr);
         return null;
     }
 
+    /**
+     * Executes "while" statement. Utilizes "isTruthy" helper.
+     */
     @Override
     public Void visitWhileStmt(WhileStmt whileStmt) {
         while (isTruthy(evaluate(whileStmt.conditional))) {
@@ -282,6 +360,10 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
         return null;
     }
 
+    /**
+     * Executes "If" statement and the potential "Else" block. Utilizes "isTruthy" helper.
+     * 
+     */
     @Override
     public Void visitIfStmt(IfStmt ifStmt) {
         if (isTruthy(evaluate(ifStmt.cond))) {
@@ -292,6 +374,10 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
         return null;
     }
 
+    /**
+     * Executes "print" (write_to_console) statement. 
+     * Adds the evaluation to the global output, so it can be shown to the user.
+     */
     @Override
     public Void visitPrintStmt(PrintStmt printStmt) {
         Object value = evaluate(printStmt.expr);
@@ -300,8 +386,11 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
         return null;
     }
 
-    /* Helps us unwind past the visit methods back to the code that began the
-       executing body. */
+    /**
+     * Helps us unwind past the visit methods back to the code that began the
+     * executing body.
+     * Done via the implemented ReturnExcep exception, that extends a Runtime exception. 
+     */
     @Override
     public Void visitReturnStmt(ReturnStmt returnStmt) {
         Object value = null; // return null if no return value.
@@ -315,8 +404,10 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
         throw new ReturnExcep(value);
     }
 
-    /*Take compile time representation (node) and convert to runtime
-    interpretation. (stores the function in the environment) */ 
+    /**
+     * Take compile time representation (node) and convert to runtime
+     * interpretation. (stores the function in the environment)
+     */
     @Override
     public Void visitFunctionStmt(FunctionStmt functionStmt) {
         VVPLFunction function = new VVPLFunction(functionStmt);
@@ -324,7 +415,10 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
         return null;
     }
 
-    /* Same implementation as our own ParseError. */
+    /**
+     *  Same implementation as our own ParseError. 
+     * The only difference is that we do not synchronize, but report the error immediately. 
+     */
     private static class RuntimeError extends RuntimeException {}
 
     private RuntimeError error(Token token, String message) {

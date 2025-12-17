@@ -4,24 +4,9 @@ import java.util.List;
 
 import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Stmt;
 
-// Skriv i rapport: "Handling function calls is an important design decision when implementing an interpreter"
-
-// OPtion 1: Outsourcing execution logic
-/* Seperate function class 
-   
-*/ 
-
-// Option 2: Executing function calls directly using the functions AST node
-/* Executed in place, no wrapping in runtime object 
-   Function call interprets AST node directly (new env, bind arguments, execute body) - no separet function class
-*/
-
-/* Write pros and cons i report.  
-    Argument for choosing option 1: clean, extensible, less complex visitCallExpr, reuse callable interface to make native functions, søg på flere 
-*/
-
-/* DET LIGNER IKKE, AT VI SKAL IMPLEMENTERE MED CLOSURE. SKRIV OM DET I DISKUSSIONEN? */
-
+/**
+ * @author Lasse Arpe Kristensen
+ */
 class VVPLFunction implements VVPLCallable {
     private final Stmt.FunctionStmt funcDecl;
     
@@ -29,10 +14,14 @@ class VVPLFunction implements VVPLCallable {
         this.funcDecl = funcDecl;
     }
 
-
+/**
+ * Creates a new environment for a function call; together with the arguments.
+ * 
+ * Follow the book implementatation.
+ */
 public Object call(Interpreter interpreter, List<Object> arguments) {
 
-    // De globale variable skal kunne tilgås i dette nye environment.
+    // Globals must be accessible. 
     // CALL BY VALUE - "copy" - the actual global must not change. 
     Environment functionScope = new Environment(interpreter.globals);
 
@@ -46,7 +35,6 @@ public Object call(Interpreter interpreter, List<Object> arguments) {
     } catch (ReturnExcep returnValue) {
         return returnValue.value;
     }
-
 
     return null;
 }
