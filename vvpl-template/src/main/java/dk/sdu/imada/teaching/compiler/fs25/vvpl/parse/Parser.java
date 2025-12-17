@@ -21,6 +21,10 @@ import static dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.TokenType.*;
  * Consumes a list of {@link Token}s and constructs an AST consiting
  * of {@link Expr} and {@link Stmt} nodes.
  * 
+ * If an unexpected token is seen it is reported to the controller via {@link VVPLController#error}
+ * and a {@link ParseError} is thrown. The Parser uses synchronization to recover from 
+ * the error, so it can finish parsing the program in order to detect any other errors.
+ * 
  * @version CompilerConstruction FT 2025
  */
 public class Parser {
@@ -147,9 +151,9 @@ public class Parser {
      */
     private Stmt ifStmt() {
         Token ifToken = previous();
-        consume(LEFT_PAREN, "Expected '('");
+        consume(LEFT_PAREN, "Expected '(' after if statement");
         Expr cond = expression();
-        consume(RIGHT_PAREN, "Expected ')'");
+        consume(RIGHT_PAREN, "Expected ')' to complete if statement");
 
         Stmt thenBranch = statement();
         // Optional else branch:
@@ -187,7 +191,7 @@ public class Parser {
             statements.add(decl());
         }
 
-        consume(RIGHT_BRACE, "Expected '}'");
+        consume(RIGHT_BRACE, "Expected '}' to complete block");
         return statements;
     }
 
@@ -215,7 +219,7 @@ public class Parser {
      */
     private Stmt exprStmt() {
         Expr expr = expression();
-        consume(SEMICOLON, "Expected ';'");
+        consume(SEMICOLON, "Expected ';' at the end of expression");
 
         return new Stmt.ExprStmt(expr);
     }
@@ -246,7 +250,7 @@ public class Parser {
                 Token id = ((Identifier)expr).id;
                 return new Expr.Assign(id, value);
             } else {
-                throw error(assignToken, "Invalid assignment target.");
+                throw error(assignToken, "Invalid assignment target");
             }
         }
         
@@ -327,10 +331,10 @@ public class Parser {
     private Expr term () {
         if (match(SUB, PLUS, MULT, DIV)) {
             Token operator = previous();
-            consume(LEFT_PAREN, "Expected '('");
+            consume(LEFT_PAREN, "Expected '(' after operator");
             Expr left = term(); 
             Expr right = term();
-            consume(RIGHT_PAREN, "Expected ')'");
+            consume(RIGHT_PAREN, "Expected ')' after last term in operator");
             return new Expr.Binary(left, operator, right);
         } else {
             return unary();
@@ -365,13 +369,13 @@ public class Parser {
             if (!(expr instanceof Identifier)) {
                 throw error(peek(), "Can't call an expression that is not an identifier."); 
             }
-
+            // If we don't have a closing ')' right after '(', we have arguments:
             List<Expr> arguments = new ArrayList<>();
             if (!check(RIGHT_PAREN)) {
                 arguments = args();
             }
             // Storing right paren token to use it for reporting rumtime errors caused by a function call
-            Token paren = consume(RIGHT_PAREN, "Expected ')'");
+            Token paren = consume(RIGHT_PAREN, "Expected ')' to complete function call");
             
             Token id = ((Identifier) expr).id;
 
@@ -404,14 +408,14 @@ public class Parser {
      */
     private Stmt function() {
         Token name = consume(IDENTIFIER, "Expected function name");
-        consume(LEFT_PAREN, "Expected '('");
+        consume(LEFT_PAREN, "Expected '(' after function name");
 
-        // If we don't have a closing ')' right after, we have params:
+        // If we don't have a closing ')' right after '(', we have params:
         List<Param> params = new ArrayList<>();
         if (!check(RIGHT_PAREN)) {
             params = params();
         }
-        consume(RIGHT_PAREN, "Expected ')'");
+        consume(RIGHT_PAREN, "Expected ')' to end function parameters");
 
         // Check if function "has_type" and handle it:
         Token typeToken = null;
@@ -419,7 +423,7 @@ public class Parser {
             typeToken = consumeType();
         }
 
-        consume(LEFT_BRACE, "Expected '{'"); // block() assumes { has already been consumed
+        consume(LEFT_BRACE, "Expected '{' to start function body"); // block() assumes { has already been consumed
         
         Stmt.BlockStmt body = new Stmt.BlockStmt(block());
         return new Stmt.FunctionStmt(name, params, typeToken, body);
@@ -435,8 +439,8 @@ public class Parser {
         List<Param> params = new ArrayList<>();
 
         do {
-            Token id = consume(IDENTIFIER, "Expected identifier");
-            consume(TYPE_DEF, "Expected 'has_type'");
+            Token id = consume(IDENTIFIER, "Expected parameter to be an identifier");
+            consume(TYPE_DEF, "Expected 'has_type' after parameter");
             Token typeToken = consumeType();
             params.add(new Param(id, typeToken));
         } while (match(COMMA));
@@ -489,7 +493,7 @@ public class Parser {
             case LEFT_PAREN:
                 advance(); // Consume the '('
                 expr = expression();
-                consume(RIGHT_PAREN, "Expected ')'");
+                consume(RIGHT_PAREN, "Expected ')' to close parenthesis");
                 return expr;
 
             default:
