@@ -2,12 +2,4 @@
 # Remaining untested expressions
 #################################
 
-# This represents a test of all the expressions, 
-# that have not been tested in Sandra's tests.
-
-# Notice: I only found this one.
-
-# Binary expression, bool
 write_to_console 1 GREATER 0;
-
-# I believe Sandras own tests cover functions and statements in depth.

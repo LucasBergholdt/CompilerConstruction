@@ -1,7 +1,7 @@
-function returnParamNumber() has_type Number {	# error (marked as error by us!)
+function returnParamNumber() has_type Number {
 	write_to_console "noparam";
+	return 0;
 }
-
 # type error
 variable x has_type String is returnParamNumber();
 
