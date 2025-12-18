@@ -1,5 +1,0 @@
-#################################
-# Remaining untested expressions
-#################################
-
-write_to_console 1 GREATER 0;

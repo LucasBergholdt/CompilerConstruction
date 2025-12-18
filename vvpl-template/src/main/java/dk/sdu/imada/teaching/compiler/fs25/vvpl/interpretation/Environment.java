@@ -50,16 +50,4 @@ public class Environment {
         return null;
     }
 
-    // Looks in current and outer scopes.
-    public boolean contains(String symbol) {
-        if (symbols.containsKey(symbol)) {
-            return true;
-        }
-
-        if (outer != null) {
-            return outer.contains(symbol);
-        }
-
-        return false;
-    }
 }

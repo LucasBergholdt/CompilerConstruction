@@ -1,0 +1,16 @@
+#################################
+# Remaining untested expressions
+#################################
+
+# Remaining binary expression
+write_to_console 1 GREATER 0; # true
+
+# Logical expressions
+
+write_to_console cast_to Bool 1 AND cast_to Bool 2; # false
+write_to_console true AND false; # false
+write_to_console cast_to Bool 13 OR false; # true
+
+write_to_console cast_to Bool 13 AND cast_to Bool 13; # true
+write_to_console true OR false; # true
+write_to_console false OR false; # false
