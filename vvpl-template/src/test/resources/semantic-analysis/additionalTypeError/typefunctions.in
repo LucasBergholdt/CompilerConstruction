@@ -36,6 +36,19 @@ function noReturnStmt() {
     return "We cannot return a string in a void function.";     # error
 }
 
+function returnsSomething() has_type Number {
+    return;                                                     # error
+}
+
+function returnsSomething2() has_type String{
+    if (true) {
+        return "Hello";
+    }
+    else {
+        return;                                                 # error
+    }
+}
+
 function voidReturnt() {
     return;
 }

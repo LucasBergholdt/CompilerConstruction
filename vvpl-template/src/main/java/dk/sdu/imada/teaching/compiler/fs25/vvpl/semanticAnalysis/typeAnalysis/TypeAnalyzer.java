@@ -535,6 +535,7 @@ public class TypeAnalyzer implements ExprVisitor<Type>, StmtVisitor<Void> {
         if (returnStmt.returnValue == null) {
             if (currentFuncReturnType != Type.UNKNOWN) {
                 typeError(returnStmt.returnKeyword, "Function is not a void function.");
+                return null;
             } 
             else {
                 return null;
