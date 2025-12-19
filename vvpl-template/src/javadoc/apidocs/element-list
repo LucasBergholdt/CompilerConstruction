@@ -1,0 +1,9 @@
+dk.sdu.imada.teaching.compiler.fs25.vvpl
+dk.sdu.imada.teaching.compiler.fs25.vvpl.ast
+dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.visitors
+dk.sdu.imada.teaching.compiler.fs25.vvpl.interpretation
+dk.sdu.imada.teaching.compiler.fs25.vvpl.parse
+dk.sdu.imada.teaching.compiler.fs25.vvpl.scan
+dk.sdu.imada.teaching.compiler.fs25.vvpl.semanticAnalysis
+dk.sdu.imada.teaching.compiler.fs25.vvpl.semanticAnalysis.scopeAnalysis
+dk.sdu.imada.teaching.compiler.fs25.vvpl.semanticAnalysis.typeAnalysis

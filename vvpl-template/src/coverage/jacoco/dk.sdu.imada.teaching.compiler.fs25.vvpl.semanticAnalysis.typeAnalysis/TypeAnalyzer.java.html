@@ -1,0 +1,600 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="da"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TypeAnalyzer.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">vvpl</a> &gt; <a href="index.source.html" class="el_package">dk.sdu.imada.teaching.compiler.fs25.vvpl.semanticAnalysis.typeAnalysis</a> &gt; <span class="el_source">TypeAnalyzer.java</span></div><h1>TypeAnalyzer.java</h1><pre class="source lang-java linenums">package dk.sdu.imada.teaching.compiler.fs25.vvpl.semanticAnalysis.typeAnalysis;
+import static dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.TokenType.*;
+
+import java.util.ArrayList;
+import java.util.List;
+import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.*;
+import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Stmt.*;
+import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Expr.*;
+import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.visitors.*;
+import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.Token;
+import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.TokenType;
+import dk.sdu.imada.teaching.compiler.fs25.vvpl.ErrorTypeStrings;
+import dk.sdu.imada.teaching.compiler.fs25.vvpl.VVPLController;
+
+/**
+ * TypeAnalyzer class that implements the {@link #analyse()} method. 
+ * 
+ * @author Carl-Emil Dons Christensen
+ */
+public class TypeAnalyzer implements ExprVisitor&lt;Type&gt;, StmtVisitor&lt;Void&gt; {
+
+    /**
+     * Symbol table for variables
+     */
+<span class="fc" id="L25">    private SymbolTable currentEnvironment = new SymbolTable();</span>
+
+    /**
+     * Symbol table for functions
+     */
+<span class="fc" id="L30">    private FuncSymbolTable functionsTable = new FuncSymbolTable();</span>
+
+    /**
+     * Set by {@link #visitFunctionStmt(FunctionStmt)} upon declared type, used by {@link #visitReturnStmt(ReturnStmt)}.
+     */
+<span class="fc" id="L35">    private Type currentFuncReturnType = Type.UNKNOWN;</span>
+
+    /**
+     * List of statements to be analysed.
+     */
+    private List&lt;Stmt&gt; program;
+
+    /**
+     * Initializes the type analyser with a set of statements to analyse
+     * @param program the list of statements to be analysed
+     */
+<span class="fc" id="L46">    public TypeAnalyzer(List&lt;Stmt&gt; program) {</span>
+<span class="fc" id="L47">        this.program = new ArrayList&lt;&gt;(program);</span>
+<span class="fc" id="L48">    }</span>
+
+    /**
+     * Performs type analysis for the entire program.
+     * 
+     * This method analyzes all top-level function declarations first,
+     * and then analyzes the remaining statements in program order.
+     *
+     * Any type-related errors are reported via {@link VVPLController#error}.
+     * @author Carl-Emil Dons Christensen
+     */
+    public void analyse() {
+<span class="fc bfc" id="L60" title="All 2 branches covered.">        for (Stmt stmt : program) {</span>
+<span class="fc bfc" id="L61" title="All 2 branches covered.">            if (stmt instanceof FunctionStmt) {</span>
+<span class="fc" id="L62">                FunctionStmt functionStmt = (FunctionStmt) stmt;</span>
+<span class="fc" id="L63">                functionsTable.define(functionStmt.name.lexeme, functionStmt);</span>
+            }
+        }
+<span class="fc bfc" id="L66" title="All 2 branches covered.">        for (Stmt stmt : program) {</span>
+<span class="fc" id="L67">            analyse(stmt);</span>
+        }
+<span class="fc" id="L69">        return;</span>
+    }
+
+    /**
+     * Performs type analysis for a single statement node using the visitor interface.
+     *
+     * @param stmt the statement to analyze
+     */
+    private void analyse(Stmt stmt) {
+<span class="fc" id="L78">        stmt.accept(this);</span>
+<span class="fc" id="L79">    }</span>
+
+    /**
+     * Performs type analysis for a single expression node using the visitor interface.
+     *
+     * @param stmt the expression to analyze
+     * @return type of the expression
+     */
+    private Type analyse(Expr expr) {
+<span class="fc" id="L88">        return expr.accept(this);</span>
+    }
+
+    /**
+     * Converts (i.e. casts) a {@link TokenType} to a {@link Type}.
+     * @param variableType the TokenType to be casted. The following types are allowed as parameters:
+     *  - {@link TokenType#NUMBER_TYPE}
+     *  - {@link TokenType#STRING_TYPE}
+     *  - {@link TokenType#BOOL_TYPE}
+     * @return resulting type
+     * @author: Carl-Emil Dons Christensen */
+    public Type convertVariableType(TokenType variableType) {
+<span class="pc bpc" id="L100" title="1 of 4 branches missed.">        return switch (variableType) {</span>
+<span class="fc" id="L101">            case NUMBER_TYPE -&gt; Type.NUMBER;</span>
+<span class="fc" id="L102">            case STRING_TYPE -&gt; Type.STRING;</span>
+<span class="fc" id="L103">            case BOOL_TYPE -&gt; Type.BOOL;</span>
+<span class="nc" id="L104">            default -&gt; Type.UNKNOWN; </span>
+            };
+        }
+
+    /* ------------------------------------- Identifier declarations, assignments and referencing ------------------------------------- */
+    /**
+     * Analyses a variable declaration.
+     * Error is raised if the declared type does not match the type of the given expression
+     * @param varDecl the variable declaration statement
+     * @author Carl-Emil Dons Christensen
+     */
+    @Override
+    public Void visitVarDecl(VarDecl varDecl) {
+<span class="fc" id="L117">        Type exprType = analyse(varDecl.expr); </span>
+<span class="fc bfc" id="L118" title="All 2 branches covered.">        if (exprType == Type.UNKNOWN) {</span>
+<span class="fc" id="L119">            return null;</span>
+        }
+<span class="fc" id="L121">        Type declaredType = convertVariableType(varDecl.typeToken.type);</span>
+
+<span class="fc bfc" id="L123" title="All 2 branches covered.">        if (exprType != declaredType) {</span>
+<span class="fc" id="L124">            typeError(varDecl.id, String.format(&quot;Type %s does not match type of expression (%s)&quot;, exprType, declaredType));</span>
+<span class="fc" id="L125">        }</span>
+        else {
+<span class="fc" id="L127">            currentEnvironment.define(varDecl.id.lexeme, exprType);</span>
+        }
+<span class="fc" id="L129">        return null;</span>
+        }
+
+    /**
+     * Analyses an assignment expression.
+     * An error is raised if the type of the new expression does not match the type of the identifier
+     * @param assign the assignment expression
+     * @return the type of the expression; {@link Type#UNKNOWN} if an error has occurred
+     * @author Carl-Emil Dons Christensen
+     */
+    @Override
+    public Type visitAssignExpr(Assign assign) {
+<span class="fc" id="L141">        Type currType = currentEnvironment.get(assign.ID.lexeme);</span>
+<span class="fc" id="L142">        Type exprType = analyse(assign.expr);</span>
+
+<span class="pc bpc" id="L144" title="1 of 2 branches missed.">        if (exprType == Type.UNKNOWN) {</span>
+<span class="nc" id="L145">            return Type.UNKNOWN;</span>
+        }
+<span class="fc bfc" id="L147" title="All 2 branches covered.">        if (currType == exprType) {</span>
+<span class="fc" id="L148">            return currType;   </span>
+        }
+        else {
+<span class="fc" id="L151">            typeError(assign.ID, String.format(&quot;current type of %s does not match the type of the given expression.&quot;, assign.ID.lexeme));</span>
+<span class="fc" id="L152">            return Type.UNKNOWN;</span>
+        }
+    }
+
+    /**
+     * Analyses an identifier reference expression.
+     * @param identifier the identifier expression
+     * @return the type of the expression; {@link Type#UNKNOWN} if an error has occurred
+     * @author Carl-Emil Dons Christensen
+     */
+    @Override
+    public Type visitIdentifierExpr(Identifier identifier) {
+<span class="fc" id="L164">        return currentEnvironment.get(identifier.id.lexeme);</span>
+    }
+
+
+    /* ------------------------------------- Expressions ------------------------------------- */
+    /**
+     * Analyses a literal expression by converting the {@link TokenType} to a {@link Type}
+     * @param literal the literal expression
+     * @return the type of the literal;
+     * @author Carl-Emil Dons Christensen
+     */
+    @Override 
+    public Type visitLiteralExpr(Literal literal) {
+<span class="pc bpc" id="L177" title="1 of 4 branches missed.">        switch (literal.token.type) {</span>
+            case NUMBER: 
+<span class="fc" id="L179">                return Type.NUMBER;</span>
+            case TRUE:
+            case FALSE:
+<span class="fc" id="L182">                return Type.BOOL;</span>
+            case STRING:
+<span class="fc" id="L184">                return Type.STRING;</span>
+            default:
+                // Unreachable
+<span class="nc" id="L187">                throw new UnsupportedOperationException();</span>
+        }
+    }
+
+    /**
+     * Analyses a unary expression
+     * Raises an error if the expression is preceded by NOT whilst not being of type {@link Type#BOOL}
+     * @param unary the unary expression
+     * @return the type of the expression; {@link Type#UNKNOWN} if an error has occured
+     * @author Carl-Emil Dons Christensen
+     */
+    @Override 
+    public Type visitUnaryExpr(Unary unary) {
+<span class="fc" id="L200">        Type exprType = analyse(unary.expr);</span>
+<span class="pc bpc" id="L201" title="1 of 2 branches missed.">        if (exprType == Type.UNKNOWN) {</span>
+<span class="nc" id="L202">            return Type.UNKNOWN;</span>
+        }
+
+<span class="fc bfc" id="L205" title="All 4 branches covered.">        if (unary.operator.type == NOT &amp;&amp; exprType != Type.BOOL) {</span>
+<span class="fc" id="L206">            typeError(unary.operator, &quot;operator NOT can only precede a boolean expression.&quot;);</span>
+<span class="fc" id="L207">            return Type.UNKNOWN;</span>
+        }
+        else {
+<span class="fc" id="L210">            return exprType;</span>
+        }
+    }
+
+    /**
+     * Analyses a binary expression.
+     * Raises an error if:
+     *  - arithmetic operations and numerical comparators are used between other than {@link Type#NUMBER}
+     *  - logical comparators are used between two elements not of same type
+     * @param binary the binary expression
+     * @return the type of the expression; {@link Type#UNKNOWN} if an error has occured
+     * @author Carl-Emil Dons Christensen
+     */
+    @Override 
+    public Type visitBinaryExpr(Binary binary) {
+<span class="fc" id="L225">        Type left = analyse(binary.left);</span>
+<span class="fc" id="L226">        Type right = analyse(binary.right);</span>
+
+<span class="pc bpc" id="L228" title="2 of 4 branches missed.">        if (left == Type.UNKNOWN || right == Type.UNKNOWN) {</span>
+<span class="nc" id="L229">            return Type.UNKNOWN;</span>
+        }
+        
+<span class="pc bpc" id="L232" title="1 of 4 branches missed.">        switch (binary.operator.type) {</span>
+            case PLUS:
+            case DIV:
+            case MULT:
+            case SUB:    
+<span class="fc bfc" id="L237" title="All 4 branches covered.">                if (left == Type.NUMBER &amp;&amp; right == Type.NUMBER) {</span>
+<span class="fc" id="L238">                    return Type.NUMBER;</span>
+                }
+                else {
+<span class="fc" id="L241">                    typeError(binary.operator, String.format(&quot;operator %s only accepts numbers.&quot;, binary.operator.lexeme));</span>
+<span class="fc" id="L242">                    return Type.UNKNOWN;</span>
+                }
+            case GREATER:
+            case GREATER_EQUAL:
+            case LESS:
+            case LESS_EQUAL:
+<span class="pc bpc" id="L248" title="1 of 4 branches missed.">                if (left == Type.NUMBER &amp;&amp; right == Type.NUMBER) {</span>
+<span class="fc" id="L249">                    return Type.BOOL;</span>
+                }
+                else {
+<span class="fc" id="L252">                    typeError(binary.operator, String.format(&quot;operator %s only accepts numbers.&quot;, binary.operator.lexeme));</span>
+<span class="fc" id="L253">                    return Type.UNKNOWN;</span>
+                }
+            case EQUALS:
+            case NOT_EQUALS:
+<span class="fc bfc" id="L257" title="All 2 branches covered.">                if (left == right) {</span>
+<span class="fc" id="L258">                    return Type.BOOL;</span>
+                }
+                else {
+<span class="fc" id="L261">                    typeError(binary.operator, String.format(&quot;operator %s can only compare two expressions of the same type.&quot;, binary.operator.lexeme));</span>
+<span class="fc" id="L262">                    return Type.UNKNOWN;</span>
+                }
+            default:
+                // Unreachable
+<span class="nc" id="L266">                throw new UnsupportedOperationException();</span>
+        }
+    }
+
+    /**
+     * Analyses a logical expression
+     * Raises an error if logical operator is used between other than {@link Type#BOOL}s
+     * @param logical the logical expression
+     * @return the type of the expression; {@link Type#UNKNOWN} if an error has occured
+     * @author Carl-Emil Dons Christensen
+     */
+    @Override   
+    public Type visitLogicalExpr(Logical logical) {
+<span class="fc" id="L279">        Type left = analyse(logical.left);</span>
+<span class="fc" id="L280">        Type right = analyse(logical.right);</span>
+
+<span class="pc bpc" id="L282" title="2 of 4 branches missed.">        if (left == Type.UNKNOWN || right == Type.UNKNOWN) {</span>
+<span class="nc" id="L283">            return Type.UNKNOWN;</span>
+        }
+
+<span class="pc bpc" id="L286" title="1 of 2 branches missed.">        switch (logical.operator.type) {</span>
+            case OR, AND: 
+<span class="fc bfc" id="L288" title="All 4 branches covered.">                if (left == Type.BOOL &amp;&amp; right == Type.BOOL) {</span>
+<span class="fc" id="L289">                    return Type.BOOL;</span>
+                }
+                else {
+<span class="fc" id="L292">                    typeError(logical.operator, String.format(&quot;operator %s only accepts Bools.&quot;, logical.operator.lexeme));</span>
+<span class="fc" id="L293">                    return Type.UNKNOWN;</span>
+                }
+            default:
+                // Unreachable
+<span class="nc" id="L297">                throw new UnsupportedOperationException();</span>
+        }
+    }
+
+    /**
+     * Analyses a cast expression
+     * Raises an error if the cast is not possible
+     * @param cast the cast expression
+     * @return the type of the resulting expression after being casted; {@link Type#UNKNOWN} if an error has occured
+     * @author Carl-Emil Dons Christensen
+     */
+    @Override 
+    public Type visitCastExpr(Cast cast) {
+<span class="fc" id="L310">        Type cast_from = analyse(cast.expr);</span>
+<span class="fc" id="L311">        TokenType cast_to = cast.typeToken.type;</span>
+
+        
+<span class="pc bpc" id="L314" title="1 of 2 branches missed.">        if (cast_from == Type.UNKNOWN) {</span>
+<span class="nc" id="L315">            return Type.UNKNOWN;</span>
+        }
+
+<span class="pc bpc" id="L318" title="1 of 4 branches missed.">        switch (cast_from) {</span>
+            case Type.NUMBER:
+<span class="fc bfc" id="L320" title="All 2 branches covered.">                if (cast_to == STRING_TYPE) {</span>
+<span class="fc" id="L321">                    return Type.STRING;</span>
+                }
+<span class="pc bpc" id="L323" title="1 of 2 branches missed.">                if (cast_to == BOOL_TYPE) {</span>
+<span class="fc" id="L324">                    return Type.BOOL;</span>
+                }
+                else {
+<span class="nc" id="L327">                    typeError(cast.typeToken, &quot;can only cast NUMBER to string or bool.&quot;);</span>
+<span class="nc" id="L328">                    return Type.UNKNOWN;</span>
+                }
+            case Type.STRING:
+<span class="fc bfc" id="L331" title="All 2 branches covered.">                if (cast_to == NUMBER_TYPE) {</span>
+                     // TypeAnalyzer assumes this is always possible. Runtime error is returned in interpreter in the case that string contains non-digits.
+<span class="fc" id="L333">                    return Type.NUMBER;</span>
+                }
+                else {
+<span class="fc" id="L336">                    typeError(cast.typeToken, &quot;can only cast STRING to NUMBER.&quot;);</span>
+<span class="fc" id="L337">                    return Type.UNKNOWN;</span>
+                }
+            case Type.BOOL:
+<span class="fc bfc" id="L340" title="All 2 branches covered.">                if (cast_to == STRING_TYPE) {</span>
+<span class="fc" id="L341">                    return Type.STRING;</span>
+                }
+                else {
+<span class="fc" id="L344">                    typeError(cast.typeToken, &quot;can only cast bool to string.&quot;);</span>
+<span class="fc" id="L345">                    return Type.UNKNOWN;</span>
+                }
+            default:
+                // Unreachable 
+<span class="nc" id="L349">                throw new UnsupportedOperationException();</span>
+        }
+    }
+
+    /* ------------------------- Statements ---------------------------- */
+    /**
+     * Analyses an expression statement
+     * @param exprStmt the expression statement
+     * @author Carl-Emil Dons Christensen
+     */
+    @Override
+    public Void visitExprStmt(ExprStmt exprStmt) {
+<span class="fc" id="L361">        analyse(exprStmt.expr);</span>
+<span class="fc" id="L362">        return null;</span>
+    }
+
+    /**
+     * Analyses a while statement
+     * Raises an error if the conditional is not of type {@link Type#BOOL}
+     * @param whileStmt the while statement
+     * @author Carl-Emil Dons Christensen
+     */
+    @Override
+    public Void visitWhileStmt(WhileStmt whileStmt) {
+<span class="fc" id="L373">        Type condType = analyse(whileStmt.conditional);</span>
+        
+<span class="fc bfc" id="L375" title="All 4 branches covered.">        if (condType != Type.BOOL &amp;&amp; condType != Type.UNKNOWN) {</span>
+<span class="fc" id="L376">            typeError(whileStmt.whileToken, &quot;conditional has to be of type Bool&quot;);</span>
+        }
+<span class="fc" id="L378">        analyse(whileStmt.body);</span>
+<span class="fc" id="L379">        return null;</span>
+    }
+
+    /**
+     * Analyses an if else statement
+     * Raises an error if the conditional is not of type {@link Type#BOOL}
+     * @param ifStmt the if else statement
+     * @author Carl-Emil Dons Christensen
+     */
+    @Override
+    public Void visitIfStmt(IfStmt ifStmt) {
+<span class="fc" id="L390">        Type condType = analyse(ifStmt.cond);</span>
+
+<span class="pc bpc" id="L392" title="1 of 4 branches missed.">        if (condType != Type.BOOL &amp;&amp; condType != Type.UNKNOWN) {</span>
+<span class="fc" id="L393">            typeError(ifStmt.ifToken, &quot;conditional has to be of type Bool&quot;);</span>
+        }
+<span class="fc" id="L395">        analyse(ifStmt.thenBlock);</span>
+<span class="fc bfc" id="L396" title="All 2 branches covered.">        if (ifStmt.elseBlock != null) {</span>
+<span class="fc" id="L397">            analyse(ifStmt.elseBlock);</span>
+        }
+<span class="fc" id="L399">        return null;</span>
+    }
+
+    /**
+     * Analyses a print statement
+     * @param printStmt the print statement
+     * @author Carl-Emil Dons Christensen
+     */
+    @Override
+    public Void visitPrintStmt(PrintStmt printStmt) {
+<span class="fc" id="L409">        analyse(printStmt.expr);</span>
+<span class="fc" id="L410">        return null;</span>
+    }
+
+    /**
+     * Analyses a block statement by constructing a new environment for the block,
+     * subsequently analysing each statement within this scope.
+     * @param blockStmt the block statement
+     * @author Carl-Emil Dons Christensen
+     */
+    @Override
+    public Void visitBlockStmt(BlockStmt blockStmt) {
+<span class="fc" id="L421">        SymbolTable oldTable = currentEnvironment;</span>
+<span class="fc" id="L422">        currentEnvironment = new SymbolTable(currentEnvironment);</span>
+
+<span class="fc bfc" id="L424" title="All 2 branches covered.">        for (Stmt stmt : blockStmt.stmts) {</span>
+<span class="fc" id="L425">            analyse(stmt);</span>
+        }
+<span class="fc" id="L427">        currentEnvironment = oldTable;</span>
+<span class="fc" id="L428">        return null;</span>
+    }
+
+
+    /* ------------------------------------- Functions Related (visitBlockStmt are also related to this section.) ------------------------------------- */
+
+    /**
+     * Checks if all paths in the given statement returns.
+     * Used in combination with {@link #visitReturnStmt(ReturnStmt)} to ensure 
+     * that functions with a declared type can't exit without returning that type.
+     * @param stmt the statement being checked
+     * @return true if all paths return, false otherwise
+     * @author: Lucas Bergholdt Hansen 
+     */
+    public boolean alwaysReturns(Stmt stmt) {
+        // CASE 1: Return statement
+        // If we see a return statement we know this branch returns.
+<span class="fc bfc" id="L445" title="All 2 branches covered.">        if (stmt instanceof ReturnStmt) {</span>
+<span class="fc" id="L446">            return true;</span>
+        }
+
+        // CASE 2: If Statement
+        // We can only be sure an if statement returns if:
+        // (1) The else block exists
+        // (2) Both the then-branch AND the else-branch return
+<span class="fc bfc" id="L453" title="All 2 branches covered.">        if (stmt instanceof IfStmt) {</span>
+<span class="fc" id="L454">            IfStmt ifStmt = (IfStmt) stmt;</span>
+
+            // Checking (1)
+<span class="fc bfc" id="L457" title="All 2 branches covered.">            if (ifStmt.elseBlock != null) { </span>
+                // Checking (2)
+<span class="pc bpc" id="L459" title="1 of 4 branches missed.">                return alwaysReturns(ifStmt.thenBlock) &amp;&amp; alwaysReturns(ifStmt.elseBlock);</span>
+            } else {
+<span class="fc" id="L461">                return false;</span>
+            }
+        }
+
+        // CASE 3: Block statement.
+        // We can be sure that a block statement returns if ANY of its statements return.
+<span class="fc bfc" id="L467" title="All 2 branches covered.">        if (stmt instanceof BlockStmt) {</span>
+<span class="fc" id="L468">            BlockStmt block = (BlockStmt) stmt;</span>
+<span class="fc bfc" id="L469" title="All 2 branches covered.">            for (Stmt s : block.stmts) {</span>
+<span class="fc bfc" id="L470" title="All 2 branches covered.">                if (alwaysReturns(s)) {</span>
+<span class="fc" id="L471">                    return true; // return instantly if ANY of the stmts return</span>
+                }
+            }
+<span class="fc" id="L474">            return false;</span>
+        }
+
+        // CASE 4: Every other statement
+        // We can't gurantee other statements return so we just return false.
+<span class="fc" id="L479">        return false;</span>
+    }
+
+    /** 
+     * Analyses a Function Statement by setting the variable {@link #currentFuncReturnType} 
+     * for {@link #visitReturnStmt(ReturnStmt)} to use, subsequently analysing the body of the function.
+     * An error is raised if the function body is not guaranteed to return the declared type.
+     * @param functionStmt the function declaration statement
+     * @author: Carl-Emil Dons Christensen, Lucas Bergholdt Hansen
+     */
+    @Override
+    public Void visitFunctionStmt(FunctionStmt functionStmt) {
+
+<span class="fc" id="L492">        SymbolTable oldTable = currentEnvironment;</span>
+<span class="fc" id="L493">        currentEnvironment = new SymbolTable();</span>
+
+        // Define all function parameters in the new environment
+<span class="fc" id="L496">        List&lt;Param&gt; params = functionStmt.params;</span>
+<span class="fc bfc" id="L497" title="All 2 branches covered.">        for (int i = 0; i &lt; params.size(); i++) {</span>
+<span class="fc" id="L498">            Param currParam = params.get(i);</span>
+<span class="fc" id="L499">            Type paramType = convertVariableType(currParam.typeToken.type);</span>
+            
+<span class="fc" id="L501">            currentEnvironment.define(currParam.id.lexeme, paramType);</span>
+        }
+        
+<span class="fc bfc" id="L504" title="All 2 branches covered.">        if (functionStmt.typeToken != null) {</span>
+<span class="fc" id="L505">            currentFuncReturnType = convertVariableType(functionStmt.typeToken.type);</span>
+<span class="fc" id="L506">        }</span>
+        else {
+<span class="fc" id="L508">            currentFuncReturnType = Type.UNKNOWN;</span>
+        }
+ 
+<span class="fc" id="L511">        analyse(functionStmt.body);</span>
+
+        // Check that all code paths return a value if the function has a declared type.
+        // VisitReturnStatement already ensured return statements return the right type.
+<span class="fc bfc" id="L515" title="All 4 branches covered.">        if (functionStmt.typeToken != null &amp;&amp; !alwaysReturns(functionStmt.body)) {</span>
+<span class="fc" id="L516">            typeError(functionStmt.name, String.format(&quot;Function %s must return a value in all code paths&quot;, functionStmt.name.lexeme));</span>
+        }
+        
+<span class="fc" id="L519">        currentEnvironment = oldTable;</span>
+<span class="fc" id="L520">        currentFuncReturnType = Type.UNKNOWN;</span>
+<span class="fc" id="L521">        return null;</span>
+    }
+
+    /**
+     * Analyses a return statement by using {@link #currentFuncReturnType} set by {@link #visitFunctionStmt(FunctionStmt)}.
+     * Error is raised if:
+     *  - A non-void type is returned in a void function
+     *  - type of return statement does not match declared type
+     * @param returnStmt the return statement
+     * @author: Carl-Emil Dons Christensen, Lucas Bergholdt Hansen
+     */
+    @Override
+    public Void visitReturnStmt(ReturnStmt returnStmt) {
+        // Handling void returns (return;)
+<span class="fc bfc" id="L535" title="All 2 branches covered.">        if (returnStmt.returnValue == null) {</span>
+<span class="fc bfc" id="L536" title="All 2 branches covered.">            if (currentFuncReturnType != Type.UNKNOWN) {</span>
+<span class="fc" id="L537">                typeError(returnStmt.returnKeyword, &quot;Function is not a void function.&quot;);</span>
+<span class="fc" id="L538">                return null;</span>
+            } 
+            else {
+<span class="fc" id="L541">                return null;</span>
+            }
+        }
+        // Handling non-void returns
+<span class="fc" id="L545">        Type exprType = analyse(returnStmt.returnValue);</span>
+<span class="pc bpc" id="L546" title="1 of 2 branches missed.">        if (exprType == Type.UNKNOWN) {</span>
+<span class="nc" id="L547">            return null;</span>
+        }
+<span class="fc bfc" id="L549" title="All 2 branches covered.">        else if (exprType != currentFuncReturnType) {</span>
+<span class="fc" id="L550">            typeError(returnStmt.returnKeyword, &quot;Type of returned value does not match declared return type of function&quot;);</span>
+<span class="fc" id="L551">            return null;</span>
+        } 
+        else {
+<span class="fc" id="L554">            return null;</span>
+        }
+    }
+
+      /** 
+     * Analyses a Call Statement.
+     * An error is raised if type of arguments does not match type of declared parameters
+     * @param call the call expression
+     * @return the type of the call expression; {@link Type#UNKNOWN} if an error has occured
+     * @author Carl-Emil Dons Christensen
+     */
+    @Override
+    public Type visitCallExpr(Call call) {
+<span class="fc" id="L567">        FunctionStmt functionStmt = functionsTable.get(call.id.lexeme);</span>
+
+<span class="fc" id="L569">        List&lt;Param&gt; params = functionStmt.params;</span>
+<span class="fc" id="L570">        List&lt;Expr&gt; args = call.arguments;</span>
+
+<span class="fc bfc" id="L572" title="All 2 branches covered.">        for (int i = 0; i &lt; args.size(); i++) {</span>
+<span class="fc" id="L573">            Type argumentType = analyse(args.get(i));</span>
+<span class="fc" id="L574">            Type paramType = convertVariableType(params.get(i).typeToken.type);</span>
+            
+<span class="fc bfc" id="L576" title="All 2 branches covered.">            if (argumentType != paramType) {</span>
+<span class="fc" id="L577">                typeError(call.id, String.format(&quot;Type of given argument %s does not match the required type %s&quot;, argumentType, paramType));</span>
+                // Do not return. Report all argument type errors.
+            }
+        }
+
+<span class="fc bfc" id="L582" title="All 2 branches covered.">        if (functionStmt.typeToken != null) {</span>
+<span class="fc" id="L583">            return convertVariableType(functionStmt.typeToken.type);</span>
+        }
+        else {
+<span class="fc" id="L586">            return Type.UNKNOWN;</span>
+        }
+    }
+
+    /**
+     * Reports a type error to the {@link VVPLController} class.
+     * @param token the token at which the error occured
+     * @param message the error message
+     * @author Lucas Bergholdt Hansen
+     */
+    private void typeError(Token token, String message) {
+<span class="fc" id="L597">        VVPLController.error(token.line, ErrorTypeStrings.TYPE_ERROR, message);</span>
+<span class="fc" id="L598">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

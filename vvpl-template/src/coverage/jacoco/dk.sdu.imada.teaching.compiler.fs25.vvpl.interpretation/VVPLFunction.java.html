@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="da"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>VVPLFunction.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">vvpl</a> &gt; <a href="index.source.html" class="el_package">dk.sdu.imada.teaching.compiler.fs25.vvpl.interpretation</a> &gt; <span class="el_source">VVPLFunction.java</span></div><h1>VVPLFunction.java</h1><pre class="source lang-java linenums">package dk.sdu.imada.teaching.compiler.fs25.vvpl.interpretation;
+
+import java.util.List;
+
+import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Stmt;
+
+/**
+ * @author Lasse Arpe Kristensen
+ */
+class VVPLFunction implements VVPLCallable {
+    private final Stmt.FunctionStmt funcDecl;
+    
+    /**
+     * The class constructor
+     * @param funcDecl the function statement representing the function's declaration (name, parameters and body)
+     */
+<span class="fc" id="L17">    VVPLFunction(Stmt.FunctionStmt funcDecl) {</span>
+<span class="fc" id="L18">        this.funcDecl = funcDecl;</span>
+<span class="fc" id="L19">    }</span>
+
+/**
+ * Creates a new environment for a function call; together with the arguments.
+ * Follow the book implementatation.
+ * 
+ * @param interpreter the interpreter instance used to execute the function body
+ * @param arguments the list of argument values passed to a function
+ * @return the result of the function execution or null if there is no return value
+ */
+public Object call(Interpreter interpreter, List&lt;Object&gt; arguments) {
+
+    // Globals must be accessible. 
+    // CALL BY VALUE - &quot;copy&quot; - the actual global must not change. 
+<span class="fc" id="L33">    Environment functionScope = new Environment(interpreter.globals);</span>
+
+    // Define the parameters inside the new scope. 
+<span class="fc bfc" id="L36" title="All 2 branches covered.">    for (int i = 0; i &lt; funcDecl.params.size(); i++) {</span>
+<span class="fc" id="L37">        functionScope.define(funcDecl.params.get(i).id.lexeme, arguments.get(i));</span>
+    }
+
+    try {
+<span class="fc" id="L41">        interpreter.executeBlock(funcDecl.body.stmts, functionScope);</span>
+<span class="fc" id="L42">    } catch (ReturnExcep returnValue) {</span>
+<span class="fc" id="L43">        return returnValue.value;</span>
+    }
+
+<span class="fc" id="L46">    return null;</span>
+}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

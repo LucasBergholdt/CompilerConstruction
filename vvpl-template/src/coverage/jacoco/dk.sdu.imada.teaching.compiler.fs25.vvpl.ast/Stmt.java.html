@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="da"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Stmt.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">vvpl</a> &gt; <a href="index.source.html" class="el_package">dk.sdu.imada.teaching.compiler.fs25.vvpl.ast</a> &gt; <span class="el_source">Stmt.java</span></div><h1>Stmt.java</h1><pre class="source lang-java linenums">package dk.sdu.imada.teaching.compiler.fs25.vvpl.ast;
+
+import java.util.List;
+
+import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.visitors.StmtVisitor;
+import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.Token;
+
+/**
+ * Abstract base class for all statement AST nodes.
+ * Each subclass represents a specific kind of statement and implemets the 
+ * accept method by redirecting the call to the proper visitor method.
+ * @version CompilerConstruction FT 2025
+ */
+<span class="fc" id="L14">public abstract class Stmt {</span>
+    /**
+     * Accepts a visitor that implements operations for this statement node.
+     * @param &lt;T&gt; the return type of the visitor
+     * @param visitor the visitor to accept
+     * @return the result of the visitor's operation
+     */
+    public abstract &lt;T&gt; T accept(StmtVisitor&lt;T&gt; visitor);
+
+
+    // --------- Nested Stmt Classes -------------
+
+    /** @author: Carl-Emil Dons Christensen */
+    public static class ExprStmt extends Stmt {
+        public final Expr expr;
+
+<span class="fc" id="L30">        public ExprStmt(Expr expr) {</span>
+<span class="fc" id="L31">            this.expr = expr;</span>
+<span class="fc" id="L32">        }</span>
+
+        @Override
+        public &lt;T&gt; T accept(StmtVisitor&lt;T&gt; v) {
+<span class="fc" id="L36">            return v.visitExprStmt(this);</span>
+        }
+    }
+
+    /** @author: Carl-Emil Dons Christensen */
+    public static class IfStmt extends Stmt {
+        public final Token ifToken; /* Literal &quot;IF&quot;. */
+        public final Expr cond;
+        public final Stmt thenBlock;
+        public final Stmt elseBlock;
+
+<span class="fc" id="L47">        public IfStmt(Token ifToken, Expr cond, Stmt thenBlock, Stmt elseBlock) {</span>
+<span class="fc" id="L48">            this.ifToken = ifToken;</span>
+<span class="fc" id="L49">            this.cond = cond;</span>
+<span class="fc" id="L50">            this.thenBlock = thenBlock;</span>
+<span class="fc" id="L51">            this.elseBlock = elseBlock;</span>
+<span class="fc" id="L52">        }</span>
+
+        @Override
+        public &lt;T&gt; T accept(StmtVisitor&lt;T&gt; v) {
+<span class="fc" id="L56">            return v.visitIfStmt(this);</span>
+        }
+    }
+
+    /** @author: Carl-Emil Dons Christensen */
+    public static class WhileStmt extends Stmt {
+        public final Token whileToken;
+        public final Expr conditional;
+        public final Stmt body;
+
+<span class="fc" id="L66">        public WhileStmt(Token whileToken, Expr conditional, Stmt body) {</span>
+<span class="fc" id="L67">            this.whileToken = whileToken;</span>
+<span class="fc" id="L68">            this.conditional = conditional;</span>
+<span class="fc" id="L69">            this.body = body;</span>
+<span class="fc" id="L70">        }</span>
+
+        @Override
+        public &lt;T&gt; T accept(StmtVisitor&lt;T&gt; v) {
+<span class="fc" id="L74">            return v.visitWhileStmt(this);</span>
+        }
+    }
+
+    /** @author: Carl-Emil Dons Christensen */
+    public static class PrintStmt extends Stmt {
+        public final Token token;
+        public final Expr expr;
+
+<span class="fc" id="L83">        public PrintStmt(Expr expr, Token token) {</span>
+<span class="fc" id="L84">            this.expr = expr;</span>
+<span class="fc" id="L85">            this.token = token;</span>
+<span class="fc" id="L86">        }</span>
+
+        @Override
+        public &lt;T&gt; T accept(StmtVisitor&lt;T&gt; v) {
+<span class="fc" id="L90">            return v.visitPrintStmt(this);</span>
+        }
+    }
+
+    /** @author: Carl-Emil Dons Christensen */
+    public static class BlockStmt extends Stmt {
+        public final List&lt;Stmt&gt; stmts;
+
+<span class="fc" id="L98">        public BlockStmt(List&lt;Stmt&gt; stmts) {</span>
+<span class="fc" id="L99">            this.stmts = stmts;</span>
+<span class="fc" id="L100">        }</span>
+
+        @Override
+        public &lt;T&gt; T accept(StmtVisitor&lt;T&gt; v) {
+<span class="fc" id="L104">            return v.visitBlockStmt(this);</span>
+        }
+    }
+
+    /** @author: Carl-Emil Dons Christensen */
+    public static class VarDecl extends Stmt {
+        public final Token id;
+        public final Expr expr;
+        public final Token typeToken;
+
+<span class="fc" id="L114">        public VarDecl(Token id, Token typeToken, Expr expr) {</span>
+<span class="fc" id="L115">            this.id = id;</span>
+<span class="fc" id="L116">            this.typeToken = typeToken;</span>
+<span class="fc" id="L117">            this.expr = expr;</span>
+<span class="fc" id="L118">        }</span>
+
+        @Override
+        public &lt;T&gt; T accept(StmtVisitor&lt;T&gt; v) {
+<span class="fc" id="L122">            return v.visitVarDecl(this);</span>
+        }
+    }
+
+    /** @author: Lucas Bergholdt Hansen */
+    public static class ReturnStmt extends Stmt {
+        public final Token returnKeyword;
+        public final Expr returnValue;
+
+<span class="fc" id="L131">        public ReturnStmt(Token returnKeyword, Expr returnValue) {</span>
+<span class="fc" id="L132">            this.returnKeyword = returnKeyword;</span>
+<span class="fc" id="L133">            this.returnValue = returnValue;</span>
+<span class="fc" id="L134">        }</span>
+
+        @Override
+        public &lt;T&gt; T accept(StmtVisitor&lt;T&gt; v) {
+<span class="fc" id="L138">            return v.visitReturnStmt(this);</span>
+        }
+    }
+
+    /** @author: Lucas Bergholdt Hansen */
+    public static class FunctionStmt extends Stmt {
+        public final Token name;
+        public final List&lt;Param&gt; params;
+        public final Token typeToken;
+        public final BlockStmt body;
+
+<span class="fc" id="L149">        public FunctionStmt(Token name, List&lt;Param&gt; params, Token typeToken, BlockStmt body) {</span>
+<span class="fc" id="L150">            this.name = name;</span>
+<span class="fc" id="L151">            this.params = params;</span>
+<span class="fc" id="L152">            this.typeToken = typeToken;</span>
+<span class="fc" id="L153">            this.body = body;</span>
+<span class="fc" id="L154">        }</span>
+
+        @Override
+        public &lt;T&gt; T accept(StmtVisitor&lt;T&gt; v) {
+<span class="fc" id="L158">            return v.visitFunctionStmt(this);</span>
+        }
+    }
+
+    
+}
+
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

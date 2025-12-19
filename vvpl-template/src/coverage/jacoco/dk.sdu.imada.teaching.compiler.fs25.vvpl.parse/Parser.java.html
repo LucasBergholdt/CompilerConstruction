@@ -1,0 +1,656 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="da"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Parser.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">vvpl</a> &gt; <a href="index.source.html" class="el_package">dk.sdu.imada.teaching.compiler.fs25.vvpl.parse</a> &gt; <span class="el_source">Parser.java</span></div><h1>Parser.java</h1><pre class="source lang-java linenums">package dk.sdu.imada.teaching.compiler.fs25.vvpl.parse;
+
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+
+import dk.sdu.imada.teaching.compiler.fs25.vvpl.ErrorTypeStrings;
+import dk.sdu.imada.teaching.compiler.fs25.vvpl.VVPLController;
+import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Expr;
+import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Expr.Identifier;
+import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Param;
+import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Stmt;
+import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.Token;
+import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.TokenType;
+
+import static dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.TokenType.*;
+
+
+/**
+ * The Parser class performs syntactic analysis of a VVPL program.
+ * Consumes a list of {@link Token}s and constructs an AST consiting
+ * of {@link Expr} and {@link Stmt} nodes.
+ * 
+ * If an unexpected token is seen it is reported to the controller via {@link VVPLController#error}
+ * and a {@link ParseError} is thrown. The Parser uses synchronization to recover from 
+ * the error, so it can finish parsing the program in order to detect any other errors.
+ * 
+ * @version CompilerConstruction FT 2025
+ */
+public class Parser {
+
+    /**
+     * The input list of tokens produced by the scanner.
+     */
+    private List&lt;Token&gt; tokens;
+
+    /**
+     * Index of current token being parsed.
+     */
+<span class="fc" id="L40">    int current = 0;</span>
+
+    /**
+     * Constructs a new parser for the given token stream.
+     * @param tokens the list of tokens to parse
+     */
+<span class="fc" id="L46">    public Parser(List&lt;Token&gt; tokens) {</span>
+<span class="fc" id="L47">        this.tokens = tokens;</span>
+<span class="fc" id="L48">    }</span>
+
+    /**
+     * Parses the complete token stream, by repeatedly parsing top-level declarations until EOF token.
+     * Recovers from syntax errors to allow continued parsing.
+     * @return a list of statements forming the AST
+     * @author: Carl-Emil Dons Christensen 
+     */
+    public List&lt;Stmt&gt; parse() {
+<span class="fc" id="L57">        List&lt;Stmt&gt; statements = new ArrayList&lt;&gt;();</span>
+        
+<span class="fc bfc" id="L59" title="All 2 branches covered.">        while (!isAtEnd()) {</span>
+            try {
+<span class="fc" id="L61">                statements.add(decl());</span>
+<span class="fc" id="L62">            } catch (ParseError e) {</span>
+<span class="fc" id="L63">                synchronise();</span>
+            }
+
+        }
+<span class="fc" id="L67">        return statements;</span>
+    }
+
+
+    // ------------------ decl := funcDecl | varDecl | statement --------------------
+
+    /**
+     * Parses the 'decl' grammar rule.
+     * @return the parsed statement
+     * @author: Carl-Emil Dons Christensen 
+     */
+    private Stmt decl() {
+<span class="fc bfc" id="L79" title="All 2 branches covered.">        if (match(FUNCTION)) {</span>
+<span class="fc" id="L80">            return function();</span>
+<span class="fc bfc" id="L81" title="All 2 branches covered.">        } else if (match(VAR)) {</span>
+<span class="fc" id="L82">            return varDecl();</span>
+        } else {
+<span class="fc" id="L84">            return statement();</span>
+        }
+    }
+
+    /**
+     * Parses the 'varDecl' grammar rule.
+     * @return a {@link Stmt.VarDecl} AST node
+     * @author: Carl-Emil Dons Christensen, Lucas Bergholdt Hansen
+     */
+    private Stmt varDecl() {
+        // When entering this method &quot;variable&quot; has already been consumed by match in decl()
+        
+        // We expect an ID (name of variable):
+<span class="fc" id="L97">        Token id = consume(IDENTIFIER, &quot;Expected identifier in variable declaration&quot;);</span>
+
+        // We expect &quot;has_type&quot;:
+<span class="fc" id="L100">        consume(TYPE_DEF, &quot;Expected 'has_type' in variable declaration&quot;);</span>
+        
+        // Expecting a NumberType, StringType or BoolType:
+<span class="fc" id="L103">        Token typeToken = consumeType();</span>
+
+        // Optional &quot;is&quot; expr:
+<span class="fc" id="L106">        Expr expr = null;</span>
+<span class="fc bfc" id="L107" title="All 2 branches covered.">        if (match(ASSIGN)) {</span>
+<span class="fc" id="L108">            expr = expression();</span>
+        }
+
+        // Expecting semicolon at end:
+<span class="fc" id="L112">        consume(SEMICOLON, &quot;Expected ';' at the end of variable declaration&quot;);</span>
+
+<span class="fc" id="L114">        return new Stmt.VarDecl(id, typeToken, expr);</span>
+    }
+
+    /**
+     * Parses the 'statement' grammar rule.
+     * @return the parsed statement.
+     * @author: Carl-Emil Dons Christensen
+     */
+    private Stmt statement() {
+<span class="fc bfc" id="L123" title="All 2 branches covered.">        if (match(PRINT)) return printStmt();</span>
+
+<span class="fc bfc" id="L125" title="All 2 branches covered.">        if (match(IF)) return ifStmt();</span>
+
+<span class="fc bfc" id="L127" title="All 2 branches covered.">        if (match(WHILE)) return whileStmt();</span>
+
+<span class="fc bfc" id="L129" title="All 2 branches covered.">        if (match(LEFT_BRACE)) return new Stmt.BlockStmt(block()); // Wraps result of block() in Stmt.BlockStmt</span>
+
+<span class="fc bfc" id="L131" title="All 2 branches covered.">        if (match(RETURN)) return returnStmt();</span>
+
+<span class="fc" id="L133">        return exprStmt();</span>
+    }
+
+    /**
+     * Parses the 'printStmt' grammar rule
+     * @return a {@link Stmt.PrintStmt} AST node.
+     * @author: Carl-Emil Dons Christensen
+     */
+    private Stmt printStmt() {
+<span class="fc" id="L142">        Expr value = expression();</span>
+<span class="fc" id="L143">        Token printToken = previous();</span>
+<span class="fc" id="L144">        consume(SEMICOLON, &quot;Expected ';' at the end of print statement&quot;);</span>
+<span class="fc" id="L145">        return new Stmt.PrintStmt(value, printToken);</span>
+    }
+
+    /**
+     * Parses the 'ifStmt' grammar rule
+     * @return a {@link Stmt.IfStmt} AST node
+     * @author: Carl-Emil Dons Christensen
+     */
+    private Stmt ifStmt() {
+<span class="fc" id="L154">        Token ifToken = previous();</span>
+<span class="fc" id="L155">        consume(LEFT_PAREN, &quot;Expected '(' after if statement&quot;);</span>
+<span class="fc" id="L156">        Expr cond = expression();</span>
+<span class="fc" id="L157">        consume(RIGHT_PAREN, &quot;Expected ')' to complete if statement&quot;);</span>
+
+<span class="fc" id="L159">        Stmt thenBranch = statement();</span>
+        // Optional else branch:
+<span class="fc" id="L161">        Stmt elseBranch = null;</span>
+<span class="fc bfc" id="L162" title="All 2 branches covered.">        if (match(ELSE)) {</span>
+<span class="fc" id="L163">            elseBranch = statement();</span>
+        }
+<span class="fc" id="L165">        return new Stmt.IfStmt(ifToken, cond, thenBranch, elseBranch);</span>
+    }
+
+    /** 
+     * Parses the 'whileStmt' grammar rule
+     * @return a {@link Stmt.WhileStmt} AST node
+     * @author: Carl-Emil Dons Christensen 
+     */
+    private Stmt whileStmt() {
+<span class="fc" id="L174">        Token whileToken = previous();</span>
+<span class="fc" id="L175">        consume(LEFT_PAREN, &quot;Expected '('&quot;);</span>
+<span class="fc" id="L176">        Expr cond = expression();</span>
+<span class="fc" id="L177">        consume(RIGHT_PAREN, &quot;Expected ')'&quot;);</span>
+<span class="fc" id="L178">        Stmt body = statement();</span>
+<span class="fc" id="L179">        return new Stmt.WhileStmt(whileToken, cond, body);</span>
+    }
+
+    /** 
+     * Parses the 'block' grammar rule.
+     * @return a list of statements inside the block
+     * @author: Carl-Emil Dons Christensen, Lucas Bergholdt Hansen 
+     */
+    private List&lt;Stmt&gt; block() {
+<span class="fc" id="L188">        List&lt;Stmt&gt; statements = new LinkedList&lt;&gt;();</span>
+        
+        // Handle all statements in the block:
+<span class="pc bpc" id="L191" title="1 of 4 branches missed.">        while (!check(RIGHT_BRACE) &amp;&amp; !isAtEnd()) {</span>
+<span class="fc" id="L192">            statements.add(decl());</span>
+        }
+
+<span class="fc" id="L195">        consume(RIGHT_BRACE, &quot;Expected '}' to complete block&quot;);</span>
+<span class="fc" id="L196">        return statements;</span>
+    }
+
+    /** 
+     * Parses the 'returnStmt' grammar rule.
+     * @return a {@link Stmt.ReturnStmt} AST node
+     * @author: Lucas Bergholdt Hansen 
+     */
+    private Stmt returnStmt() {
+<span class="fc" id="L205">        Token returnKeyword = previous(); // Kept for later error reporting</span>
+        // Optional return value:
+<span class="fc" id="L207">        Expr value = null;</span>
+<span class="fc bfc" id="L208" title="All 2 branches covered.">        if (!check(SEMICOLON)) {</span>
+<span class="fc" id="L209">            value = expression();</span>
+        }
+
+<span class="fc" id="L212">        consume(SEMICOLON, &quot;Expected ';' at the end of return statement&quot;);</span>
+<span class="fc" id="L213">        return new Stmt.ReturnStmt(returnKeyword, value);</span>
+    }
+
+    /** 
+     * Parses the 'exprStmt' grammar rule.
+     * @return a {@link Stmt.ExprStmt} AST node
+     * @author: Carl-Emil Dons Christensen 
+     */
+    private Stmt exprStmt() {
+<span class="fc" id="L222">        Expr expr = expression();</span>
+<span class="fc" id="L223">        consume(SEMICOLON, &quot;Expected ';' at the end of expression&quot;);</span>
+
+<span class="fc" id="L225">        return new Stmt.ExprStmt(expr);</span>
+    }
+
+    /** 
+     * Parses the 'expr' grammar rule
+     * @return the parsed expression
+     * @author: Carl-Emil Dons Christensen 
+     */
+    private Expr expression() {
+<span class="fc" id="L234">        return assignment();</span>
+    }
+
+    /** 
+     * Parses the 'assignment' grammar rule
+     * Throws an error if trying to assign something other than an identifier.
+     * @return the parsed expression.
+     * @author: Carl-Emil Dons Christensen, Lucas Bergholdt Hansen 
+     */
+    private Expr assignment() {
+<span class="fc" id="L244">        Expr expr = logicalOr();</span>
+
+<span class="fc bfc" id="L246" title="All 2 branches covered.">        if (match(ASSIGN)) {</span>
+<span class="fc" id="L247">            Token assignToken = previous(); // The 'is' token</span>
+<span class="fc" id="L248">            Expr value = assignment();</span>
+
+<span class="fc bfc" id="L250" title="All 2 branches covered.">            if (expr instanceof Identifier) {</span>
+<span class="fc" id="L251">                Token id = ((Identifier)expr).id;</span>
+<span class="fc" id="L252">                return new Expr.Assign(id, value);</span>
+            } else {
+<span class="fc" id="L254">                throw error(assignToken, &quot;Invalid assignment target&quot;);</span>
+            }
+        }
+        
+<span class="fc" id="L258">        return expr;</span>
+    }
+
+    /** 
+     * Parses the 'logicalOr' grammar rule
+     * @return the parsed expression.
+     * @author: Carl-Emil Dons Christensen
+     */
+    private Expr logicalOr() {
+<span class="fc" id="L267">        Expr expr = logicalAnd();</span>
+
+<span class="fc bfc" id="L269" title="All 2 branches covered.">        while (match(OR)) {</span>
+<span class="fc" id="L270">            Token operator = previous();</span>
+<span class="fc" id="L271">            Expr right = logicalAnd();</span>
+<span class="fc" id="L272">            expr = new Expr.Logical(expr, operator, right);</span>
+        }
+<span class="fc" id="L274">        return expr;</span>
+    }
+
+    /** 
+     * Parses the 'logicalAnd' grammar rule
+     * @return the parsed expression.
+     * @author: Carl-Emil Dons Christensen
+     */
+    private Expr logicalAnd() {
+<span class="fc" id="L283">        Expr expr = equality();</span>
+
+<span class="fc bfc" id="L285" title="All 2 branches covered.">        while (match(AND)) {</span>
+<span class="fc" id="L286">            Token operator = previous();</span>
+<span class="fc" id="L287">            Expr right = equality();</span>
+<span class="fc" id="L288">            expr = new Expr.Logical(expr, operator, right);</span>
+        }
+<span class="fc" id="L290">        return expr;</span>
+    }
+
+    /** 
+     * Parses the 'equality' grammar rule
+     * @return the parsed expression.
+     * @author: Carl-Emil Dons Christensen
+     */
+    private Expr equality() {
+<span class="fc" id="L299">        Expr expr = compr();</span>
+
+<span class="fc bfc" id="L301" title="All 2 branches covered.">        while (match(NOT_EQUALS, EQUALS)) {</span>
+<span class="fc" id="L302">            Token operator = previous();</span>
+<span class="fc" id="L303">            Expr right = compr();</span>
+<span class="fc" id="L304">            expr = new Expr.Binary(expr, operator, right);</span>
+        }
+
+<span class="fc" id="L307">        return expr;</span>
+    }
+
+    /** 
+     * Parses the 'compr' grammar rule
+     * @return the parsed expression.
+     * @author: Carl-Emil Dons Christensen
+     */
+    private Expr compr() {
+<span class="fc" id="L316">        Expr expr = term();</span>
+
+<span class="fc bfc" id="L318" title="All 2 branches covered.">        while (match(GREATER, GREATER_EQUAL, LESS, LESS_EQUAL)) {</span>
+<span class="fc" id="L319">            Token operator = previous();</span>
+<span class="fc" id="L320">            Expr right = term();</span>
+<span class="fc" id="L321">            expr = new Expr.Binary(expr, operator, right); </span>
+        }
+
+<span class="fc" id="L324">        return expr;</span>
+    }
+
+    /** 
+     * Parses the 'term' grammar rule
+     * @return the parsed expression.
+     * @author: Carl-Emil Dons Christensen
+     */
+    private Expr term () {
+<span class="fc bfc" id="L333" title="All 2 branches covered.">        if (match(SUB, PLUS, MULT, DIV)) {</span>
+<span class="fc" id="L334">            Token operator = previous();</span>
+<span class="fc" id="L335">            consume(LEFT_PAREN, &quot;Expected '(' after operator&quot;);</span>
+<span class="fc" id="L336">            Expr left = term(); </span>
+<span class="fc" id="L337">            Expr right = term();</span>
+<span class="fc" id="L338">            consume(RIGHT_PAREN, &quot;Expected ')' after last term in operator&quot;);</span>
+<span class="fc" id="L339">            return new Expr.Binary(left, operator, right);</span>
+        } else {
+<span class="fc" id="L341">            return unary();</span>
+        }
+    }
+
+    /** 
+     * Parses the 'unary' grammar rule
+     * @return the parsed expression.
+     * @author: Carl-Emil Dons Christensen
+     */
+    private Expr unary () {
+<span class="fc bfc" id="L351" title="All 2 branches covered.">        if (match(NOT, MINUS)) {</span>
+<span class="fc" id="L352">            Token operator = previous();</span>
+<span class="fc" id="L353">            Expr expr = unary();</span>
+<span class="fc" id="L354">            return new Expr.Unary(operator, expr);</span>
+        } else {
+<span class="fc" id="L356">            return call();</span>
+        }
+    }
+
+    /** 
+     * Parses the 'call' grammar rule
+     * Throws an error if trying to call something other than an identifier.
+     * @return the parsed expression.
+     * @author: Lucas Bergholdt Hansen 
+     */
+    private Expr call() {
+<span class="fc" id="L367">        Expr expr = primary();</span>
+
+<span class="fc bfc" id="L369" title="All 2 branches covered.">        if (match(LEFT_PAREN)) {</span>
+<span class="fc bfc" id="L370" title="All 2 branches covered.">            if (!(expr instanceof Identifier)) {</span>
+<span class="fc" id="L371">                throw error(peek(), &quot;Can't call an expression that is not an identifier.&quot;); </span>
+            }
+            // If we don't have a closing ')' right after '(', we have arguments:
+<span class="fc" id="L374">            List&lt;Expr&gt; arguments = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L375" title="All 2 branches covered.">            if (!check(RIGHT_PAREN)) {</span>
+<span class="fc" id="L376">                arguments = args();</span>
+            }
+            // Storing right paren token to use it for reporting rumtime errors caused by a function call
+<span class="fc" id="L379">            Token paren = consume(RIGHT_PAREN, &quot;Expected ')' to complete function call&quot;);</span>
+            
+<span class="fc" id="L381">            Token id = ((Identifier) expr).id;</span>
+
+<span class="fc" id="L383">            return new Expr.Call(id, expr, paren, arguments);</span>
+        }
+
+<span class="fc" id="L386">        return expr;</span>
+    }
+
+    /** 
+     * Parses the 'args' grammar rule
+     * @return a list of argument expressions.
+     * @author: Lucas Bergholdt Hansen 
+     */
+    private List&lt;Expr&gt; args() {
+<span class="fc" id="L395">        List&lt;Expr&gt; arguments = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L396">        arguments.add(expression()); // handling first &quot;expr&quot; in grammar</span>
+
+        // Handling (&quot;,&quot; expr)*:
+<span class="fc bfc" id="L399" title="All 2 branches covered.">        while (match(COMMA)) { </span>
+<span class="fc" id="L400">            arguments.add(expression());</span>
+        }
+<span class="fc" id="L402">        return arguments;</span>
+    }
+
+    /** 
+     * Parses the 'function' grammar rule
+     * @return a {@link Stmt.FunctionStmt} AST node.
+     * @author: Lucas Bergholdt Hansen
+     */
+    private Stmt function() {
+<span class="fc" id="L411">        Token name = consume(IDENTIFIER, &quot;Expected function name&quot;);</span>
+<span class="fc" id="L412">        consume(LEFT_PAREN, &quot;Expected '(' after function name&quot;);</span>
+
+        // If we don't have a closing ')' right after '(', we have params:
+<span class="fc" id="L415">        List&lt;Param&gt; params = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L416" title="All 2 branches covered.">        if (!check(RIGHT_PAREN)) {</span>
+<span class="fc" id="L417">            params = params();</span>
+        }
+<span class="fc" id="L419">        consume(RIGHT_PAREN, &quot;Expected ')' to end function parameters&quot;);</span>
+
+        // Check if function &quot;has_type&quot; and handle it:
+<span class="fc" id="L422">        Token typeToken = null;</span>
+<span class="fc bfc" id="L423" title="All 2 branches covered.">        if (match(TYPE_DEF)) {</span>
+<span class="fc" id="L424">            typeToken = consumeType();</span>
+        }
+
+<span class="fc" id="L427">        consume(LEFT_BRACE, &quot;Expected '{' to start function body&quot;); // block() assumes { has already been consumed</span>
+        
+<span class="fc" id="L429">        Stmt.BlockStmt body = new Stmt.BlockStmt(block());</span>
+<span class="fc" id="L430">        return new Stmt.FunctionStmt(name, params, typeToken, body);</span>
+    }
+
+    /** 
+     * Parses the 'params' grammar rule
+     * @return a list of function parameters as {@link Param} objects.
+     * @author: Lucas Bergholdt Hansen 
+     */
+    private List&lt;Param&gt; params() {
+        // Function parameters are stored as a list of Param objects.
+<span class="fc" id="L440">        List&lt;Param&gt; params = new ArrayList&lt;&gt;();</span>
+
+        do {
+<span class="fc" id="L443">            Token id = consume(IDENTIFIER, &quot;Expected parameter to be an identifier&quot;);</span>
+<span class="fc" id="L444">            consume(TYPE_DEF, &quot;Expected 'has_type' after parameter&quot;);</span>
+<span class="fc" id="L445">            Token typeToken = consumeType();</span>
+<span class="fc" id="L446">            params.add(new Param(id, typeToken));</span>
+<span class="fc bfc" id="L447" title="All 2 branches covered.">        } while (match(COMMA));</span>
+
+<span class="fc" id="L449">        return params;</span>
+    }
+
+    /** 
+     * Parses the cast that might appear in the 'primary' grammar rule.
+     * @return the parsed expression, optionally wrapped in an {@link Expr.Cast} node.
+     * @author: Lucas Bergholdt Hansen 
+     */
+    private Expr primary() {
+        // Check if cast is specified
+<span class="fc bfc" id="L459" title="All 2 branches covered.">        if (match(CAST)) {</span>
+            // Expecting a NumberType, StringType or BoolType:
+<span class="fc" id="L461">            Token typeToken = consumeType();</span>
+
+            // Create new Expr.Cast:
+<span class="fc" id="L464">            Expr expr = primaryNoCast();</span>
+<span class="fc" id="L465">            return new Expr.Cast(typeToken, expr);</span>
+
+        } else { // Otherwise just parse the primary (literal / identifier / grouping)
+<span class="fc" id="L468">            return primaryNoCast();</span>
+        }
+    }
+
+    /**
+    * Parses the non-cast part of the 'primary' grammar rule.
+    * End of recursion, if we can't match token throw an error.
+    * @return the parsed primary expression
+    * @author: Carl-Emil Dons Christensen, Lucas Bergholdt Hansen
+    */
+    private Expr primaryNoCast() {
+        Expr expr;
+<span class="fc bfc" id="L480" title="All 4 branches covered.">        switch (peek().type) {</span>
+            case FALSE:
+            case TRUE:
+            case NUMBER:
+            case STRING:
+<span class="fc" id="L485">                expr = new Expr.Literal(peek());</span>
+<span class="fc" id="L486">                current++;</span>
+<span class="fc" id="L487">                return expr;</span>
+
+            case IDENTIFIER:
+<span class="fc" id="L490">                expr = new Identifier(peek());</span>
+<span class="fc" id="L491">                current++;</span>
+<span class="fc" id="L492">                return expr;</span>
+            
+            case LEFT_PAREN:
+<span class="fc" id="L495">                advance(); // Consume the '('</span>
+<span class="fc" id="L496">                expr = expression();</span>
+<span class="fc" id="L497">                consume(RIGHT_PAREN, &quot;Expected ')' to close parenthesis&quot;);</span>
+<span class="fc" id="L498">                return expr;</span>
+
+            default:
+<span class="fc" id="L501">                throw error(peek(), &quot;Expected expression.&quot;);</span>
+        }
+    }
+
+
+    
+    // -------------------------- Helper Functions -------------------------
+    /** @author: Carl-Emil Dons Christensen, Lucas Bergholdt Hansen */
+
+    /**
+     * @return the current token
+     */
+    Token peek() {
+<span class="fc" id="L514">        return tokens.get(current);</span>
+    }
+
+    /**
+     * Checks whether parser has reached end of token stream.
+     * @return true if type of current token is EOF, otherwise false
+     */
+    private boolean isAtEnd() {
+<span class="fc bfc" id="L522" title="All 2 branches covered.">        return peek().type == EOF;</span>
+    }
+
+    /**
+     * Attempts to match and consume one of the given token types.
+     * @param types the different token types to match
+     * @return true if a token was matched, otherwise false
+     */
+    private boolean match(TokenType... types) {
+<span class="fc bfc" id="L531" title="All 2 branches covered.">        for (TokenType type : types) {</span>
+<span class="fc bfc" id="L532" title="All 2 branches covered.">            if (check(type)) {</span>
+<span class="fc" id="L533">                advance();</span>
+<span class="fc" id="L534">                return true;</span>
+            }
+        }
+
+<span class="fc" id="L538">        return false;</span>
+    }
+
+    /**
+     * Checks whether the current token matches the given type.
+     * @param type the expected token type
+     * @return true if types match, otherwise false
+     */
+    private boolean check(TokenType type) {
+<span class="fc bfc" id="L547" title="All 2 branches covered.">        if (isAtEnd()) {</span>
+<span class="fc" id="L548">            return false;</span>
+        } else {
+<span class="fc bfc" id="L550" title="All 2 branches covered.">            return peek().type == type;</span>
+        }
+    }
+
+    /**
+     * Consumes the current token and advances the parser.
+     * @return the consumed token.
+     */
+    private Token advance() {
+<span class="pc bpc" id="L559" title="1 of 2 branches missed.">        if (!isAtEnd()) current++;</span>
+<span class="fc" id="L560">        return previous();</span>
+    }
+
+    /**
+     * Fetches the previously consumed token
+     * @return the previous token
+     */
+    private Token previous() {
+<span class="fc" id="L568">        return tokens.get(current - 1);</span>
+    }
+
+    // Consumes if given token type matches current token, otherwise throws error
+    /**
+     * Consumes current token if it matches the expected type.
+     * Otherwise reports and throws an error.
+     * @param type the expected token type
+     * @param message the error message if token does not match
+     * @return the consumed token
+     */
+    private Token consume(TokenType type, String message) {
+<span class="fc bfc" id="L580" title="All 2 branches covered.">        if (check(type)) {</span>
+<span class="fc" id="L581">            return advance();</span>
+        } else {
+<span class="fc" id="L583">            throw error(previous(), message);</span>
+        }
+    }
+
+    /**
+     * Consumes the current token if it is a type token.
+     * Otherwise reports and throws an error.
+     * @return the consumed type token
+     */
+    private Token consumeType() {
+<span class="fc bfc" id="L593" title="All 2 branches covered.">        if (match(NUMBER_TYPE, STRING_TYPE, BOOL_TYPE)) {</span>
+<span class="fc" id="L594">            return previous();</span>
+        } else {
+<span class="fc" id="L596">            throw error(peek(), &quot;Type specified should be NumberType, StringType or BoolType&quot;);</span>
+        }
+    }
+
+
+
+    // -------------------------- Error recovery -------------------------
+
+    /**
+     * Exception used to mark an error for parser error recovery through synchronization.
+     */
+    private static class ParseError extends RuntimeException {}
+
+    /**
+     * Reports a parse error to the {@link VVPLController} class.
+     * @param token the token at which the error occured
+     * @param message the error message
+     * @return a {@link ParseError} instance to be thrown.
+     * @author: Lucas Bergholdt Hansen
+     */
+    private ParseError error(Token token, String message) {
+<span class="fc" id="L617">        VVPLController.error(token.line, ErrorTypeStrings.PARSE_ERROR, message);</span>
+<span class="fc" id="L618">        return new ParseError();</span>
+    }
+
+    /** 
+     * Synchronizes the parser after an error occured by discarding tokens
+     * until reaching a token that can begin a new statement.
+     * @author: Lucas Bergholdt Hansen 
+     */
+    private void synchronise() {
+        // Consume the problematic token that triggered the error
+<span class="fc" id="L628">        advance();</span>
+
+        // Discard tokens until we find a valid place to continue
+<span class="fc bfc" id="L631" title="All 2 branches covered.">        while (!isAtEnd()) {</span>
+            // If we just passed a semicolon the next token is the start of a new statement
+<span class="fc bfc" id="L633" title="All 2 branches covered.">            if (previous().type == SEMICOLON) return;</span>
+
+            // Check if current token begins a new statement
+<span class="fc bfc" id="L636" title="All 2 branches covered.">            switch (peek().type) {</span>
+                case FUNCTION:
+                case VAR:
+                case IF:
+                case WHILE:
+                case PRINT:
+                case LEFT_BRACE:
+                case RETURN:
+<span class="fc" id="L644">                    return;</span>
+                
+                default:
+                    // Current token is part of the mess. Discard it and continue looping.
+<span class="fc" id="L648">                    advance();</span>
+                    break;
+            }
+        }
+<span class="fc" id="L652">    }</span>
+
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

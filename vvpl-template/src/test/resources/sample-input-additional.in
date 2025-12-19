@@ -1,0 +1,46 @@
+################################
+# TESTING "NOT_EQUALS" AND "MULTIPLY"
+################################
+
+variable a has_type Number is 2;
+variable b has_type Number is 42;
+
+variable res has_type Number is multiply(a b);
+
+write_to_console res;
+write_to_console (res NOT_EQUALS 1);
+write_to_console (res NOT_EQUALS 1);
+
+################################
+# TESTING "AND"
+################################
+
+variable t has_type Bool is true;
+variable f has_type Bool is false;
+
+variable logic_res has_type Bool is (NOT (NOT t AND NOT f)); 
+variable logic_res2 has_type Bool is (t OR f);
+write_to_console logic_res EQUALS logic_res2;  
+
+################################
+# TESTING "GREATER"
+################################
+
+if (b GREATER a) {
+    write_to_console "GREATER works.";
+} else {
+    write_to_console "Greater do not work";
+}
+
+################################
+# TESTING "cast_to" FURTHER
+################################
+
+variable string_true has_type String is "true";
+variable bool_true has_type Bool is (cast_to Bool string_true);
+
+if (string_bool EQUALS t) {
+    write_to_console "Converting string to bool worked.";
+} else {
+    write_to_console "Converting string to bool did not work.";
+}

@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="da"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Environment.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">vvpl</a> &gt; <a href="index.source.html" class="el_package">dk.sdu.imada.teaching.compiler.fs25.vvpl.interpretation</a> &gt; <span class="el_source">Environment.java</span></div><h1>Environment.java</h1><pre class="source lang-java linenums">package dk.sdu.imada.teaching.compiler.fs25.vvpl.interpretation;
+
+import java.util.HashMap;
+import java.util.Map;
+
+/**
+ * Stores our state. 
+ * 
+ * Follows the book implementation. 
+ * 
+ * @author Lasse Arpe Kristensen
+ */
+public class Environment {
+
+<span class="fc" id="L15">    private Map&lt;String, Object&gt; symbols = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L16">    public Environment outer = null;</span>
+
+
+<span class="fc" id="L19">    public Environment(Environment outer) {</span>
+<span class="fc" id="L20">        this.outer = outer;</span>
+<span class="fc" id="L21">    }</span>
+
+    // define symbol
+    public void define(String symbol, Object value) {
+<span class="fc" id="L25">        symbols.put(symbol, value);</span>
+<span class="fc" id="L26">    }</span>
+
+    public void assign(String symbol, Object value) {
+<span class="fc bfc" id="L29" title="All 2 branches covered.">        if (symbols.containsKey(symbol)) {</span>
+<span class="fc" id="L30">            symbols.put(symbol, value);</span>
+<span class="fc" id="L31">            return;</span>
+        }
+
+<span class="pc bpc" id="L34" title="1 of 2 branches missed.">        if (outer != null) {</span>
+<span class="fc" id="L35">            outer.assign(symbol, value);</span>
+<span class="fc" id="L36">            return;</span>
+        }
+<span class="nc" id="L38">    }</span>
+
+    public Object get(String symbol) {
+<span class="fc bfc" id="L41" title="All 2 branches covered.">        if (symbols.containsKey(symbol)) {</span>
+<span class="fc" id="L42">            return symbols.get(symbol);</span>
+        }
+
+<span class="pc bpc" id="L45" title="1 of 2 branches missed.">        if (outer != null) {</span>
+<span class="fc" id="L46">            return outer.get(symbol);</span>
+        }
+
+        // Unreachable
+<span class="nc" id="L50">        return null;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

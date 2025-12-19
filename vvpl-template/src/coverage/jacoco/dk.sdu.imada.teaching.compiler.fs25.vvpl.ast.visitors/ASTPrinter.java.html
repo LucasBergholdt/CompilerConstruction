@@ -1,0 +1,285 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="da"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ASTPrinter.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">vvpl</a> &gt; <a href="index.source.html" class="el_package">dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.visitors</a> &gt; <span class="el_source">ASTPrinter.java</span></div><h1>ASTPrinter.java</h1><pre class="source lang-java linenums">package dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.visitors;
+
+import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Expr.Assign;
+import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Expr.Binary;
+import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Expr.Call;
+import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Expr.Cast;
+import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Expr.Identifier;
+import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Expr.Literal;
+import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Expr.Logical;
+import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Expr.Unary;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Stmt;
+import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Stmt.BlockStmt;
+import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Stmt.ExprStmt;
+import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Stmt.FunctionStmt;
+import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Stmt.IfStmt;
+import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Stmt.PrintStmt;
+import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Stmt.ReturnStmt;
+import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Stmt.VarDecl;
+import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Stmt.WhileStmt;
+import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.TokenType;
+
+/**
+ * @author Lasse Arpe Kristensen
+ * @version CompilerConstruction FT 2025
+ * The ASTPrinter utilizes the visitor pattern to traverse the AST 
+ * while building a string that visualizes the tree.
+ */
+<span class="fc" id="L32"> public class ASTPrinter implements ExprVisitor&lt;String&gt;, StmtVisitor&lt;String&gt; {</span>
+<span class="fc" id="L33">  private int indent = 0;</span>
+
+    private static final Map&lt;TokenType, String&gt; reverse_keywords;
+      static {
+<span class="fc" id="L37">		reverse_keywords = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L38">        reverse_keywords.put(TokenType.BOOL_TYPE, &quot;Bool&quot;);</span>
+<span class="fc" id="L39">        reverse_keywords.put(TokenType.NUMBER_TYPE, &quot;Number&quot;);</span>
+<span class="fc" id="L40">        reverse_keywords.put(TokenType.STRING_TYPE, &quot;String&quot;);        </span>
+<span class="fc" id="L41">	}</span>
+
+  public String print(Stmt stmt) {
+<span class="fc" id="L44">    return stmt.accept(this);</span>
+  }
+
+  @Override
+  public String visitExprStmt(ExprStmt exprStmt) {
+<span class="fc" id="L49">    StringBuilder sb = new StringBuilder();</span>
+
+<span class="fc" id="L51">    sb.append(indentString(&quot;ExprStmt&quot;));</span>
+<span class="fc" id="L52">    indent++;</span>
+<span class="fc" id="L53">    sb.append(exprStmt.expr.accept(this));</span>
+<span class="fc" id="L54">    indent--;</span>
+<span class="fc" id="L55">    return sb.toString();</span>
+  }
+
+  @Override
+  public String visitWhileStmt(WhileStmt whileStmt) {
+<span class="fc" id="L60">    StringBuilder sb = new StringBuilder();</span>
+
+<span class="fc" id="L62">    sb.append(indentString(&quot;WhileStmt&quot;));</span>
+
+<span class="fc" id="L64">    indent++;</span>
+<span class="fc" id="L65">    sb.append(whileStmt.conditional.accept(this));</span>
+<span class="fc" id="L66">    sb.append(whileStmt.body.accept(this));</span>
+<span class="fc" id="L67">    indent--;</span>
+
+<span class="fc" id="L69">    return sb.toString();</span>
+  }
+
+  @Override
+  public String visitIfStmt(IfStmt ifStmt) {
+<span class="fc" id="L74">    StringBuilder sb = new StringBuilder();</span>
+
+<span class="fc" id="L76">    sb.append(indentString(&quot;IfStmt&quot;));</span>
+
+<span class="fc" id="L78">    indent++;</span>
+<span class="fc" id="L79">    sb.append(ifStmt.cond.accept(this));</span>
+
+<span class="fc" id="L81">    sb.append(ifStmt.thenBlock.accept(this));</span>
+
+<span class="pc bpc" id="L83" title="1 of 2 branches missed.">    if (ifStmt.elseBlock != null) {</span>
+<span class="fc" id="L84">      sb.append(ifStmt.elseBlock.accept(this));</span>
+    }
+<span class="fc" id="L86">    indent--;</span>
+
+<span class="fc" id="L88">    return sb.toString();</span>
+  }
+
+  @Override
+  public String visitPrintStmt(PrintStmt printStmt) {
+<span class="fc" id="L93">    StringBuilder sb = new StringBuilder();</span>
+
+<span class="fc" id="L95">    sb.append(indentString(&quot;PrintStmt&quot;));</span>
+<span class="fc" id="L96">    indent++;</span>
+<span class="fc" id="L97">    sb.append(printStmt.expr.accept(this));</span>
+<span class="fc" id="L98">    indent--;</span>
+<span class="fc" id="L99">    return sb.toString();</span>
+  }
+
+  @Override
+  public String visitBlockStmt(BlockStmt blockStmt) {
+<span class="fc" id="L104">    StringBuilder sb = new StringBuilder();</span>
+
+<span class="fc" id="L106">    sb.append(indentString(&quot;BlockStmt&quot;));</span>
+
+<span class="fc" id="L108">    indent++;</span>
+<span class="fc bfc" id="L109" title="All 2 branches covered.">    for (Stmt stmt : blockStmt.stmts) {</span>
+<span class="fc" id="L110">      sb.append(stmt.accept(this));</span>
+    }
+<span class="fc" id="L112">    indent--;</span>
+<span class="fc" id="L113">    return sb.toString();</span>
+  }
+
+
+  public String visitVarDecl(VarDecl varDecl) {
+<span class="fc" id="L118">    StringBuilder sb = new StringBuilder();</span>
+
+<span class="fc" id="L120">    sb.append(indentString(&quot;VarDecl&quot;));</span>
+<span class="fc" id="L121">    indent++;</span>
+<span class="fc" id="L122">    sb.append(indentString(varDecl.id.lexeme));</span>
+
+<span class="fc" id="L124">    sb.append(indentString(reverse_keywords.get(varDecl.typeToken.type)));</span>
+
+<span class="fc bfc" id="L126" title="All 2 branches covered.">    if (varDecl.expr != null) {</span>
+<span class="fc" id="L127">      sb.append(varDecl.expr.accept(this));</span>
+    }
+
+<span class="fc" id="L130">    indent--;</span>
+<span class="fc" id="L131">    return sb.toString();</span>
+
+  }
+
+  /*Prepends the appropriate amount of indentation to strings.*/
+  private String indentString(String text) {
+<span class="fc" id="L137">    StringBuilder sb = new StringBuilder();</span>
+<span class="fc bfc" id="L138" title="All 2 branches covered.">    for (int i = 0; i &lt; indent; i++) {</span>
+<span class="fc" id="L139">      sb.append(&quot;  &quot;);</span>
+    }
+<span class="fc" id="L141">    sb.append(text).append(System.lineSeparator());</span>
+<span class="fc" id="L142">    return sb.toString();</span>
+  }
+
+
+
+  @Override
+  public String visitAssignExpr(Assign assign) {
+<span class="fc" id="L149">      StringBuilder sb = new StringBuilder();</span>
+
+<span class="fc" id="L151">    sb.append(indentString(&quot;AssignExpr&quot;));</span>
+<span class="fc" id="L152">    indent++;</span>
+<span class="fc" id="L153">    sb.append(indentString(assign.ID.lexeme));</span>
+<span class="fc" id="L154">    sb.append(assign.expr.accept(this));</span>
+<span class="fc" id="L155">    indent--;</span>
+
+<span class="fc" id="L157">    return sb.toString();</span>
+  }
+
+  @Override
+  public String visitLogicalExpr(Logical logical) {
+
+<span class="fc" id="L163">    StringBuilder sb = new StringBuilder();</span>
+
+<span class="fc" id="L165">    sb.append(indentString(&quot;LogicalExpr&quot;));</span>
+
+<span class="fc" id="L167">    indent++;</span>
+<span class="fc" id="L168">    sb.append(logical.left.accept(this));</span>
+
+<span class="fc" id="L170">    sb.append(indentString(logical.operator.lexeme));</span>
+
+<span class="fc" id="L172">    sb.append(logical.right.accept(this));</span>
+<span class="fc" id="L173">    indent--;</span>
+<span class="fc" id="L174">    return sb.toString();</span>
+  }
+
+  @Override
+  public String visitBinaryExpr(Binary binary) {
+<span class="fc" id="L179">    StringBuilder sb = new StringBuilder();</span>
+
+<span class="fc" id="L181">    sb.append(indentString(&quot;BinaryExpr&quot;));</span>
+<span class="fc" id="L182">    indent++;</span>
+<span class="fc" id="L183">    sb.append(binary.left.accept(this));</span>
+
+<span class="fc" id="L185">    sb.append(indentString(binary.operator.lexeme));</span>
+    
+<span class="fc" id="L187">    sb.append(binary.right.accept(this));</span>
+
+<span class="fc" id="L189">    indent--;</span>
+<span class="fc" id="L190">    return sb.toString();</span>
+  }
+
+  @Override
+  public String visitUnaryExpr(Unary unary) {
+<span class="fc" id="L195">    StringBuilder sb = new StringBuilder();</span>
+    
+<span class="fc" id="L197">    sb.append(indentString(&quot;UnaryExpr&quot;));</span>
+<span class="fc" id="L198">    indent++;</span>
+<span class="fc" id="L199">    sb.append(indentString(unary.operator.lexeme));</span>
+<span class="fc" id="L200">    sb.append(unary.expr.accept(this));</span>
+<span class="fc" id="L201">    indent--;</span>
+
+<span class="fc" id="L203">    return sb.toString();</span>
+  }
+  
+
+  // Leaf.
+  @Override
+  public String visitLiteralExpr(Literal literal) {
+<span class="fc" id="L210">    StringBuilder sb = new StringBuilder();</span>
+
+<span class="fc" id="L212">    sb.append(indentString(&quot;LiteralExpr&quot;));</span>
+
+<span class="fc" id="L214">    indent++;</span>
+
+<span class="fc" id="L216">    String lexeme = literal.token.lexeme;</span>
+
+    // Converts to double if digit. (And back to string).
+<span class="fc bfc" id="L219" title="All 2 branches covered.">    if (isDigit(lexeme.charAt(0))) {</span>
+<span class="fc" id="L220">      double newNum = Double.parseDouble(lexeme);</span>
+<span class="fc" id="L221">      sb.append(indentString(newNum+&quot;&quot;));</span>
+<span class="fc" id="L222">    } else {</span>
+<span class="fc" id="L223">      sb.append(indentString(lexeme));</span>
+    }
+
+<span class="fc" id="L226">    indent--;</span>
+
+<span class="fc" id="L228">    return sb.toString();</span>
+  }
+
+  // Leaf.
+  @Override
+  public String visitIdentifierExpr(Identifier identifier) {
+<span class="fc" id="L234">    StringBuilder sb = new StringBuilder();</span>
+
+<span class="fc" id="L236">    sb.append(indentString(&quot;VariableExpr&quot;));</span>
+
+<span class="fc" id="L238">    indent++;</span>
+
+<span class="fc" id="L240">    sb.append(indentString(identifier.id.lexeme));</span>
+<span class="fc" id="L241">    indent--;</span>
+<span class="fc" id="L242">    return sb.toString();</span>
+  }
+
+  
+  @Override
+  public String visitCastExpr(Cast cast) {
+<span class="fc" id="L248">    StringBuilder sb = new StringBuilder();</span>
+
+<span class="fc" id="L250">    sb.append(indentString(&quot;Cast_To &quot; + cast.typeToken.lexeme));    </span>
+<span class="fc" id="L251">    indent++;</span>
+<span class="fc" id="L252">    sb.append(cast.expr.accept(this));</span>
+<span class="fc" id="L253">    indent--;</span>
+
+<span class="fc" id="L255">    return sb.toString();</span>
+
+  }
+
+  @Override
+  public String visitCallExpr(Call call) {
+    // TODO Auto-generated method stub
+<span class="nc" id="L262">    throw new UnsupportedOperationException(&quot;Unimplemented method 'visitCallExpr'&quot;);</span>
+  }
+
+  @Override
+  public String visitReturnStmt(ReturnStmt returnStmt) {
+    // TODO Auto-generated method stub
+<span class="nc" id="L268">    throw new UnsupportedOperationException(&quot;Unimplemented method 'visitReturnStmt'&quot;);</span>
+  }
+
+  @Override
+  public String visitFunctionStmt(FunctionStmt functionStmt) {
+    // TODO Auto-generated method stub
+<span class="nc" id="L274">    throw new UnsupportedOperationException(&quot;Unimplemented method 'visitFunctionStmt'&quot;);</span>
+  }
+
+ /*Helpers */
+
+  // Checks if string is a digit (via first digit).
+    private boolean isDigit(char c) {
+<span class="fc bfc" id="L281" title="All 4 branches covered.">        return (c &gt;= '0' &amp;&amp; c &lt;= '9');</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

@@ -1,0 +1,483 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="da"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Interpreter.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">vvpl</a> &gt; <a href="index.source.html" class="el_package">dk.sdu.imada.teaching.compiler.fs25.vvpl.interpretation</a> &gt; <span class="el_source">Interpreter.java</span></div><h1>Interpreter.java</h1><pre class="source lang-java linenums">package dk.sdu.imada.teaching.compiler.fs25.vvpl.interpretation;
+
+import static dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.TokenType.BOOL_TYPE;
+import static dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.TokenType.NUMBER_TYPE;
+import static dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.TokenType.STRING_TYPE;
+
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+
+import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Stmt;
+import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Stmt.*;
+import dk.sdu.imada.teaching.compiler.fs25.vvpl.ErrorTypeStrings;
+import dk.sdu.imada.teaching.compiler.fs25.vvpl.VVPLController;
+import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Expr;
+import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Expr.*;
+import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.visitors.*;
+import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.Token;
+import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.TokenType;
+
+/**
+ * Interpreter that implements the execute method.
+ * 
+ * @author: Lasse Arpe Kristensen
+ */
+<span class="fc" id="L26">public class Interpreter implements StmtVisitor&lt;Void&gt;, ExprVisitor&lt;Object&gt; {</span>
+
+    /**
+     * Stores the output of the interpreter.
+     */
+<span class="fc" id="L31">    List&lt;String&gt; output = new ArrayList&lt;String&gt;();</span>
+
+    /**
+     * The environments stores the internal state of the interpreter.
+     */
+<span class="fc" id="L36">    final Environment globals = new Environment(null);</span>
+
+    /**
+     * Globals can only be changed in the outmost environnment.
+     */
+<span class="fc" id="L41">    private Environment env = globals;</span>
+
+    /**
+     * 
+     * Executes a program, represented as a list of Statements.
+     * We assume that the TypeAnalyzer and ScopeAnalyser has ran beforehand.
+     * 
+     * Will however report a runtimeError if there is an incorrect casting of String
+     * to Number.
+     * 
+     * @param stmts the list of statements representing the program
+     * @return the output of the programs execution
+     */
+    public List&lt;String&gt; interpret(List&lt;Stmt&gt; stmts) {
+
+        try {
+<span class="fc bfc" id="L57" title="All 2 branches covered.">            for (Stmt s : stmts) {</span>
+<span class="fc" id="L58">                execute(s);</span>
+            }
+<span class="fc" id="L60">        } catch (RuntimeError e) {</span>
+            // See error implementation below.
+        }
+<span class="fc" id="L63">        return output;</span>
+
+    }
+
+    /**
+     * Helper, used to Stringify objects in order to make them visible for printing.
+     * @param object the object to stringify
+     * @return the string representation of the object
+     */
+    private String stringify(Object object) {
+<span class="pc bpc" id="L73" title="1 of 2 branches missed.">        if (object == null)</span>
+<span class="nc" id="L74">            return &quot;null&quot;;</span>
+
+<span class="fc bfc" id="L76" title="All 2 branches covered.">        if (object instanceof Double) {</span>
+<span class="fc" id="L77">            String text = object.toString();</span>
+<span class="fc bfc" id="L78" title="All 2 branches covered.">            if (text.endsWith(&quot;.0&quot;)) {</span>
+<span class="fc" id="L79">                text = text.substring(0, text.length() - 2);</span>
+            }
+
+<span class="fc" id="L82">            return text;</span>
+        }
+
+<span class="fc" id="L85">        return object.toString();</span>
+    }
+
+    /**
+     * Executing statements.
+     * @param s the statement to execute
+     */
+    private void execute(Stmt s) {
+<span class="fc" id="L93">        s.accept(this);</span>
+<span class="fc" id="L94">    }</span>
+
+    /**
+     * Evaluating expressions.
+     * @param e the expression to evaluate
+     * @return the result of evaluating the expression
+     */
+    private Object evaluate(Expr e) {
+<span class="fc" id="L102">        return e.accept(this);</span>
+    }
+
+    /**
+     * Evaluates assignment expression.
+     * Assigns the expression to the identifier in the environment.
+     * @param assign the assignment expression
+     * @return the value assigned
+     */
+    @Override
+    public Object visitAssignExpr(Assign assign) {
+<span class="fc" id="L113">        Object value = evaluate(assign.expr);</span>
+<span class="fc" id="L114">        env.assign(assign.ID.lexeme, value);</span>
+<span class="fc" id="L115">        return value;</span>
+    }
+
+    /**
+     * Returns the expr that an assignment is bound to.
+     * @param identifier the identifier expression
+     * @return the value bound to the identifier
+     */
+    @Override
+    public Object visitIdentifierExpr(Identifier identifier) {
+<span class="fc" id="L125">        return env.get(identifier.id.lexeme);</span>
+    }
+
+    /**
+     * Evalutes Literals.
+     * Also evalutes reserved keywords &quot;true&quot; and &quot;false&quot;.
+     * @param literal the literal expression
+     * @return the value of the literal
+     */
+    @Override
+    public Object visitLiteralExpr(Literal literal) {
+<span class="fc bfc" id="L136" title="All 2 branches covered.">        if (literal.token.type == TokenType.TRUE) {</span>
+<span class="fc" id="L137">            return true;</span>
+<span class="fc bfc" id="L138" title="All 2 branches covered.">        } else if (literal.token.type == TokenType.FALSE) {</span>
+<span class="fc" id="L139">            return false;</span>
+        } else {
+<span class="fc" id="L141">            return literal.token.literal;</span>
+        }
+    }
+
+    /**
+     * Evaluates logical expressions.
+     * Uses a &quot;short circuit&quot; to detect OR verus AND.
+     * @param logical the logical expression
+     * @return the result of the logical operation
+     */
+    @Override
+    public Object visitLogicalExpr(Logical logical) {
+
+<span class="fc" id="L154">        Object left = evaluate(logical.left);</span>
+
+        // Short-circuit: If OR and left is true, return immediatly.
+<span class="fc bfc" id="L157" title="All 2 branches covered.">        if (logical.operator.type == TokenType.OR) {</span>
+
+<span class="fc bfc" id="L159" title="All 2 branches covered.">            if (isTruthy(left))</span>
+<span class="fc" id="L160">                return left;</span>
+
+        } else { // Must be AND.
+            // If AND, and left is not true, dont bother evluating right.
+<span class="fc bfc" id="L164" title="All 2 branches covered.">            if (!isTruthy(left))</span>
+<span class="fc" id="L165">                return left;</span>
+        }
+
+<span class="fc" id="L168">        return evaluate(logical.right);</span>
+    }
+
+    /**
+     * Evaluates binary expressions.
+     * @param binary the binary expression
+     * @return the result of the binary expression
+     */
+    @Override
+    public Object visitBinaryExpr(Binary binary) {
+<span class="fc" id="L178">        Object left = evaluate(binary.left);</span>
+<span class="fc" id="L179">        Object right = evaluate(binary.right);</span>
+
+<span class="pc bpc" id="L181" title="1 of 11 branches missed.">        switch (binary.operator.type) {</span>
+            case SUB:
+<span class="fc" id="L183">                return (double) left - (double) right;</span>
+            case PLUS:
+<span class="fc" id="L185">                return (double) left + (double) right;</span>
+            case DIV:
+                // Java handles division by 0.
+<span class="fc" id="L188">                return (double) left / (double) right;</span>
+            case MULT:
+<span class="fc" id="L190">                return (double) left * (double) right;</span>
+            case NOT_EQUALS:
+<span class="pc bpc" id="L192" title="1 of 2 branches missed.">                return !isEqual(left, right);</span>
+            case EQUALS:
+<span class="fc" id="L194">                return isEqual(left, right);</span>
+            case GREATER:
+<span class="pc bpc" id="L196" title="1 of 2 branches missed.">                return (double) left &gt; (double) right;</span>
+            case GREATER_EQUAL:
+<span class="pc bpc" id="L198" title="1 of 2 branches missed.">                return (double) left &gt;= (double) right;</span>
+            case LESS:
+<span class="fc bfc" id="L200" title="All 2 branches covered.">                return (double) left &lt; (double) right;</span>
+            case LESS_EQUAL:
+<span class="fc bfc" id="L202" title="All 2 branches covered.">                return (double) left &lt;= (double) right;</span>
+            default:
+<span class="nc" id="L204">                return null; // Unreachable.</span>
+
+        }
+    }
+
+    /**
+     * Helper for binary expression
+     * @param left the left operand
+     * @param right the right operand
+     * @return true if operands are equal, otherwise false
+     */
+    private boolean isEqual(Object left, Object right) {
+<span class="pc bpc" id="L216" title="3 of 4 branches missed.">        if (left == null &amp;&amp; right == null)</span>
+<span class="nc" id="L217">            return true;</span>
+<span class="pc bpc" id="L218" title="1 of 2 branches missed.">        if (left == null)</span>
+<span class="nc" id="L219">            return false;</span>
+<span class="fc" id="L220">        return left.equals(right);</span>
+    }
+
+    /**
+     * Evaluates unary expressions.
+     * @param unary the unary expression
+     * @return the result of the unary operation
+     */
+    @Override
+    public Object visitUnaryExpr(Unary unary) {
+<span class="fc" id="L230">        Object right = evaluate(unary.expr);</span>
+
+<span class="pc bpc" id="L232" title="2 of 3 branches missed.">        switch (unary.operator.type) {</span>
+            case MINUS:
+<span class="nc" id="L234">                return -(double) right;</span>
+            case NOT:
+<span class="pc bpc" id="L236" title="1 of 2 branches missed.">                return !isTruthy(right);</span>
+            default:
+<span class="nc" id="L238">                return null; // Unreachable</span>
+        }
+
+    }
+
+    /**
+     * Helper for deciding the boolean value of an object.
+     * The number 13 is evaluated to true.
+     * @param object the object to check
+     * @return true if the object is truthy, false otherwise
+     */
+    private boolean isTruthy(Object object) {
+<span class="pc bpc" id="L250" title="1 of 2 branches missed.">        if (object == null)</span>
+<span class="nc" id="L251">            return false;</span>
+<span class="fc bfc" id="L252" title="All 2 branches covered.">        if (object instanceof Boolean)</span>
+<span class="fc" id="L253">            return (boolean) object;</span>
+<span class="pc bpc" id="L254" title="1 of 2 branches missed.">        if (object instanceof Number) { // 13 should evaluate to true.</span>
+<span class="fc bfc" id="L255" title="All 2 branches covered.">            if (object.equals(13.0)) {</span>
+<span class="fc" id="L256">                return true;</span>
+            } else {
+<span class="fc" id="L258">                return false;</span>
+            }
+        }
+<span class="nc" id="L261">        return true;</span>
+    }
+
+    /**
+     * Executes block statements.
+     * @param blockStmt the block statement
+     * @return null
+     */
+    @Override
+    public Void visitBlockStmt(BlockStmt blockStmt) {
+<span class="fc" id="L271">        executeBlock(blockStmt.stmts, new Environment(env));</span>
+<span class="fc" id="L272">        return null;</span>
+    }
+
+    /**
+     * Helper for visitBlockStmt. Executes the environment of the function.
+     * @param body the list of statements in the block
+     * @param environment the environment to execute in
+     */
+    void executeBlock(List&lt;Stmt&gt; body, Environment environment) {
+<span class="fc" id="L281">        Environment previous = this.env; // save current environment, so we can get back to it after.</span>
+        try {
+<span class="fc" id="L283">            this.env = environment;</span>
+
+<span class="fc bfc" id="L285" title="All 2 branches covered.">            for (Stmt statement : body) {</span>
+<span class="fc" id="L286">                execute(statement);</span>
+            }
+<span class="fc" id="L288">        } finally {</span>
+<span class="fc" id="L289">            this.env = previous; // restore former environment.</span>
+        }
+<span class="fc" id="L291">    }</span>
+
+    /**
+     * Executes a variable declaration.
+     * Evaluate a containing expression, if one is present.
+     * Then save it in the environment.
+     * @param varDecl the variable declaration statement
+     * @return null
+     */
+    @Override
+    public Void visitVarDecl(VarDecl varDecl) {
+<span class="fc" id="L302">        Object value = null;</span>
+<span class="pc bpc" id="L303" title="1 of 2 branches missed.">        if (varDecl.expr != null) { // If varDecl has an expr, evalaute that first.</span>
+<span class="fc" id="L304">            value = evaluate(varDecl.expr);</span>
+        }
+
+<span class="fc" id="L307">        env.define(varDecl.id.lexeme, value);</span>
+<span class="fc" id="L308">        return null;</span>
+    }
+
+    /**
+     * Evaluates a function call.
+     * Evaluates each argument beforehand,
+     * and then adds these to an VVPLCallable function instance.
+     * @param call the call expression
+     * @return the result of the function call
+     */
+    @Override
+    public Object visitCallExpr(Call call) {
+<span class="fc" id="L320">        Object callee = evaluate(call.callee);</span>
+
+<span class="fc" id="L322">        List&lt;Object&gt; evaluatedArgs = new LinkedList&lt;&gt;();</span>
+<span class="fc bfc" id="L323" title="All 2 branches covered.">        for (Expr arg : call.arguments) {</span>
+<span class="fc" id="L324">            evaluatedArgs.add(evaluate(arg)); //</span>
+        }
+
+        // We assume type and number of args are correct.
+        // Calls the function with the evaluated args.
+<span class="fc" id="L329">        VVPLCallable function = (VVPLCallable) callee;</span>
+<span class="fc" id="L330">        return function.call(this, evaluatedArgs);</span>
+    }
+
+    /**
+     * Evaluates a casting expression. 
+     * 
+     * In the cast of String -&gt; Number, we do error checking. 
+     * @param cast the cast expression
+     * @return the result of the cast
+     */
+    @Override
+    public Object visitCastExpr(Cast cast) {
+
+        // Conversion to Boolean.
+<span class="fc bfc" id="L344" title="All 2 branches covered.">        if (cast.typeToken.type == BOOL_TYPE) {</span>
+<span class="fc" id="L345">            Object value = evaluate(cast.expr);</span>
+
+<span class="fc" id="L347">            return isTruthy(value);</span>
+        }
+
+        // Conversion to Bumber.
+<span class="fc bfc" id="L351" title="All 2 branches covered.">        if (cast.typeToken.type == NUMBER_TYPE) {</span>
+
+            // CHECK IF WE ARE ALLOWED TO CONVERT
+<span class="fc" id="L354">            Object value = evaluate(cast.expr);</span>
+<span class="fc" id="L355">            String str = value.toString();</span>
+<span class="fc" id="L356">            Double number = null;</span>
+
+            try {
+<span class="fc" id="L359">                number = Double.parseDouble(str);</span>
+<span class="fc" id="L360">            } catch (NumberFormatException e) {</span>
+<span class="fc" id="L361">                throw error(cast.typeToken,</span>
+<span class="fc" id="L362">                        &quot;: String \&quot;&quot; + str + &quot;\&quot; is not in the right format to convert to Number.&quot;);</span>
+            }
+
+<span class="fc" id="L365">            return number;</span>
+        }
+
+        // Conversion to String
+<span class="pc bpc" id="L369" title="1 of 2 branches missed.">        if (cast.typeToken.type == STRING_TYPE) {</span>
+<span class="fc" id="L370">            Object value = evaluate(cast.expr);</span>
+<span class="fc" id="L371">            return value.toString();</span>
+        }
+
+<span class="nc" id="L374">        return evaluate(cast.expr);</span>
+    }
+    /**
+     * Evaluates an expression statement. 
+     * @param exprStmt the expression statement to evaluate
+     * @return null
+     */
+    @Override
+    public Void visitExprStmt(ExprStmt exprStmt) {
+<span class="fc" id="L383">        evaluate(exprStmt.expr);</span>
+<span class="fc" id="L384">        return null;</span>
+    }
+
+    /**
+     * Executes &quot;while&quot; statement. Utilizes &quot;isTruthy&quot; helper.
+     * @param whileStmt the while statement to evaluate
+     * @return null
+     */
+    @Override
+    public Void visitWhileStmt(WhileStmt whileStmt) {
+<span class="fc bfc" id="L394" title="All 2 branches covered.">        while (isTruthy(evaluate(whileStmt.conditional))) {</span>
+<span class="fc" id="L395">            execute(whileStmt.body);</span>
+        }
+<span class="fc" id="L397">        return null;</span>
+    }
+
+    /**
+     * Executes &quot;If&quot; statement and the potential &quot;Else&quot; block. Utilizes &quot;isTruthy&quot; helper.
+     * @param ifStmt the if statement to evaluate
+     * @return null
+     * 
+     */
+    @Override
+    public Void visitIfStmt(IfStmt ifStmt) {
+<span class="fc bfc" id="L408" title="All 2 branches covered.">        if (isTruthy(evaluate(ifStmt.cond))) {</span>
+<span class="fc" id="L409">            execute(ifStmt.thenBlock);</span>
+<span class="fc bfc" id="L410" title="All 2 branches covered.">        } else if (ifStmt.elseBlock != null) {</span>
+<span class="nc" id="L411">            execute(ifStmt.elseBlock);</span>
+        }
+<span class="fc" id="L413">        return null;</span>
+    }
+
+    /**
+     * Executes &quot;print&quot; (write_to_console) statement. 
+     * Adds the evaluation to the global output, so it can be shown to the user.
+     * @param printStmt the print statement to evaluate
+     * @return null
+     */
+    @Override
+    public Void visitPrintStmt(PrintStmt printStmt) {
+<span class="fc" id="L424">        Object value = evaluate(printStmt.expr);</span>
+<span class="fc" id="L425">        output.add(stringify(value));</span>
+
+<span class="fc" id="L427">        return null;</span>
+    }
+
+    /**
+     * Helps us unwind past the visit methods back to the code that began the
+     * executing body.
+     * Done via the implemented ReturnExcep exception, that extends a Runtime exception. 
+     * @param returnStmt the return statement to evaluate
+     * @return null
+     */
+    @Override
+    public Void visitReturnStmt(ReturnStmt returnStmt) {
+<span class="fc" id="L439">        Object value = null; // return null if no return value.</span>
+<span class="pc bpc" id="L440" title="1 of 2 branches missed.">        if (returnStmt.returnValue != null)</span>
+<span class="fc" id="L441">            value = evaluate(returnStmt.returnValue);</span>
+
+        // Getting from the top of the call stack back to call().
+        // Unwind back to where the function call began.
+
+        // We store the return value in order to pass it to the environment.
+<span class="fc" id="L447">        throw new ReturnExcep(value);</span>
+    }
+
+    /**
+     * Take compile time representation (node) and convert to runtime
+     * interpretation. (stores the function in the environment)
+     * @param functionStmt the function stmt to evaluate
+     * @return null
+     */
+    @Override
+    public Void visitFunctionStmt(FunctionStmt functionStmt) {
+<span class="fc" id="L458">        VVPLFunction function = new VVPLFunction(functionStmt);</span>
+<span class="fc" id="L459">        env.define(functionStmt.name.lexeme, function);</span>
+<span class="fc" id="L460">        return null;</span>
+    }
+
+    /**
+     * Same implementation as our ParseError. 
+     * The only difference is that we do not synchronize, but report the error immediately. 
+     */
+    private static class RuntimeError extends RuntimeException {}
+
+    /**
+     * Reports a runtime error
+     * @param token the token where the error occured
+     * @param message the error message
+     * @return a new RuntimeError
+     */
+    private RuntimeError error(Token token, String message) {
+        // Add the error to the list of errors in VVPLController.
+<span class="fc" id="L477">        VVPLController.error(token.line, ErrorTypeStrings.RUNTIME_ERROR, message);</span>
+
+<span class="fc" id="L479">        return new RuntimeError();</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

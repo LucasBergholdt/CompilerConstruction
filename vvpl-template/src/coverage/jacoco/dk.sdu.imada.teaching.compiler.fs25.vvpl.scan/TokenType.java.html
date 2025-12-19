@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="da"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TokenType.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">vvpl</a> &gt; <a href="index.source.html" class="el_package">dk.sdu.imada.teaching.compiler.fs25.vvpl.scan</a> &gt; <span class="el_source">TokenType.java</span></div><h1>TokenType.java</h1><pre class="source lang-java linenums">package dk.sdu.imada.teaching.compiler.fs25.vvpl.scan;
+
+/**
+ * The different types of tokens.
+ * @author Lucas Bergholdt Hansen
+ * @version CompilerConstruction FT 2025
+ */
+<span class="fc" id="L8">public enum TokenType {</span>
+<span class="fc" id="L9">    // Single-character tokens:</span>
+<span class="fc" id="L10">    LEFT_PAREN, RIGHT_PAREN, </span>
+<span class="fc" id="L11">    LEFT_BRACE, RIGHT_BRACE, </span>
+<span class="fc" id="L12">    COMMA, SEMICOLON,</span>
+
+<span class="fc" id="L14">    // Logical operators:</span>
+<span class="fc" id="L15">    NOT, OR, AND, </span>
+<span class="fc" id="L16">    TRUE, FALSE,</span>
+
+<span class="fc" id="L18">    // Comparison:</span>
+<span class="fc" id="L19">    EQUALS, NOT_EQUALS,</span>
+<span class="fc" id="L20">    GREATER, GREATER_EQUAL,</span>
+<span class="fc" id="L21">    LESS, LESS_EQUAL,</span>
+
+<span class="fc" id="L23">    // Arithmetic:</span>
+<span class="fc" id="L24">    PLUS, SUB, DIV, MULT,</span>
+
+<span class="fc" id="L26">    // Declarations:</span>
+<span class="fc" id="L27">    VAR, // &quot;variable&quot;</span>
+<span class="fc" id="L28">    TYPE_DEF, // &quot;has_type&quot;</span>
+<span class="fc" id="L29">    ASSIGN, // &quot;is&quot;</span>
+<span class="fc" id="L30">    CAST, // &quot;cast_to&quot;</span>
+<span class="fc" id="L31">    MINUS, // negative number</span>
+<span class="fc" id="L32">    NUMBER_TYPE, STRING_TYPE, BOOL_TYPE, // variable types</span>
+
+    // 'Functional' keywords:
+<span class="fc" id="L35">    IF, // &quot;if&quot;</span>
+<span class="fc" id="L36">    ELSE, // &quot;else&quot;</span>
+<span class="fc" id="L37">    WHILE, // &quot;loop_while&quot;</span>
+<span class="fc" id="L38">    PRINT, // &quot;write_to_console&quot;&quot;</span>
+<span class="fc" id="L39">    RETURN, // &quot;return&quot;</span>
+<span class="fc" id="L40">    FUNCTION, // &quot;function&quot;</span>
+
+    // Literals
+<span class="fc" id="L43">    IDENTIFIER, // User given names</span>
+<span class="fc" id="L44">    NUMBER, // Some numeric value</span>
+<span class="fc" id="L45">    STRING, // Some string</span>
+
+    // End-of-file
+<span class="fc" id="L48">    EOF</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

@@ -1,0 +1,158 @@
+<VAR,variable> Literal: null, Line: 5
+<IDENTIFIER,a> Literal: null, Line: 5
+<TYPE_DEF,has_type> Literal: null, Line: 5
+<NUMBER_TYPE,Number> Literal: null, Line: 5
+<ASSIGN,is> Literal: null, Line: 5
+<NUMBER,2> Literal: 2.0, Line: 5
+<SEMICOLON,;> Literal: null, Line: 5
+
+<VAR,variable> Literal: null, Line: 6
+<IDENTIFIER,b> Literal: null, Line: 6
+<TYPE_DEF,has_type> Literal: null, Line: 6
+<NUMBER_TYPE,Number> Literal: null, Line: 6
+<ASSIGN,is> Literal: null, Line: 6
+<NUMBER,42> Literal: 42.0, Line: 6
+<SEMICOLON,;> Literal: null, Line: 6
+
+<VAR,variable> Literal: null, Line: 8
+<IDENTIFIER,res> Literal: null, Line: 8
+<TYPE_DEF,has_type> Literal: null, Line: 8
+<NUMBER_TYPE,Number> Literal: null, Line: 8
+<ASSIGN,is> Literal: null, Line: 8
+<MULT,multiply> Literal: null, Line: 8
+<LEFT_PAREN,(> Literal: null, Line: 8
+<IDENTIFIER,a> Literal: null, Line: 8
+<IDENTIFIER,b> Literal: null, Line: 8
+<RIGHT_PAREN,)> Literal: null, Line: 8
+<SEMICOLON,;> Literal: null, Line: 8
+
+<PRINT,write_to_console> Literal: null, Line: 10
+<IDENTIFIER,res> Literal: null, Line: 10
+<SEMICOLON,;> Literal: null, Line: 10
+
+<PRINT,write_to_console> Literal: null, Line: 11
+<LEFT_PAREN,(> Literal: null, Line: 11
+<IDENTIFIER,res> Literal: null, Line: 11
+<NOT_EQUALS,NOT_EQUALS> Literal: null, Line: 11
+<NUMBER,1> Literal: 1.0, Line: 11
+<RIGHT_PAREN,)> Literal: null, Line: 11
+<SEMICOLON,;> Literal: null, Line: 11
+
+<PRINT,write_to_console> Literal: null, Line: 12
+<LEFT_PAREN,(> Literal: null, Line: 12
+<IDENTIFIER,res> Literal: null, Line: 12
+<NOT_EQUALS,NOT_EQUALS> Literal: null, Line: 12
+<NUMBER,1> Literal: 1.0, Line: 12
+<RIGHT_PAREN,)> Literal: null, Line: 12
+<SEMICOLON,;> Literal: null, Line: 12
+
+<VAR,variable> Literal: null, Line: 18
+<IDENTIFIER,t> Literal: null, Line: 18
+<TYPE_DEF,has_type> Literal: null, Line: 18
+<BOOL_TYPE,Bool> Literal: null, Line: 18
+<ASSIGN,is> Literal: null, Line: 18
+<TRUE,true> Literal: null, Line: 18
+<SEMICOLON,;> Literal: null, Line: 18
+
+<VAR,variable> Literal: null, Line: 19
+<IDENTIFIER,f> Literal: null, Line: 19
+<TYPE_DEF,has_type> Literal: null, Line: 19
+<BOOL_TYPE,Bool> Literal: null, Line: 19
+<ASSIGN,is> Literal: null, Line: 19
+<FALSE,false> Literal: null, Line: 19
+<SEMICOLON,;> Literal: null, Line: 19
+
+<VAR,variable> Literal: null, Line: 21
+<IDENTIFIER,logic_res> Literal: null, Line: 21
+<TYPE_DEF,has_type> Literal: null, Line: 21
+<BOOL_TYPE,Bool> Literal: null, Line: 21
+<ASSIGN,is> Literal: null, Line: 21
+<LEFT_PAREN,(> Literal: null, Line: 21
+<NOT,NOT> Literal: null, Line: 21
+<LEFT_PAREN,(> Literal: null, Line: 21
+<NOT,NOT> Literal: null, Line: 21
+<IDENTIFIER,t> Literal: null, Line: 21
+<AND,AND> Literal: null, Line: 21
+<NOT,NOT> Literal: null, Line: 21
+<IDENTIFIER,f> Literal: null, Line: 21
+<RIGHT_PAREN,)> Literal: null, Line: 21
+<RIGHT_PAREN,)> Literal: null, Line: 21
+<SEMICOLON,;> Literal: null, Line: 21
+
+<VAR,variable> Literal: null, Line: 22
+<IDENTIFIER,logic_res2> Literal: null, Line: 22
+<TYPE_DEF,has_type> Literal: null, Line: 22
+<BOOL_TYPE,Bool> Literal: null, Line: 22
+<ASSIGN,is> Literal: null, Line: 22
+<LEFT_PAREN,(> Literal: null, Line: 22
+<IDENTIFIER,t> Literal: null, Line: 22
+<OR,OR> Literal: null, Line: 22
+<IDENTIFIER,f> Literal: null, Line: 22
+<RIGHT_PAREN,)> Literal: null, Line: 22
+<SEMICOLON,;> Literal: null, Line: 22
+
+<PRINT,write_to_console> Literal: null, Line: 23
+<IDENTIFIER,logic_res> Literal: null, Line: 23
+<EQUALS,EQUALS> Literal: null, Line: 23
+<IDENTIFIER,logic_res2> Literal: null, Line: 23
+<SEMICOLON,;> Literal: null, Line: 23
+
+<IF,if> Literal: null, Line: 29
+<LEFT_PAREN,(> Literal: null, Line: 29
+<IDENTIFIER,b> Literal: null, Line: 29
+<GREATER,GREATER> Literal: null, Line: 29
+<IDENTIFIER,a> Literal: null, Line: 29
+<RIGHT_PAREN,)> Literal: null, Line: 29
+<LEFT_BRACE,{> Literal: null, Line: 29
+<PRINT,write_to_console> Literal: null, Line: 30
+<STRING,"GREATER works."> Literal: GREATER works., Line: 30
+<SEMICOLON,;> Literal: null, Line: 30
+
+<RIGHT_BRACE,}> Literal: null, Line: 31
+<ELSE,else> Literal: null, Line: 31
+<LEFT_BRACE,{> Literal: null, Line: 31
+<PRINT,write_to_console> Literal: null, Line: 32
+<STRING,"Greater do not work"> Literal: Greater do not work, Line: 32
+<SEMICOLON,;> Literal: null, Line: 32
+
+<RIGHT_BRACE,}> Literal: null, Line: 33
+<VAR,variable> Literal: null, Line: 39
+<IDENTIFIER,string_true> Literal: null, Line: 39
+<TYPE_DEF,has_type> Literal: null, Line: 39
+<STRING_TYPE,String> Literal: null, Line: 39
+<ASSIGN,is> Literal: null, Line: 39
+<STRING,"true"> Literal: true, Line: 39
+<SEMICOLON,;> Literal: null, Line: 39
+
+<VAR,variable> Literal: null, Line: 40
+<IDENTIFIER,bool_true> Literal: null, Line: 40
+<TYPE_DEF,has_type> Literal: null, Line: 40
+<BOOL_TYPE,Bool> Literal: null, Line: 40
+<ASSIGN,is> Literal: null, Line: 40
+<LEFT_PAREN,(> Literal: null, Line: 40
+<CAST,cast_to> Literal: null, Line: 40
+<BOOL_TYPE,Bool> Literal: null, Line: 40
+<IDENTIFIER,string_true> Literal: null, Line: 40
+<RIGHT_PAREN,)> Literal: null, Line: 40
+<SEMICOLON,;> Literal: null, Line: 40
+
+<IF,if> Literal: null, Line: 42
+<LEFT_PAREN,(> Literal: null, Line: 42
+<IDENTIFIER,string_bool> Literal: null, Line: 42
+<EQUALS,EQUALS> Literal: null, Line: 42
+<IDENTIFIER,t> Literal: null, Line: 42
+<RIGHT_PAREN,)> Literal: null, Line: 42
+<LEFT_BRACE,{> Literal: null, Line: 42
+<PRINT,write_to_console> Literal: null, Line: 43
+<STRING,"Converting string to bool worked."> Literal: Converting string to bool worked., Line: 43
+<SEMICOLON,;> Literal: null, Line: 43
+
+<RIGHT_BRACE,}> Literal: null, Line: 44
+<ELSE,else> Literal: null, Line: 44
+<LEFT_BRACE,{> Literal: null, Line: 44
+<PRINT,write_to_console> Literal: null, Line: 45
+<STRING,"Converting string to bool did not work."> Literal: Converting string to bool did not work., Line: 45
+<SEMICOLON,;> Literal: null, Line: 45
+
+<RIGHT_BRACE,}> Literal: null, Line: 46
+<EOF,> Literal: null, Line: 46

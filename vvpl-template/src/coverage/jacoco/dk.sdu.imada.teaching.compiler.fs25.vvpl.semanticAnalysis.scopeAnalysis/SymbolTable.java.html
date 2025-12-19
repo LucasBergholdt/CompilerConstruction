@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="da"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SymbolTable.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">vvpl</a> &gt; <a href="index.source.html" class="el_package">dk.sdu.imada.teaching.compiler.fs25.vvpl.semanticAnalysis.scopeAnalysis</a> &gt; <span class="el_source">SymbolTable.java</span></div><h1>SymbolTable.java</h1><pre class="source lang-java linenums">package dk.sdu.imada.teaching.compiler.fs25.vvpl.semanticAnalysis.scopeAnalysis;
+
+import dk.sdu.imada.teaching.compiler.fs25.vvpl.semanticAnalysis.SymbolTableException;
+import java.util.HashMap;
+import java.util.Map;
+import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.Token;
+
+/**
+* Symbol Table used in scope analysis for mapping symbols to their token.
+* @author Carl-Emil Dons Christensen
+*/
+public class SymbolTable {
+<span class="fc" id="L13">    private Map&lt;String, Token&gt; symbols = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L14">    public SymbolTable outer = null;</span>
+<span class="fc" id="L15">    public Boolean isGlobal = false;</span>
+
+    /**
+     * Creates a new symbol table with no enclosing scope and marks it as the global scope. 
+     * Only used once.
+     */
+<span class="fc" id="L21">    public SymbolTable(Boolean isGlobal) {</span>
+<span class="fc" id="L22">        this.isGlobal = isGlobal;</span>
+<span class="fc" id="L23">    }</span>
+
+    /**
+     * Creates a new symbol table with an enclosing scope.
+     * Used for all nested blocks except blocks being used in a FunctionStmt.
+     */
+<span class="fc" id="L29">    public SymbolTable(SymbolTable outer) {</span>
+<span class="fc" id="L30">        this.outer = outer;</span>
+<span class="fc" id="L31">    }</span>
+
+    /**
+     * Creates a new symbol table with no enclosing scope. 
+     * Only used for blocks directly used in a FunctionStmt.
+     */
+<span class="fc" id="L37">    public SymbolTable() {</span>
+<span class="fc" id="L38">    }</span>
+
+
+    /**
+     * Defines a new mapping in the symbol table
+     * @param symbol name of symbol to be stored
+     * @param token token to be associated with symbol
+     */
+    public void define(String symbol, Token token) throws SymbolTableException {
+<span class="fc bfc" id="L47" title="All 2 branches covered.">        if (contains(symbol)) {</span>
+<span class="fc" id="L48">            throw new SymbolTableException(&quot;Variable is already defined in scope.&quot;);</span>
+        }
+<span class="fc" id="L50">        symbols.put(symbol, token);</span>
+<span class="fc" id="L51">    }</span>
+
+    /**
+     * Assigns a token to an existing symbol
+     * @param symbol name of symbol to assign
+     * @param token token to associate with the symbol
+     */
+    public void assign(String symbol, Token token) throws SymbolTableException {
+<span class="nc bnc" id="L59" title="All 2 branches missed.">        if (symbols.containsKey(symbol)) {</span>
+<span class="nc" id="L60">            symbols.put(symbol, token);</span>
+<span class="nc" id="L61">            return;</span>
+        }
+
+<span class="nc bnc" id="L64" title="All 2 branches missed.">        if (outer != null) {</span>
+<span class="nc" id="L65">            outer.assign(symbol, token);</span>
+<span class="nc" id="L66">            return;</span>
+            }
+<span class="nc" id="L68">        throw new SymbolTableException(&quot;Variable is not defined in scope.&quot;);</span>
+    }
+
+    /**
+     * Returns the token associated with the given symbol
+     * @param symbol symbol name to look up
+     * @return the associated token
+     */
+    public Token get(String symbol) throws SymbolTableException {
+<span class="nc bnc" id="L77" title="All 2 branches missed.">    if (symbols.containsKey(symbol)) {</span>
+<span class="nc" id="L78">        return symbols.get(symbol);</span>
+    }
+
+<span class="nc bnc" id="L81" title="All 2 branches missed.">    if (outer != null) {</span>
+<span class="nc" id="L82">        return outer.get(symbol);</span>
+    }
+<span class="nc" id="L84">    throw new SymbolTableException(&quot;Variable is not defined in scope.&quot;);</span>
+    }
+
+    /**
+     * Checks if symbol is in the current scope
+     * @param symbol symbol name to look up
+     * @return true if symbol is in scope, otherwise false
+     */
+    public boolean contains(String symbol) {
+<span class="fc bfc" id="L93" title="All 2 branches covered.">        if (symbols.containsKey(symbol)) {</span>
+<span class="fc" id="L94">            return true;</span>
+        }
+
+<span class="fc bfc" id="L97" title="All 2 branches covered.">        if (outer != null) {</span>
+<span class="fc" id="L98">            return outer.contains(symbol);</span>
+        }
+
+<span class="fc" id="L101">        return false;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

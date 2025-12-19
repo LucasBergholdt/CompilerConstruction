@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="da"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Expr.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">vvpl</a> &gt; <a href="index.source.html" class="el_package">dk.sdu.imada.teaching.compiler.fs25.vvpl.ast</a> &gt; <span class="el_source">Expr.java</span></div><h1>Expr.java</h1><pre class="source lang-java linenums">package dk.sdu.imada.teaching.compiler.fs25.vvpl.ast;
+
+import java.util.List;
+
+import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.visitors.ExprVisitor;
+import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.Token;
+
+/**
+ * Abstract base class for all expression AST nodes.
+ * Each subclass represents a specific kind of expression and implemets the 
+ * accept method by redirecting the call to the proper visitor method.
+ * @version CompilerConstruction FT 2025
+ */
+<span class="fc" id="L14">public abstract class Expr {</span>
+    /**
+     * Accepts a visitor that implements operations for this expression node.
+     * @param &lt;T&gt; the return type of the visitor
+     * @param visitor the visitor to accept
+     * @return the result of the visitor's operation
+     */
+    public abstract &lt;T&gt; T accept(ExprVisitor&lt;T&gt; visitor);
+
+    
+    // ------------- Nested Expr Classes -------------
+
+    /** @author: Carl-Emil Dons Christensen */
+    public static class Assign extends Expr {
+        public final Token ID;
+        public final Expr expr;
+
+<span class="fc" id="L31">        public Assign(Token iD, Expr expr) {</span>
+<span class="fc" id="L32">            ID = iD;</span>
+<span class="fc" id="L33">            this.expr = expr;</span>
+<span class="fc" id="L34">        }</span>
+
+        @Override
+        public &lt;T&gt; T accept(ExprVisitor&lt;T&gt; v) {
+<span class="fc" id="L38">            return v.visitAssignExpr(this);</span>
+        }
+    }
+
+    /** @author: Carl-Emil Dons Christensen */
+    public static class Binary extends Expr {
+        public final Expr left;
+        public final Token operator;
+        public final Expr right;
+
+<span class="fc" id="L48">        public Binary(Expr left, Token operator, Expr right) {</span>
+<span class="fc" id="L49">            this.left = left;</span>
+<span class="fc" id="L50">            this.operator = operator;</span>
+<span class="fc" id="L51">            this.right = right;</span>
+<span class="fc" id="L52">        }</span>
+
+        @Override
+        public &lt;T&gt; T accept(ExprVisitor&lt;T&gt; v) {
+<span class="fc" id="L56">            return v.visitBinaryExpr(this);</span>
+        }
+    }
+
+    /** @author: Carl-Emil Dons Christensen */
+    public static class Logical extends Expr {
+        public final Expr left;
+        public final Token operator;
+        public final Expr right;
+
+<span class="fc" id="L66">        public Logical(Expr left, Token operator, Expr right) {</span>
+<span class="fc" id="L67">            this.left = left;</span>
+<span class="fc" id="L68">            this.operator = operator;</span>
+<span class="fc" id="L69">            this.right = right;</span>
+<span class="fc" id="L70">        }</span>
+
+        @Override
+        public &lt;T&gt; T accept(ExprVisitor&lt;T&gt; v) {
+<span class="fc" id="L74">            return v.visitLogicalExpr(this);</span>
+        }
+    }
+
+    /** @author: Carl-Emil Dons Christensen */
+    public static class Unary extends Expr {
+        public final Token operator;
+        public final Expr expr;
+
+<span class="fc" id="L83">        public Unary(Token operator, Expr expr) {</span>
+<span class="fc" id="L84">            this.operator = operator;</span>
+<span class="fc" id="L85">            this.expr = expr;</span>
+<span class="fc" id="L86">        }</span>
+
+        @Override
+        public &lt;T&gt; T accept(ExprVisitor&lt;T&gt; v) {
+<span class="fc" id="L90">            return v.visitUnaryExpr(this);</span>
+        }
+    }
+
+    /** @author: Carl-Emil Dons Christensen */
+    public static class Literal extends Expr {
+        public final Token token;
+        
+<span class="fc" id="L98">        public Literal(Token token) {</span>
+<span class="fc" id="L99">            this.token = token;</span>
+<span class="fc" id="L100">        }</span>
+
+        @Override
+        public &lt;T&gt; T accept(ExprVisitor&lt;T&gt; v) {
+<span class="fc" id="L104">            return v.visitLiteralExpr(this);</span>
+        }
+    }
+
+    /** @author: Carl-Emil Dons Christensen */
+    public static class Identifier extends Expr {
+        public final Token id;
+
+<span class="fc" id="L112">        public Identifier(Token id) {</span>
+<span class="fc" id="L113">            this.id = id;</span>
+<span class="fc" id="L114">        }</span>
+
+        @Override
+        public &lt;T&gt; T accept(ExprVisitor&lt;T&gt; e) {
+<span class="fc" id="L118">            return e.visitIdentifierExpr(this);</span>
+        }
+    }
+
+    /** @author: Lucas Bergholdt Hansen */
+    public static class Call extends Expr {
+        public final Token id;      // Set if call to a function
+        public final Expr callee;
+        public final Token paren;   // Set if call to a function
+        public List&lt;Expr&gt; arguments;
+
+<span class="fc" id="L129">        public Call(Token id, Expr callee, Token paren, List&lt;Expr&gt; arguments) {</span>
+<span class="fc" id="L130">            this.id = id;</span>
+<span class="fc" id="L131">            this.callee = callee;</span>
+<span class="fc" id="L132">            this.paren = paren;</span>
+<span class="fc" id="L133">            this.arguments = arguments;</span>
+<span class="fc" id="L134">        }</span>
+
+        @Override
+        public &lt;T&gt; T accept(ExprVisitor&lt;T&gt; v) {
+<span class="fc" id="L138">            return v.visitCallExpr(this);</span>
+        }
+    }
+
+    /** @author: Lucas Bergholdt Hansen */ 
+    public static class Cast extends Expr {
+        public final Token typeToken;    // token efter &quot;cast_to&quot;
+        public final Expr expr;
+
+<span class="fc" id="L147">        public Cast(Token typeToken, Expr expr) {</span>
+<span class="fc" id="L148">            this.typeToken = typeToken;</span>
+<span class="fc" id="L149">            this.expr = expr;</span>
+<span class="fc" id="L150">        }</span>
+
+        @Override
+        public &lt;T&gt; T accept(ExprVisitor&lt;T&gt; v) {
+<span class="fc" id="L154">            return v.visitCastExpr(this);</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

@@ -1,0 +1,376 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="da"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ScopeAnalyzer.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">vvpl</a> &gt; <a href="index.source.html" class="el_package">dk.sdu.imada.teaching.compiler.fs25.vvpl.semanticAnalysis.scopeAnalysis</a> &gt; <span class="el_source">ScopeAnalyzer.java</span></div><h1>ScopeAnalyzer.java</h1><pre class="source lang-java linenums">package dk.sdu.imada.teaching.compiler.fs25.vvpl.semanticAnalysis.scopeAnalysis;
+
+import dk.sdu.imada.teaching.compiler.fs25.vvpl.semanticAnalysis.SymbolTableException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.ListIterator;
+import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.*;
+import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Stmt.*;
+import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.Expr.*;
+import dk.sdu.imada.teaching.compiler.fs25.vvpl.ast.visitors.*;
+import dk.sdu.imada.teaching.compiler.fs25.vvpl.scan.Token;
+import dk.sdu.imada.teaching.compiler.fs25.vvpl.ErrorTypeStrings;
+import dk.sdu.imada.teaching.compiler.fs25.vvpl.VVPLController;
+
+/**
+ * ScopeAnalyzer class that implements the analyse() method. 
+ * 
+ * @author Carl-Emil Dons Christensen
+ */
+public class ScopeAnalyzer implements ExprVisitor&lt;Void&gt;, StmtVisitor&lt;Void&gt; {
+
+    /**
+     * Symbol table used for the global environment. This is the only time this constructor is used.
+     */
+<span class="fc" id="L25">    private SymbolTable currentEnvironment = new SymbolTable(true);</span>
+
+    /**
+     * True when evaluating a function, otherwise false.
+     */
+<span class="fc" id="L30">    private Boolean is_function_env = false;</span>
+
+    /**
+     * Symbol table for functions only.
+     */
+<span class="fc" id="L35">    private FuncSymbolTable functionsTable = new FuncSymbolTable();</span>
+    
+    /**
+     * List of statements to be analysed.
+     */
+    private List&lt;Stmt&gt; program;
+    
+    /**
+     * Initializes the scope analyser with a set of statements to analyse
+     * @param program the list of statements to be analysed
+     */
+<span class="fc" id="L46">    public ScopeAnalyzer(List&lt;Stmt&gt; program) {</span>
+<span class="fc" id="L47">        this.program = new ArrayList&lt;&gt;(program);</span>
+<span class="fc" id="L48">    }</span>
+
+    /**
+     * Performs scope analysis for the entire program.
+     * 
+     * This method analyzes all top-level function declarations first,
+     * and then analyzes the remaining statements in program order.
+     *
+     * Any scope-related errors are reported via {@link VVPLController#error}.
+     */
+    public void analyse() {
+<span class="fc" id="L59">        ListIterator&lt;Stmt&gt; stmts = program.listIterator();</span>
+<span class="fc bfc" id="L60" title="All 2 branches covered.">        while (stmts.hasNext()) {</span>
+<span class="fc" id="L61">            Stmt currentStmt = stmts.next();</span>
+<span class="fc bfc" id="L62" title="All 2 branches covered.">            if(currentStmt instanceof FunctionStmt) {</span>
+<span class="fc" id="L63">                analyse(currentStmt);</span>
+<span class="fc" id="L64">                stmts.remove(); </span>
+            }
+        }
+<span class="fc bfc" id="L67" title="All 2 branches covered.">        for (Stmt stmt : program) {</span>
+<span class="fc" id="L68">            analyse(stmt);</span>
+        }
+<span class="fc" id="L70">        return;</span>
+    }
+
+    /**
+     * Performs scope analysis for a single statement node using the visitor interface.
+     *
+     * @param stmt the statement to analyze
+     */
+    private void analyse(Stmt stmt) {
+<span class="fc" id="L79">        stmt.accept(this);</span>
+<span class="fc" id="L80">    }</span>
+
+    /**
+     * Performs scope analysis for a single expression node using the visitor interface.
+     *
+     * @param stmt the expression to analyze
+     */
+    private void analyse(Expr expr) {
+<span class="fc" id="L88">        expr.accept(this);</span>
+<span class="fc" id="L89">    }</span>
+
+    /* ------------------------------------- Identifier declarations, assignments and referencing ------------------------------------- */
+    
+    /**
+     * Analyses a variable declaration.
+     * Error is raised if:
+     *  - declared variable already exists in scope 
+     *  - variable is not declared with a value
+     * @param varDecl the variable declaration statement
+     */
+    @Override
+    public Void visitVarDecl(VarDecl varDecl) {
+        try {
+<span class="fc" id="L103">            currentEnvironment.define(varDecl.id.lexeme, varDecl.id); </span>
+<span class="fc" id="L104">        } catch (SymbolTableException e) {</span>
+<span class="fc" id="L105">            scopeError(varDecl.id, String.format(&quot;Variable %s already exists in scope&quot;, varDecl.id.lexeme));</span>
+<span class="fc" id="L106">            return null;</span>
+        }
+        
+<span class="fc bfc" id="L109" title="All 2 branches covered.">        if (varDecl.expr != null) {</span>
+<span class="fc" id="L110">            analyse(varDecl.expr);</span>
+<span class="fc" id="L111">        } else {</span>
+<span class="fc" id="L112">            scopeError(varDecl.id, String.format(&quot;Variable %s must be initialized with a value&quot;, varDecl.id.lexeme));</span>
+        }
+<span class="fc" id="L114">        return null;</span>
+    }
+
+    /**
+     * Analyses an assignment expression.
+     * An error is raised if variable does not exist in scope
+     * @param assign the assignment expression
+     */
+    @Override
+    public Void visitAssignExpr(Assign assign) {
+<span class="fc bfc" id="L124" title="All 2 branches covered.">        if (!currentEnvironment.contains(assign.ID.lexeme)) {</span>
+<span class="fc" id="L125">            scopeError(assign.ID, String.format(&quot;Variable %s does not exist in scope or any parent scopes.&quot;, assign.ID.lexeme));</span>
+<span class="fc" id="L126">            return null;</span>
+        }
+<span class="fc" id="L128">        analyse(assign.expr);</span>
+<span class="fc" id="L129">        return null;</span>
+    }
+
+    /**
+     * Analyses an identifier reference expression.
+     * An error is raised if variable does not exist in scope.
+     * @param identifier the identifier expression
+     */
+    @Override
+    public Void visitIdentifierExpr(Identifier identifier) {
+<span class="fc bfc" id="L139" title="All 2 branches covered.">        if (!currentEnvironment.contains(identifier.id.lexeme)) {</span>
+<span class="fc" id="L140">            scopeError(identifier.id, String.format(&quot;Variable %s does not exist in scope or any parent scopes.&quot;, identifier.id.lexeme));</span>
+        }
+<span class="fc" id="L142">        return null;</span>
+    }
+
+    /* ------------------------------------- Expressions ------------------------------------- */
+    /**
+     * Analyses a literal expression
+     * @param literal the literal expression
+     */
+    @Override
+    public Void visitLiteralExpr(Literal literal) {
+<span class="fc" id="L152">        return null;</span>
+    }
+
+    /**
+     * Analyses a unary expression
+     * @param unary the unary expression
+     */
+    @Override
+    public Void visitUnaryExpr(Unary unary) {
+<span class="fc" id="L161">        analyse(unary.expr);</span>
+<span class="fc" id="L162">        return null;</span>
+    }
+    /**
+     * Analyses a binary expression
+     * @param binary the binary expression
+     */
+    @Override
+    public Void visitBinaryExpr(Binary binary) {
+<span class="fc" id="L170">        analyse(binary.left);</span>
+<span class="fc" id="L171">        analyse(binary.right);</span>
+<span class="fc" id="L172">        return null;</span>
+    }
+
+    /**
+     * Analyses a logical expression
+     * @param logical the logical expression
+     */
+    @Override
+    public Void visitLogicalExpr(Logical logical) {
+<span class="fc" id="L181">        analyse(logical.left);</span>
+<span class="fc" id="L182">        analyse(logical.right);</span>
+<span class="fc" id="L183">        return null;</span>
+    }
+
+    /**
+     * Analyses a cast expression
+     * @param cast the cast expression
+     */
+    @Override
+    public Void visitCastExpr(Cast cast) {
+<span class="fc" id="L192">        analyse(cast.expr);</span>
+<span class="fc" id="L193">        return null;</span>
+    }
+
+    /* ------------------------------------- Statements ------------------------------------- */
+    /**
+     * Analyses an expression statement
+     * @param exprStmt the expression statement
+     */
+    @Override
+    public Void visitExprStmt(ExprStmt exprStmt) {
+<span class="fc" id="L203">        analyse(exprStmt.expr);</span>
+<span class="fc" id="L204">        return null;</span>
+    }
+    
+    /**
+     * Analyses a while statement
+     * @param whileStmt the while statement
+     */
+    @Override
+    public Void visitWhileStmt(WhileStmt whileStmt) {
+<span class="fc" id="L213">        analyse(whileStmt.conditional);</span>
+<span class="fc" id="L214">        analyse(whileStmt.body);</span>
+<span class="fc" id="L215">        return null;</span>
+    }
+    
+    /**
+     * Analyses an if else statement
+     * @param ifStmt the if else statement
+     */
+    @Override
+    public Void visitIfStmt(IfStmt ifStmt) {
+<span class="fc" id="L224">        analyse(ifStmt.cond);</span>
+<span class="fc" id="L225">        analyse(ifStmt.thenBlock);</span>
+<span class="fc bfc" id="L226" title="All 2 branches covered.">        if (ifStmt.elseBlock != null) {</span>
+<span class="fc" id="L227">            analyse(ifStmt.elseBlock);</span>
+        }
+<span class="fc" id="L229">        return null;</span>
+    }
+    
+    /**
+     * Analyses a print statement
+     * @param printStmt the print statement
+     */
+    @Override
+    public Void visitPrintStmt(PrintStmt printStmt) {
+<span class="fc" id="L238">        analyse(printStmt.expr);</span>
+<span class="fc" id="L239">        return null;</span>
+    }
+
+    /**
+     * Analyses a block statement by constructing a new environment for the block,
+     * subsequently analysing each statement within this scope.
+     * Raises an error if one of the non-final statements is a return statement.
+     * @param blockStmt the block statement
+     */
+    @Override
+    public Void visitBlockStmt(BlockStmt blockStmt) {
+<span class="fc" id="L250">        SymbolTable oldTable = currentEnvironment;</span>
+<span class="fc" id="L251">        currentEnvironment = new SymbolTable(currentEnvironment);</span>
+
+<span class="fc" id="L253">        int num_statements = blockStmt.stmts.size();</span>
+<span class="fc bfc" id="L254" title="All 2 branches covered.">        for (int i = 0; i &lt; num_statements; i++) {</span>
+            // If any return statement is non-final statement of block, return error
+<span class="fc bfc" id="L256" title="All 4 branches covered.">            if (blockStmt.stmts.get(i) instanceof ReturnStmt &amp;&amp; i != num_statements - 1 ) {</span>
+<span class="fc" id="L257">                scopeError(((ReturnStmt)blockStmt.stmts.get(i)).returnKeyword, &quot;Return statement must be last statement of block.&quot;);</span>
+<span class="fc" id="L258">                currentEnvironment = oldTable;</span>
+<span class="fc" id="L259">                return null;</span>
+            }
+            else {
+<span class="fc" id="L262">                analyse(blockStmt.stmts.get(i));</span>
+            }
+        }
+
+<span class="fc" id="L266">        currentEnvironment = oldTable;</span>
+<span class="fc" id="L267">        return null;</span>
+    }
+
+    /* ------------------------------------- Functions Related (visitBlockStmt are also related to this section.) ------------------------------------- */
+
+    /** 
+     * Analyses a Function Statement.
+     * An error is raised if:
+     *  - the function statement occurs in a non-global environment
+     *  - the function has already been declared
+     *  - the function parameters are named similarly
+     * If no error is raised, the global flag global {@link #is_function_env} is set and the body of the function is analysed. 
+     * @param functionStmt the function declaration statement
+     */
+    @Override
+    public Void visitFunctionStmt(FunctionStmt functionStmt) {
+<span class="fc bfc" id="L283" title="All 2 branches covered.">        if (!currentEnvironment.isGlobal) {</span>
+<span class="fc" id="L284">            scopeError(functionStmt.name, String.format(&quot;Function %s can only be defined in a global scope.&quot;, functionStmt.name.lexeme));</span>
+<span class="fc" id="L285">            return null;</span>
+        }
+
+        try {
+<span class="fc" id="L289">            functionsTable.define(functionStmt.name.lexeme, functionStmt);</span>
+<span class="fc" id="L290">        } catch (SymbolTableException e) {</span>
+<span class="fc" id="L291">            scopeError(functionStmt.name, String.format(&quot;Function %s already exist in scope.&quot;, functionStmt.name.lexeme));</span>
+        }
+
+<span class="fc" id="L294">        SymbolTable oldTable = currentEnvironment;</span>
+<span class="fc" id="L295">        currentEnvironment = new SymbolTable();</span>
+
+<span class="fc" id="L297">        List&lt;Param&gt; params = functionStmt.params;</span>
+<span class="fc bfc" id="L298" title="All 2 branches covered.">        for (int i = 0; i &lt; params.size(); i++) {</span>
+<span class="fc" id="L299">            Token paramToken = params.get(i).id;</span>
+            try { 
+<span class="fc" id="L301">                currentEnvironment.define(paramToken.lexeme, paramToken);</span>
+<span class="fc" id="L302">            } catch (SymbolTableException e) {</span>
+<span class="fc" id="L303">                scopeError(paramToken, String.format(&quot;Parameter %s has already been defined.&quot;, paramToken.lexeme));</span>
+<span class="fc" id="L304">                currentEnvironment = oldTable;</span>
+<span class="fc" id="L305">                return null;</span>
+            }
+        }
+
+<span class="fc" id="L309">        is_function_env = true;</span>
+<span class="fc" id="L310">        analyse(functionStmt.body);</span>
+<span class="fc" id="L311">        is_function_env = false;</span>
+
+<span class="fc" id="L313">        currentEnvironment = oldTable;</span>
+<span class="fc" id="L314">        return null;</span>
+    }
+
+    /**
+     * Analyses a return statement by using {@link #is_function_env} set by {@link #visitFunctionStmt(FunctionStmt)}.
+     * Error is raised if a return statement occurs outside of a function body.
+     * @param returnStmt the return statement
+     */
+    @Override
+    public Void visitReturnStmt(ReturnStmt returnStmt) {
+<span class="fc bfc" id="L324" title="All 2 branches covered.">        if (!is_function_env) {</span>
+<span class="fc" id="L325">            scopeError(returnStmt.returnKeyword, &quot;Return statement cannot occur outside of function.&quot;);</span>
+<span class="fc" id="L326">        } </span>
+<span class="fc bfc" id="L327" title="All 2 branches covered.">        else if (returnStmt.returnValue != null) {</span>
+<span class="fc" id="L328">            analyse(returnStmt.returnValue);</span>
+        }
+<span class="fc" id="L330">        return null;</span>
+    }
+
+    /** 
+     * Analyses a Call Statement.
+     * An error is raised if:
+     *  - the function name is not defined
+     *  - the number of given arguments does not match the number of necessary parameters.
+     * If no error is raised, the arguments are analysed. 
+     * @param call the call expression
+     */
+    @Override
+    public Void visitCallExpr(Call call) {
+        FunctionStmt functionStmt;
+        try {
+<span class="fc" id="L345">            functionStmt = functionsTable.get(call.id.lexeme);</span>
+<span class="fc" id="L346">        } catch (SymbolTableException e) {</span>
+<span class="fc" id="L347">            scopeError(call.id, String.format(&quot;Function %s does not exist.&quot;, call.id.lexeme));</span>
+<span class="fc" id="L348">            return null;</span>
+        }
+        
+<span class="fc" id="L351">        List&lt;Param&gt; params = functionStmt.params;   </span>
+<span class="fc" id="L352">        List&lt;Expr&gt; args = call.arguments;</span>
+
+<span class="fc bfc" id="L354" title="All 2 branches covered.">        if (params.size() != args.size()) {</span>
+<span class="fc" id="L355">            scopeError(call.id, String.format(&quot;Function %s takes exactly %d parameters. %d were given&quot;, call.id.lexeme, params.size(), args.size()));</span>
+<span class="fc" id="L356">            return null;</span>
+        }
+
+<span class="fc bfc" id="L359" title="All 2 branches covered.">        for (int i = 0; i &lt; args.size(); i++) {</span>
+<span class="fc" id="L360">            analyse(args.get(i));   </span>
+        }
+
+<span class="fc" id="L363">        return null;</span>
+    }
+
+    /**
+     * Reports a scope error to the {@link VVPLController} class.
+     * @param token the token at which the error occured
+     * @param message the error message
+     * @author Lucas Bergholdt Hansen
+     */
+    private void scopeError(Token token, String message) {
+<span class="fc" id="L373">        VVPLController.error(token.line, ErrorTypeStrings.SCOPE_ERROR, message);</span>
+<span class="fc" id="L374">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
