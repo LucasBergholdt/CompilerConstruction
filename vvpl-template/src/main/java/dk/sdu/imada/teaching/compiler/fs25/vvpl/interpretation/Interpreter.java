@@ -48,8 +48,8 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
      * Will however report a runtimeError if there is an incorrect casting of String
      * to Number.
      * 
-     * @param stmts
-     * @return
+     * @param stmts the list of statements representing the program
+     * @return the output of the programs execution
      */
     public List<String> interpret(List<Stmt> stmts) {
 
@@ -66,6 +66,8 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
 
     /**
      * Helper, used to Stringify objects in order to make them visible for printing.
+     * @param object the object to stringify
+     * @return the string representation of the object
      */
     private String stringify(Object object) {
         if (object == null)
@@ -85,6 +87,7 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
 
     /**
      * Executing statements.
+     * @param s the statement to execute
      */
     private void execute(Stmt s) {
         s.accept(this);
@@ -92,6 +95,8 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
 
     /**
      * Evaluating expressions.
+     * @param e the expression to evaluate
+     * @return the result of evaluating the expression
      */
     private Object evaluate(Expr e) {
         return e.accept(this);
@@ -100,6 +105,8 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
     /**
      * Evaluates assignment expression.
      * Assigns the expression to the identifier in the environment.
+     * @param assign the assignment expression
+     * @return the value assigned
      */
     @Override
     public Object visitAssignExpr(Assign assign) {
@@ -110,6 +117,8 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
 
     /**
      * Returns the expr that an assignment is bound to.
+     * @param identifier the identifier expression
+     * @return the value bound to the identifier
      */
     @Override
     public Object visitIdentifierExpr(Identifier identifier) {
@@ -119,6 +128,8 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
     /**
      * Evalutes Literals.
      * Also evalutes reserved keywords "true" and "false".
+     * @param literal the literal expression
+     * @return the value of the literal
      */
     @Override
     public Object visitLiteralExpr(Literal literal) {
@@ -134,6 +145,8 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
     /**
      * Evaluates logical expressions.
      * Uses a "short circuit" to detect OR verus AND.
+     * @param logical the logical expression
+     * @return the result of the logical operation
      */
     @Override
     public Object visitLogicalExpr(Logical logical) {
@@ -157,6 +170,8 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
 
     /**
      * Evaluates binary expressions.
+     * @param binary the binary expression
+     * @return the result of the binary expression
      */
     @Override
     public Object visitBinaryExpr(Binary binary) {
@@ -193,6 +208,9 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
 
     /**
      * Helper for binary expression
+     * @param left the left operand
+     * @param right the right operand
+     * @return true if operands are equal, otherwise false
      */
     private boolean isEqual(Object left, Object right) {
         if (left == null && right == null)
@@ -204,6 +222,8 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
 
     /**
      * Evaluates unary expressions.
+     * @param unary the unary expression
+     * @return the result of the unary operation
      */
     @Override
     public Object visitUnaryExpr(Unary unary) {
@@ -222,6 +242,9 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
 
     /**
      * Helper for deciding the boolean value of an object.
+     * The number 13 is evaluated to true.
+     * @param object the object to check
+     * @return true if the object is truthy, false otherwise
      */
     private boolean isTruthy(Object object) {
         if (object == null)
@@ -240,6 +263,8 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
 
     /**
      * Executes block statements.
+     * @param blockStmt the block statement
+     * @return null
      */
     @Override
     public Void visitBlockStmt(BlockStmt blockStmt) {
@@ -249,6 +274,8 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
 
     /**
      * Helper for visitBlockStmt. Executes the environment of the function.
+     * @param body the list of statements in the block
+     * @param environment the environment to execute in
      */
     void executeBlock(List<Stmt> body, Environment environment) {
         Environment previous = this.env; // save current environment, so we can get back to it after.
@@ -267,6 +294,8 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
      * Executes a variable declaration.
      * Evaluate a containing expression, if one is present.
      * Then save it in the environment.
+     * @param varDecl the variable declaration statement
+     * @return null
      */
     @Override
     public Void visitVarDecl(VarDecl varDecl) {
@@ -283,6 +312,8 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
      * Evaluates a function call.
      * Evaluates each argument beforehand,
      * and then adds these to an VVPLCallable function instance.
+     * @param call the call expression
+     * @return the result of the function call
      */
     @Override
     public Object visitCallExpr(Call call) {
@@ -303,6 +334,8 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
      * Evaluates a casting expression. 
      * 
      * In the cast of String -> Number, we do error checking. 
+     * @param cast the cast expression
+     * @return the result of the cast
      */
     @Override
     public Object visitCastExpr(Cast cast) {
@@ -342,6 +375,8 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
     }
     /**
      * Evaluates an expression statement. 
+     * @param exprStmt the expression statement to evaluate
+     * @return null
      */
     @Override
     public Void visitExprStmt(ExprStmt exprStmt) {
@@ -351,6 +386,8 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
 
     /**
      * Executes "while" statement. Utilizes "isTruthy" helper.
+     * @param whileStmt the while statement to evaluate
+     * @return null
      */
     @Override
     public Void visitWhileStmt(WhileStmt whileStmt) {
@@ -362,6 +399,8 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
 
     /**
      * Executes "If" statement and the potential "Else" block. Utilizes "isTruthy" helper.
+     * @param ifStmt the if statement to evaluate
+     * @return null
      * 
      */
     @Override
@@ -377,6 +416,8 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
     /**
      * Executes "print" (write_to_console) statement. 
      * Adds the evaluation to the global output, so it can be shown to the user.
+     * @param printStmt the print statement to evaluate
+     * @return null
      */
     @Override
     public Void visitPrintStmt(PrintStmt printStmt) {
@@ -390,6 +431,8 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
      * Helps us unwind past the visit methods back to the code that began the
      * executing body.
      * Done via the implemented ReturnExcep exception, that extends a Runtime exception. 
+     * @param returnStmt the return statement to evaluate
+     * @return null
      */
     @Override
     public Void visitReturnStmt(ReturnStmt returnStmt) {
@@ -407,6 +450,8 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
     /**
      * Take compile time representation (node) and convert to runtime
      * interpretation. (stores the function in the environment)
+     * @param functionStmt the function stmt to evaluate
+     * @return null
      */
     @Override
     public Void visitFunctionStmt(FunctionStmt functionStmt) {
@@ -416,11 +461,17 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
     }
 
     /**
-     *  Same implementation as our own ParseError. 
+     * Same implementation as our {@link ParseError}. 
      * The only difference is that we do not synchronize, but report the error immediately. 
      */
     private static class RuntimeError extends RuntimeException {}
 
+    /**
+     * Reports a runtime error
+     * @param token the token where the error occured
+     * @param message the error message
+     * @return a new RuntimeError
+     */
     private RuntimeError error(Token token, String message) {
         // Add the error to the list of errors in VVPLController.
         VVPLController.error(token.line, ErrorTypeStrings.RUNTIME_ERROR, message);
