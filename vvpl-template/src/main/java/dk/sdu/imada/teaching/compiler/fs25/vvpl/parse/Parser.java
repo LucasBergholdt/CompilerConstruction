@@ -41,6 +41,7 @@ public class Parser {
 
     /**
      * Constructs a new parser for the given token stream.
+     * @param tokens the list of tokens to parse
      */
     public Parser(List<Token> tokens) {
         this.tokens = tokens;

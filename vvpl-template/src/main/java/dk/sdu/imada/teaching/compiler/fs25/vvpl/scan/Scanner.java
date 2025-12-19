@@ -86,6 +86,7 @@ public class Scanner {
 
     /**
      * Constructs a new scanner for the given input string.
+     * @param inputString the string to scan (VVPL source program)
      */
     public Scanner(String inputString) {
         this.inputString = inputString;
