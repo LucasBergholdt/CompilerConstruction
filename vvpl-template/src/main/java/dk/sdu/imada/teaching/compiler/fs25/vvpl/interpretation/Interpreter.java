@@ -461,7 +461,7 @@ public class Interpreter implements StmtVisitor<Void>, ExprVisitor<Object> {
     }
 
     /**
-     * Same implementation as our {@link ParseError}. 
+     * Same implementation as our ParseError. 
      * The only difference is that we do not synchronize, but report the error immediately. 
      */
     private static class RuntimeError extends RuntimeException {}
