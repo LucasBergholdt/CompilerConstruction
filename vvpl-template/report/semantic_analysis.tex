@@ -24,7 +24,7 @@ VVPL is a statically typed language, which usually means that we perform context
 the property of being statically typed means that we perform the semantic analysis before runtime.
 
 VVPL uses lexical scoping (i.e. curly brackets indicate a new scope) and symbol tables to perform context-sensitive checks.
-We chose to implement two separate function tables for variables and functions since the mappings and the functionality for these symbol tables would differ.
+We chose to implement two separate symbol tables for variables and functions as the mappings and the functionality for these symbol tables would differ.
 A function table does not need an outer scope due to it only being used in the global scope, and it does not need the ability to assign a new function to a function identifier.
 
 \paragraph{Design choices in Scope Analysis}\mbox{}\\
@@ -37,9 +37,9 @@ This design solution impacted the solution to the issue of functions only being 
 check if the current table had an outer table, but due to both the global symbol table as well as function tables having no outer scope, this would no longer be possible.
 Therefore the new symbol table attribute \code{isGlobal} was introduced, and functions defined in other tables than these would lead to an error.
 
-Another key issue was the addressing of ReturnStmts whose occurrence is only allowed in a function declaration. One could think that it would suffice to check if the current block 
+Another key issue was the addressing of \code{ReturnStmt}s whose occurrence is only allowed in a function declaration. One could think that it would suffice to check if the current block 
 was a direct descendant from a FunctionStmt by checking if the symbol table had the attributes \code{isGlobal = false;} and \code{outer = null;}.
-This would however not suffice since nested blocks of these blocks also would be allowed to contain ReturnStmts.
+This would however not suffice since nested blocks of these blocks also would be allowed to contain \code{ReturnStmt}s.
 We therefore introduced the new variable \code{is\_function\_env} that is set before analysing a block in \code{VisitFunctionStmt}. This way,
 \code{VisitReturnStmt} returns an error if this variable is true:
 \begin{lstlisting}[language=java]
