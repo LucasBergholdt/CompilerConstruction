@@ -24,8 +24,8 @@ VVPL is a statically typed language, which usually means that we perform context
 the property of being statically typed means that we perform the semantic analysis before runtime.
 
 VVPL uses lexical scoping (i.e. curly brackets indicate a new scope) and symbol tables to perform context-sensitive checks.
-We chose to implement two separate symbol tables for variables and functions as the mappings and the functionality for these symbol tables would differ.
-A function table does not need an outer scope due to it only being used in the global scope, and it does not need the ability to assign a new function to a function identifier.
+We chose to implement two separate symbol tables: \code{SymbolTable} for variables and \code{FuncSymbolTable} for functions as the mappings and the functionality for these tables would differ.
+Functionality differs as a function table does not need the attribute \code{outer} due to it only being used in the global scope, and it does not need the \code{assign} function because we do not support assigning a new function declaration to a function identifier.
 
 \paragraph{Design choices in Scope Analysis}\mbox{}\\
 Usually, a variable is not allowed to shadow another variable in an outer scope. We implement this by making the \code{define} function look recursively in all outer tables
