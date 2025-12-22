@@ -10,20 +10,34 @@ The interpreter is the section of our program actually evaluating the preprocess
 In essence, this is where the program output is produced. 
 We are interested in executing the statements and evaluating the expressions. This is done by walking the AST via the \verb|Interpreter| visitor. 
 Importantly, this requires an environment that manages variables and the scope dynamically during program execution. This environment can be considered a runtime equivalent of the beforementioned Symbol Table, and is therefore implemented likewise.
-This stores our runtime binding of variables and represents the internal state of our interpreter. The statements changes the internal state and the expressions evalautes to an \verb|Object|.
+This stores our runtime binding of variables and represents the internal state of our interpreter. 
+% Måske "when visiting statements" eller "executing statements" i stedet for bare "the statements"? - Lucas
+The statements changes the internal state and the expressions evalautes to an \verb|Object|.
+% As the actual value is only later evaluated? Måske er noget i den dur bedre? - Lucas
 \verb|Object| is an important runtime artifact, as we need to evaluate the actual value later when interpreting statements. 
 
 % The fact that in our implementation of VVPL, the semantic analysis has already handled scope and type checking leaves us with much fewer concerns regarding error handling in this section. 
+% LUCAS:
+% Ville ikke skrive "consulting with Sandra". Synes jeg er lidt mærkeligt. 
+% Måske i stedet brug pladsen på at forklare lidt tydeligere problemet: Når vi skal caste fra streng til tal bliver vi nødt til at kende hvad strengens værdi ender med at blive evalueret til.
+% Kan også godt være man forstår det fint bare af at du skriver: Some errors can only be detected at runtime; for example errors relating to the actual literal value of variables after being evaluated.
 Despite the semantic analysis, there are some unique error concerns for our interpreter. We need to abort the program immediatly upon a runtime error. 
 Some errors can only be detected at runtime; for example errors relating to the actual literal value of variables after being evaluated. We have decided to implement the handling of one type of error, namely the conversion of \verb|String| to \verb|Number| after consultation with Sandra.
 A small note is that dividing by zero is handled per default in Java, but refering to the project description, we can in general assume no runtime exceptions. We do a test for this, just to document the behaviour. 
 
-Functions are defined via a \verb|VVPLCallable| interface, and implemented via the \verb|VVPLFunction| class. A benefit is future extension; having defined an interface allows us to more easily extend our language with for example built-in functions. We then handle each function call as its own instance; importantly, we pass on the provided arguments and the global variables in a new environment called \verb|functionScope|. This is what allows us to modify a copy of the global variables, and maintain the \textit{call by value} porperty of the functions.
+Functions are defined via a \verb|VVPLCallable| interface, and implemented via the \verb|VVPLFunction| class. 
+A benefit is future extension; having defined an interface allows us to more easily extend our language with for example built-in functions. 
+% Hvad betyder det helt præcist at vi håndterer hver funktion som sin egen instans? Det der står lige efter? 
+% At vi har et nyt environment? Måske mere nysgerrighed end en kommentar - Lucas
+We then handle each function call as its own instance; importantly, we pass on the provided arguments and the global variables in a new environment called \verb|functionScope|. This is what allows us to modify a copy of the global variables, and maintain the \textit{call by value} porperty of the functions.
 Within this scope, we can now execute the block body statements of the function. Notice that we already check for the arity of the function parameters and provided argument in the \verb|ScopeAnalyzer| visitor, and for types of the function parameters and prodivded arguments in \verb|typeAnalyser|, so these checks are not performed.
 The function call can consist of an arbitrary amount of visited statements.
 If there is a value to return after the executed statements of the function, we must get back to the top of the call stack with the return value. 
 This is implemented with the \verb|ReturnExcep| class, whose instance stores the return value as an attribute. This instance is then thrown in the \verb|visitReturnStmt| method, and caught and returned by the top-level \verb|visitCallExpr| function call, and the program can now carry on executing statements. 
 
+% Lucas:
+% Ah okay du forklarer tydeligt cast problemet her. Så ville jeg bare slet ikke nævne det tidliger.
+% Altså ville slette denne tidligere sætning helt: We have decided to implement the handling of one type of error, namely the conversion of \verb|String| to \verb|Number| after consultation with Sandra.
 Casting of types is handled by the \verb|visitCastExpr| method. The casting of a \verb|String| to a \verb|Number| requires us to be aware of the actual value of the string, which is only available at runtime. This is implemented by trying to convert the string to a \verb|Double| with the built-in java method \verb|parseDouble|. If this do not succed, we know the content of the String is not valid, and we can catch the runtime error.
 Another notable casting feature, is the fact that all numbers should evaluate to \verb|False| except for the number 13. This is implemented inside of the helper function \verb|isTruthy|, where a hard-coded check for the number 13 is conducted.
 

@@ -66,6 +66,16 @@ Abstractly representing our source code allows us to implement the methods neces
 Ideally, our AST is abstracting away language specific details and carry just enough information to maintain the semantic meaning of the program allowing us 
 to check for semantic errors, interpret its content or, if necessary in the future, do optimization.
  
+\begin{comment}
+LUCAS KOMMENTAR:
+Jeg savner stadig at vi beskriver vores klasser lidt mere her.
+Altså man kunne godt super kort lige sige at det er klasserne Expr og Stmt. 
+Og måske at vi gennem polymorfi kan bruge de mere specifikke underklasser som nodes.
+Så ikke en stor ændring: Bare lige nævne det i forbindelse med vi alligevel siger "nodes implemented via their own classes".
+
+Så tænker jeg man let lige kan tilføje Expr og Stmt til figuren med streg mellem disse og interfacet.
+Føler at man så både får forklaret det her med double dispatch etc. OG helt konkret viser strukturen af vores program så det er lettere at forstå koden.
+\end{comment}
 The program structure is represented via nodes, which are implemented via their own classes. 
 This allows us to gradually unpack the semantic meaning following the given order and rules of the grammar.
 Doing our traversal, we want to perform specific operations on each node, based on the current stage of the semantic analysis or the interpretation, and instead of implementing all these different behaviours associated with each stage directly in methods on the classes themselves, we do so by implementing a \verb|Visitor| interface for each distinct traversal. 
@@ -76,6 +86,8 @@ Now, we delegate the responsibility of the concrete implementation to a \textit{
 This utilizes a \textit{double dispatch} where the operation executed depends on both the type of visitor class and within that visitor, the type of node to call \verb|accept| upon.
 For example, the evaluation of the node \verb|CallExpr| in the visitor class \verb|ScopeAnalyzer| is concerned about the correct binding of variables while in  the \verb|TypeAnalyzer| vistor, \verb|CallExpr| is concerned about the correct type of arguments used.
 If we have ran the the two semantic stages beforehand, and a statement is without errors e.g \verb|add(multiply(2 2) 4);|, the AST will then be evaluated by the \verb|Interpreter| visitor (Figure \ref{fig:ast-visitor}).
+% Måske kan man smide ordet "reusability" ind eftersom hun selv skriver: 
+%Try to explain the development choices you made taking into account important properties, such as reusability and performance.
 The double dispatch of the visitor pattern does introduce an amount of overhead, but in turn helps us greatly with the modularity, separation of concerns and the open-closed principle.
 
 
