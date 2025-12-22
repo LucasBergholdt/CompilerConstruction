@@ -1,0 +1,457 @@
+%- Den version af string håndtering Sandra gerne ville har en lidt mærkelig implikation på dette tilfælde hvor vi rapporterer fejl på linje 1 og 3.
+%Fordi vi ser " efter lines som start på en ny streng og rapporterer en "forkert" fejl. Lige i dette eksempel betyder det faktisk også at vi misser
+%den rigtige fejl at < er et ulovligt tegn.
+%    variable a type String is "string spanning
+%    too many
+%    lines"
+%    a is bla<
+
+
+
+After having making sure that the program is syntactically correct, we want to confirm that our context-sensitive grammar is also semantically correct, 
+i.e. perform context-sensitive checks and interpret the meaning of the program at its' syntactic level.
+VVPL is a statically typed language, which usually means that we perform context-sensitive checks at compile-time. 
+VVPL is however an interpreted language, meaning that we do not compile the code directly to native machine code, but let the interpreter execute the code.
+This means that in our case, "statically-typed" means that we perform the context-sensitive checks before interpreting the program (runtime evaluation).
+
+Context-sensitive checks are performed by constructing symbol tables upon entering a new scope.
+VVPL practises lexical (or static) scoping by using curly brackets to indicate a new scope. 
+An example of constructing a new symbol table to represent the scope of the current block can be seen in the visitBlockStmt:
+
+\begin{lstlisting}[language=java]
+public Void visitBlockStmt(BlockStmt blockStmt) {
+    SymbolTable oldTable = currentEnvironment;
+    currentEnvironment = new SymbolTable(currentEnvironment);
+    for (int i = 0; i < num_statements; i++) {
+        analyse(blockStmt.stmts.get(i));
+    }
+    currentEnvironment = oldTable;
+    return null;
+}
+\end{lstlisting}
+
+Here we construct a new symbol table which represents the scope of the current block. The new symboltable has the old symbol table as an attribute such
+that it is possible to access variables from outer scopes, where as variables in inner scopes will be unreachable.
+
+\paragraph{Scope Analysis}\mbox{}\\
+Roughly we handle three things in the scopeanalyzer, being variables, functions declarations and function calls. We will go through them step-by-step
+
+\subparagraph{Variables}\mbox{}\\
+The following scopeing rules fall in this category (omitting the variables within functions for now):
+\begin{itemize}
+    \item Variable can only be declared once by a variable declaration
+    \item Variables can not be \textbf{shadowed} (i.e. defined in an inner scope to shadow the object in the outer scope)
+    \item Variable declarations needs to be initialized with a value
+    \item Variable must be visible in current scope before usage
+\end{itemize}
+
+scopeanalyzer.java enforces the first two bullet points in the logic of SymbolTable.java. Upon attempting to define a new variable, we check if the variable exists in the current scope:
+\begin{lstlisting}[language=java]
+public void define(String symbol, Token token) throws SymbolTableException {
+    if (contains(symbol)) {
+        throw new SymbolTableException();
+    }
+    symbols.put(symbol, token);
+}
+\end{lstlisting}
+If the variable is not defined in the current symbol table, Symboltable.define() uses the contains() function to recursively check if the variable is defined in any outer symbol tables in order to cover the whole scope to prevent shadowing:
+\begin{lstlisting}[language=java]
+public boolean contains(String symbol) {
+if (symbols.containsKey(symbol)) {
+    return true;
+}
+if (outer != null) {
+    return outer.contains(symbol);
+}
+return false;
+}
+\end{lstlisting}
+
+Variable declarations needs to be initialized with a value. We enforce this in visitVarDecl:
+\begin{lstlisting}[language=java]
+if (varDecl.expr != null) {
+    analyse(varDecl.expr);
+}
+else {
+    VVPLController.error(varDecl.id.line, ErrorTypeStrings.SCOPE_ERROR, "declared variable must be initialized with a value.");
+}
+\end{lstlisting}
+
+In visitIdentifier we enforce that variables are visible in the current scope by checking if the current or any outer symbol tables contains the identifier:
+\begin{lstlisting}[language=java]
+public Void visitIdentifierExpr(Identifier identifier) {
+    if (!currentEnvironment.contains(identifier.id.lexeme)) {
+        VVPLController.error(identifier.id.line, ErrorTypeStrings.SCOPE_ERROR, "variable [insert name here] does not exist in scope or any parent scopes.");
+    }
+}
+\end{lstlisting}
+
+\subparagraph{Function Declarations}\mbox{}\\
+The following scopeing rules fall in this category:
+\begin{itemize}
+    \item Variables inside the function declaration cannot access any outer scopes. These must be shadowed
+    \item Functions cannot be defined in inner scopes, only in the global scope
+    \item Unique function name (i.e. re-declarations are not possible)
+    \item Return statements can only occur in the context of a function
+    \item No statements can follow a return statement
+    \item Out-of-order declarations and calls are allowed, i.e. a function call can precede its' declaration
+\end{itemize}
+
+In visitFunctionStmt, we make sure that no variables inside a function can access any symbol table (i.e. scopes) outside its' declaration by simply initializing the symbol table with no outer table:
+\begin{lstlisting}[language=java]
+SymbolTable oldTable = currentEnvironment;
+currentEnvironment = new SymbolTable();
+\end{lstlisting}
+
+The requirement of functions being declared only globally is enforced by checking if the current environment is the originally defined environment for the program.
+This environment is made unique by adding a separate constructor for the global SymbolTable:
+\begin{lstlisting}[language=java]
+public SymbolTable(Boolean isGlobal) {
+    this.isGlobal = isGlobal;
+}
+\end{lstlisting}
+This constructor is used upon constructing an instance of ScopeAnalyzer, and nowhere else.
+This way, visitFunctionStmt can only be rightfully called from this environment, otherwise an error is raised:
+
+\begin{lstlisting}[language=java]
+if (!currentEnvironment.isGlobal) {
+            VVPLController.error(functionStmt.name.line, ErrorTypeStrings.SCOPE_ERROR, "Attempting to define function [insert name here] in a non-global scope.");
+            return null;
+}
+\end{lstlisting}
+One could think we could check whether the current environment is global by seeing if there are no outer symbol tables linked to the current symboltable,
+but due to our previously mentioned implementation of function blocks having no outer scope, this is not possible.
+
+For the next requirements, a global symbol table unique to functions are used - this of course has the consequence that a variable and a function can share the same name, but it beautifies the implementation of our scopeanalyzer significantly.
+FuncSymbolTable maps a symbol not only to their token, but to their respective FunctionStmt AST node:
+
+\begin{lstlisting}[language=java]
+private Map<String, FunctionStmt> symbols = new HashMap<>();
+\end{lstlisting}
+
+This way additional details such as the function block and the function type can easily be fetched.
+This symbol table also has a much more restricted functionality:
+\begin{itemize}
+    \item It does not need an assign function - we cannot reassign a value to a current existing function
+    \item It does not need the attribute outer since there is only one global function table accessible by all (inner and outer) scopes.
+\end{itemize}
+
+Unique function names are enforced the same way as unique variable names as seen previously, but the contains() function simplifies since we do not need to check any outer scopes recursively:
+\begin{lstlisting}[language=java]
+public boolean contains(String symbol) {
+    if (symbols.containsKey(symbol)) {
+        return true;
+    }
+    return false;
+    }
+\end{lstlisting}
+
+To enforce that return statements can only occur in a function, a global variable is\_function\_env is used.
+In visitFunctionStmt, this value is set to true upon analyzing the body of a function.
+\begin{lstlisting}[language=java]
+is_function_env = true;
+analyse(functionStmt.body);
+is_function_env = false;
+\end{lstlisting}
+
+We use this in visitReturnStmt to return an error if the statement is not analyzed in the context of a function:
+\begin{lstlisting}[language=java]
+if (!is_function_env) {
+    VVPLController.error(returnStmt.returnKeyword.line, ErrorTypeStrings.SCOPE_ERROR, "Return statement cannot occur outside of function.");
+}
+\end{lstlisting}
+
+In visitBlockStmt we ensure that no statements follow a return statement by checking that a returnStmt cannot be a non-final statement of its' containing block:
+\begin{lstlisting}[language=java]
+for (int i = 0; i < num_statements; i++) {
+    if (blockStmt.stmts.get(i) instanceof ReturnStmt && i != num_statements - 1 ) {
+        VVPLController.error(((ReturnStmt)blockStmt.stmts.get(i)).returnKeyword.line, ErrorTypeStrings.SCOPE_ERROR, "Return statement must be last statement of block.");
+        return null;
+    }
+}
+\end{lstlisting}
+
+Lastly, we enforce out-of-order declarations and calls by iterating through the list of given statements and analyse function declarations prior to any other statement in ScopeAnalyzer.analyse():
+\begin{lstlisting}[language=java]
+public void analyse() {        
+    ListIterator<Stmt> stmts = program.listIterator();
+
+    while (stmts.hasNext()) {
+        Stmt currentStmt = stmts.next();
+        if(currentStmt instanceof FunctionStmt) {
+            analyse(currentStmt);
+            stmts.remove(); 
+        }
+    }
+    // Analyse rest of program
+    for (Stmt stmt : program) {
+        analyse(stmt);
+    }
+    return;
+}
+\end{lstlisting}
+
+\subparagraph{Function Calls}\mbox{}\\
+The following scopeing rules fall in this category:
+\begin{itemize}
+    \item Only declared and known functions can be called
+    \item Number of function arguments matches number of function parameters
+    \item Function arguments must be within scope
+\end{itemize}
+These are all enforced within visitCallExpr. The FuncSymbolTable throws an exception in the case that an unknown function is called:
+\begin{lstlisting}[language=java]
+try {
+    functionStmt = functionsTable.get(call.id.lexeme);
+} 
+catch (SymbolTableException e) {
+    VVPLController.error(call.id.line, ErrorTypeStrings.SCOPE_ERROR, "function [insert name here] does not exist.");
+    return null;
+}
+\end{lstlisting}
+
+We check that the number of arguments match the number of parameters:
+\begin{lstlisting}[language=java]
+    // check if #args == #params
+    if (params.size() != args.size()) {
+        VVPLController.error(call.id.line, ErrorTypeStrings.SCOPE_ERROR, "function [name here] takes exactly [params.size()] parameters.");
+        return null;
+    }
+\end{lstlisting}
+
+We check that the given arguments are in scope by analyzing the arguments as normal expressions. This allows for the arguments to be given as both identfiers or ordinary expressions:
+\begin{lstlisting}[language=java]
+    // check if arguments are in scope
+    for (int i = 0; i < args.size(); i++) {
+        analyse(args.get(i));   
+    }
+\end{lstlisting}
+This concludes our scope analysis.
+
+\paragraph{Type Analysis}\mbox{}\\
+We have constructed a separate class for doing the type analysis. This class could have been merged with the class of ScopeAnalyzer (i.e. a SemanticAnalyzer) but SOLID principles such as the Single Responsibility Principle suggests that responsibilities should be delegated to each their class.
+Therefore we build the symbol tables from scratch again in order to build a context-sensitive environment required for the type analysis, but we do not need to error handle scope issues since those have been handled already.
+This results in the usage of a much simpler SymbolTable as well as a new FuncSymbolTable where all error handling is omitted.
+An enum Type class have been implemented for the new symbol table to use: 
+\begin{lstlisting}[language=java]
+private Map<String, Type> symbols = new HashMap<>();
+public enum Type {
+    UNKNOWN,
+    NUMBER,
+    BOOL,
+    STRING
+}
+\end{lstlisting}
+We use Type.UNKNOWN for two cases:
+\begin{itemize}
+    \item Functions that do not have a type declared are assumed to return null. In this context, Type.UNKNOWN represents the value null
+    \item Upon encountering an error in the type analysis, we return this value, so that calls higher up the call stack knows that an error was made and has already been processed. An example is in visitBinaryExpr:
+\end{itemize}
+\begin{lstlisting}[language=java]
+public Type visitBinaryExpr(Binary binary) {
+    Type left = analyse(binary.left);
+    Type right = analyse(binary.right);
+
+    if (left == Type.UNKNOWN || right == Type.UNKNOWN) {
+        return Type.UNKNOWN;
+    }
+}
+\end{lstlisting}
+If one of the returned types are unknown, it has already been reported as an error, and we do not want to report further errors regarding this nested call as this could otherwise clutter up the error messages.
+
+Again we can split the typeing requirements in three sections and go through them step-by-step.
+\subparagraph{Variables}\mbox{}\\
+The following scopeing rules fall in this category:
+\begin{itemize}
+    \item Variables are initialized with the correct type
+    \item New assignments to variables matches the current type
+\end{itemize}
+
+In visitVarDecl we enforce that the type of the given expression matches the declared type:
+\begin{lstlisting}[language=java]
+if (exprType != declaredType) {
+    VVPLController.error(varDecl.id.line, ErrorTypeStrings.TYPE_ERROR, String.format("Type %s does not match type of expression (%s)", exprType, declaredType));
+}
+\end{lstlisting}
+
+In visitAssignExpr we check that new assignments to variables matches the current type:
+\begin{lstlisting}[language=java]
+if (currType == exprType) {
+        return currType;   
+}
+else {
+    VVPLController.error(assign.ID.line, ErrorTypeStrings.TYPE_ERROR, "current type of identifier [insert name here] does not match the type of the given expression.");
+}
+\end{lstlisting}
+
+\subparagraph{Operations}\mbox{}\\
+The following scopeing rules fall in this category:
+\begin{itemize}
+    \item Arithmetic operations only between numbers
+    \item Logical Operations only between bools
+    \item Conditionals (used by if-statements and while-statements) must be of type Bool.
+    \item Only certain type casts are correct
+    \begin{itemize}
+        \item Number to String
+        \item Number to Bool
+        \item String to Number
+        \item Bool to String
+    \end{itemize}
+\end{itemize}
+
+In visitBinaryExpr we check that arithmetic operations are performed only between numbers as seen on the following snippet of a subset of the operators:
+\begin{lstlisting}[language=java]
+case GREATER:
+case GREATER_EQUAL:
+case LESS:
+case LESS_EQUAL:
+    if (left == Type.NUMBER && right == Type.NUMBER) {
+        return Type.BOOL;
+    }
+    else {
+        VVPLController.error(binary.operator.line, ErrorTypeStrings.TYPE_ERROR, "operator [insert name here] only accepts numbers.");
+        return Type.UNKNOWN;
+    }
+\end{lstlisting}
+
+Likewise, logical operations are handled in visitLogicalExpr:
+\begin{lstlisting}[language=java]
+switch (logical.operator.type) {
+    case OR, AND: 
+        if (left == Type.BOOL && right == Type.BOOL) {
+            return Type.BOOL;
+        }
+        else {
+            VVPLController.error(logical.operator.line, ErrorTypeStrings.TYPE_ERROR, "operator [insert name here] only accepts booleans.");
+            return Type.UNKNOWN;
+        }
+}
+\end{lstlisting}
+
+In visitWhileStmt and visitIfStmt, it is required that the condition is of type Bool:
+\begin{lstlisting}[language=java]
+if (condType != Type.BOOL && condType != Type.UNKNOWN) {
+    VVPLController.error(whileStmt.whileToken.line, ErrorTypeStrings.TYPE_ERROR, "conditional has to be of type Bool");
+}
+\end{lstlisting}
+
+In visitCastExpr, the rules of casting are enforced. An example are the requirements for casting numbers:
+\begin{lstlisting}[language=java]
+switch (cast_from) {
+    case Type.NUMBER:
+        if (cast_to == STRING_TYPE) {
+            return Type.STRING;
+        }
+        if (cast_to == BOOL_TYPE) {
+            return Type.BOOL;
+        }
+        else {
+            VVPLController.error(cast.typeToken.line, ErrorTypeStrings.TYPE_ERROR, "can only cast NUMBER to string or bool.");
+        }
+}
+\end{lstlisting}    
+
+\subparagraph{Functions}\mbox{}\\
+The following scopeing rules fall in this category:
+\begin{itemize}
+    \item The types of a function calls given arguments must match the types of the declared parameter(s).
+    \item A function declaration must in all cases return the declared type. It cannot miss a return statement or return the wrong type.
+\end{itemize}
+
+In visitCallExpr we enforce the requirements of the given arguments:
+\begin{lstlisting}[language=java]
+for (int i = 0; i < args.size(); i++) {
+    if (argumentType != paramType) {
+        VVPLController.error(call.id.line, ErrorTypeStrings.TYPE_ERROR, "Type of given argument [insert name here] does not match the required type [paramType]");
+    }
+}
+\end{lstlisting}   
+
+Enforcing that a function is guaranteed to return the declared type in all cases require extra handling. This requirement can be subdivided in two more requirements:
+\begin{itemize}
+    \item Return statements within a function must all return the declared type
+    \item A function with a declared type must always guarantee to return nevermind which branch it chooses to take
+\end{itemize}
+
+The first requirement is fulfilled within visitReturnStmt. Before visiting any ReturnStmt, visitFunctionStmt sets the the global variable currentFuncReturnType to the required type of any occuring return statement:
+\begin{lstlisting}[language=java]
+if (functionStmt.typeToken != null) {
+    currentFuncReturnType = convertVariableType(functionStmt.typeToken.type);
+}
+else {
+    currentFuncReturnType = Type.UNKNOWN;
+}
+\end{lstlisting}
+As earlier mentioned, if a function has no return type declared, we assume it to be a void function.
+
+In visitReturnStmt we first check if the value of the return statement is null (i.e. return;). If it is, and the function is not a void function, an error is raised:
+\begin{lstlisting}[language=java]
+public Void visitReturnStmt(ReturnStmt returnStmt) {
+    if (returnStmt.returnValue == null) {
+        if (currentFuncReturnType != Type.UNKNOWN) {
+            VVPLController.error(returnStmt.returnKeyword.line, ErrorTypeStrings.TYPE_ERROR, "Function with return type must return a value.");
+        }
+    }
+}
+\end{lstlisting}
+
+If the return type of the current function is not null, we compare it to the declared return value of the function and raise an error if they do not match.
+\begin{lstlisting}[language=java]
+if (exprType != currentFuncReturnType) {
+    VVPLController.error(returnStmt.returnKeyword.line, ErrorTypeStrings.TYPE_ERROR, "Type of returned value does not match declared return type of function");
+    return null;
+}
+\end{lstlisting}
+
+Now for the second point: "A function with a declared type must always guarantee to return nevermind which branch it chooses to take". This is also enforced in the statically typed language Java and is appropiately enforced in VVPL as well.
+visitFunctionStmt uses the helper function alwaysReturns in order to guarantee this:
+\begin{lstlisting}[language=java]
+if (functionStmt.typeToken != null && !alwaysReturns(functionStmt.body)) {
+    VVPLController.error(functionStmt.name.line, ErrorTypeStrings.TYPE_ERROR, "Function must return a value in all code paths");
+}
+\end{lstlisting}
+
+alwaysReturns is a recursive function that evaluates whether a function with a declared type contains a return statement within all possible paths.
+There are four cases to evaluate, the first case being the base-case. Of course, a return statement itself always returns:
+\begin{lstlisting}[language=java]
+if (stmt instanceof ReturnStmt) {
+    return true;
+}
+\end{lstlisting}
+
+The second case are if-else statements:
+\begin{lstlisting}[language=java]
+if (stmt instanceof IfStmt) {
+    IfStmt ifStmt = (IfStmt) stmt;
+
+    if (ifStmt.elseBlock != null) { 
+        return alwaysReturns(ifStmt.thenBlock) && alwaysReturns(ifStmt.elseBlock);
+    } 
+    else {
+    return false;
+    }
+}
+\end{lstlisting}
+An if-else statement can only guarantee to always return if both the if branch returns, and the else branch also returns.
+If the else branch is non-existant, the function can potentially skip the if-branch, therefore not returning.
+
+The third case is the block statement itself which also constitutes the body of a function:
+
+\begin{lstlisting}[language=java]
+if (stmt instanceof BlockStmt) {
+    BlockStmt block = (BlockStmt) stmt;
+    for (Stmt s : block.stmts) {
+        if (alwaysReturns(s)) {
+            return true;
+        }
+    }
+    return false;
+}
+\end{lstlisting}
+Here, we use all cases to see if a block returns. 
+\begin{itemize}
+    \item If a block statement contains a return statement at its' current level, it is guaranteed to return.
+    \item If a block statement contains an if-else statement, this statement has to return if there are no other statements that are guaranteed to return.
+    \item If a block statement contains another block statement, this statement is indeed required to return if there are no other statements that always return.
+\end{itemize}
+
+The fourth case is of course that the block is not guaranteed to return. In that case, we return false, and visitFunctionStmt will raise an error.

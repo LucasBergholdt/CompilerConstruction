@@ -79,3 +79,17 @@
 \lhead{Group T05}
 \chead{Full Interpreter}
 \rhead{\today}
+
+
+
+%general packages for showing codes from programmes
+\usepackage{tcolorbox}
+\newtcbox{\code}{on line,             % Extra option to make text stay on line instead of moving all text before and after the \code{} text to new lines.
+colupper = black!95!white,            % Font color
+colback  = white!85!black,            % Background color
+boxrule  = 0pt,                       % Border length
+left     = 1pt, 
+right    = 1pt, 
+top      = -1pt, 
+bottom   = -1pt,                      % Extra space to the horisontal and vertical directions
+arc      = 4pt}                       % The arc of the corner. You could also call it the roundness factor to the corners.
