@@ -42,12 +42,12 @@ was a direct descendant from a FunctionStmt by checking if the symbol table had 
 This would however not suffice since nested blocks of these blocks also would be allowed to contain \code{ReturnStmt}s.
 We therefore introduced the new variable \code{is\_function\_env} that is set before analysing a block in \code{VisitFunctionStmt}. This way,
 \code{VisitReturnStmt} returns an error if this variable is true:
-\begin{lstlisting}[language=java]
+\begin{lstlisting}[language=java, caption={\texttt{funktion1}}]
 is_function_env = true;
 analyse(functionStmt.body);
 is_function_env = false;
 \end{lstlisting}
-\begin{lstlisting}[language=java]
+\begin{lstlisting}[language=java, caption={\texttt{funktion2}}]
 if (!is_function_env) {
     VVPLController.error(returnStmt.returnKeyword.line, ErrorTypeStrings.SCOPE_ERROR, "Return statement cannot occur outside of function.");
 }
@@ -91,9 +91,9 @@ We have constructed a separate class for executing the type analysis. This class
 Therefore we build the symbol tables from scratch again in order to build a context-sensitive environment required for the type analysis, but we do not need to error handle scope issues since those have been handled already.
 This results in the usage of a much simpler SymbolTable as well as a new FuncSymbolTable where all error handling is omitted.
 
-For the type analysis, an enum Type class have been implemented. The types are self-explanatory, while Type.UNKNOWN we use for two different cases:
+For the type analysis, an enum \code{Type} class have been implemented. The types are self-explanatory, while \code{Type.UNKNOWN} we use for two different cases:
 \begin{itemize}
-    \item Functions that do not have a type declared are assumed to return null. In this context, Type.UNKNOWN represents the value null
+    \item Functions that do not have a type declared are assumed to return null. In this context, \code{Type.UNKNOWN} represents the value null
     \item Upon encountering an error in the type analysis, we return this value, so that calls higher up the call stack knows that an error was made and has already been processed. This way we avoid reporting cascading errors.
 \end{itemize}
 
@@ -124,13 +124,6 @@ if (functionStmt.typeToken != null && !alwaysReturns(functionStmt.body)) {
     VVPLController.error(functionStmt.name.line, ErrorTypeStrings.TYPE_ERROR, "Function must return a value in all code paths");
 }
 \end{lstlisting}
-
-\begin{lstlisting}[language=java]
-if (functionStmt.typeToken != null && !alwaysReturns(functionStmt.body)) {
-    VVPLController.error(functionStmt.name.line, ErrorTypeStrings.TYPE_ERROR, "Function must return a value in all code paths");
-}
-\end{lstlisting}
-
 \code{alwaysReturns} is a recursive function that evaluates whether a function with a declared type contains a return statement within all possible paths.
 There are four cases to evaluate.
 \begin{itemize}
