@@ -1,0 +1,3 @@
+For the interpreter, our additional tests is oriented towards testing cases not already taken care of by the other stages, and not already part of Sandra's test suite. This encompass the \textit{call by value}, casting from a Bool to a String, casting numbers to Bools (including 13), casting Strings to Numbers, division by zero and finally, the remaining untested expression in the form of the \verb|GREATER| binary expression.
+Importantly, we made sure to test the \verb|RuntimeException| behavior when casting an invalid string to a Number to check if it interrupts the program flow as intended. The division by zero was simply to document the behaviour, as we relies on Javas default error handling of this. 
+

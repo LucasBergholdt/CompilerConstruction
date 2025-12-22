@@ -40,7 +40,7 @@ Which kind of design decisions did you take? Answer the following questions in t
 \input{interpreter_implementation.tex}
 \subsubsection{Monitoring and Logging} 
 %Do you trace the state of the interpreter and its components (i.e., the scanner, parser, etc)?
-\input{monitoring_and_logging.tex}
+% \input{monitoring_and_logging.tex}
 
 \subsection{Testing \& Evaluation}
 
@@ -49,3 +49,16 @@ Describe the test setup and the test inputs with their expected outputs.
 If you have documented this in the source code a link and submission of the generated JavaDoc is also fine.
 
 If the provided tests have been changed or do not work, please explain here what tests fail, why and what it would require to fix them.
+
+Overall, our testing is characterized by both testing on a smaller and bigger scale. We test the individual ... throughout all stages, and then test whole end-to-end pipeline with the interpreter in \verb|VVPLController|
+
+% Idé til struktur?: /Lasse
+% - Unit test (vi tester de enkelte dele hver for sig, e.g expressions i en parser)
+% - Integration test (Vi tester, at scanner + parser virker sammen og printede det i AST (del 1))
+% - end-to-end test (Vi tester den fulde pipeline med tilhørende interpretation, hvor vi sammenligner source code med evaluated code)
+
+% Overvej dog om Sandra egentlig går op i det. har bare skrevet en lille kommentar om det, måske slet. 
+
+% Herefter en kort kommentar omkring vores code coverage. 
+
+\input{testing_interpreter.tex}
