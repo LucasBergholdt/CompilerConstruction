@@ -45,13 +45,18 @@ production rule to apply without backtracking.
 %If we don't find the right token we recover from the error
 %through synchronization rather than exploring alternative parsing paths (which would be characteristic of backtracking).
 
+While the parser largely follows a direct one-to-one mapping between grammar rules and our parsing methods, 
+cast expressions form a small exception to this approach.
+Rather than treating casts as an attribute of a primary expression we decided to represent a cast
+in its own dedicated AST node that wraps the expression being cast together with the type to cast to.
+% Somehow sige at det vender det lidt på hovedet hvor expressions er en del af casts og ikke omvendt.
+To keep the parsing logic simple this is implemented by explicitly handling casts in the \texttt{primary} method before delegating
+to \texttt{primaryNoCast} to parse the remaining parts of the primary grammar rule
+% Kunne være nice at slutte af på en god pointe, men ved ikke helt hvad det skulle være.
 
-%? Skriv om håndtering af casts her?
-
-
-If we encounter a syntax error we need to recover from the error.
-The parser should be robust in the face of syntax errors.
-Invalid code is valid input for the parser as it should teach the user about valid syntax.
+\paragraph{Error recovery}\mbox{}\\
+The parser should be robust in the face of syntax errors and be able to recover from them.
+Invalid code is valid input for the parser as it should teach the user about correct syntax.
 When the parser encounters an error it may get confused and report a cascade of
 pseudo-errors that don't indicate another real problem in the code.
 To avoid this, the parser must realign its state with the upcoming token streams after encountering an error.
@@ -60,13 +65,13 @@ This is accomplished through synchronization.
 Our chosen synchronization point is between statements. Encountering a syntax error
 triggers a \texttt{ParseError} exception which unwinds the call stack until it is caught in the parse
 loop between statements. Here the \texttt{synchronise} method is invoked.
-This method discards tokens until reaching a token that begins a new statement.
+This method discards tokens until reaching a token that begins a new statement and as such we are ready to parse again.
 By using synchronization our parser reports as many distict errors as possible while filtering out confusing pseudo-errors.
 However, any real syntax errors hiding inside the discarded tokens will not reported. This is an acceptable
 trade-off for avoiding falsely reporting cascaded errors.
 
 
-One challenge was reporting missing semicolons at the correct location.
+One challenge was reporting the error of a missing semicolons at the correct location.
 Initially, our \texttt{consume} method reported syntax errors on the current token when an unexpected
 token was encountered. In the case of a missing semicolon, this caused the error to be reported on the following token,
 often on the next line, rather than on the line where the semicolon was actually missing.
@@ -80,10 +85,12 @@ Since we only report line numbers this is fine and we have not identified any ca
 % any cases where this change leads to any significant problems.
 
 
+
+
 \begin{comment}
 Detaljer som måske er værd at nævne:
 - Wrapper block stmt. Kan ikke helt huske hvorfor dette var smart, men mener også bogen gør det. ❌
-- Håndtering af casts. Vi har valgt at have en seperat CAST node. ❌
+- Håndtering af casts. Vi har valgt at have en seperat CAST node. ✅
 - Vi håndterer true() som en parse error selvom det er beskrevet som en scope error i projektbeskrivelsen  ❌
 - Vi bruger en custom "Param" klasse til at håndterer funktioners parametre. ❌
 - Consume rapporterer error på previous(). ✅
