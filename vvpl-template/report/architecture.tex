@@ -68,7 +68,7 @@ Abstractly representing our source code allows us to implement the methods neces
 Ideally, our AST is abstracting away language specific details and carry just enough information to maintain the semantic meaning of the program allowing us 
 to check for semantic errors, interpret its content or, if necessary in the future, do further optimization.
  
-The program structure is represented via nodes, which are implemented via their own classes. % har slettet det med at nodes uden børn er leaves. Det tænker jeg godt man ved. - Lucas
+The program structure is represented via nodes, which are implemented via their own classes. 
 This allows us to gradually unpack the semantic meaning following the given order and rules of the grammar.
 Doing our traversal, we want to perform specific operations on each node, based on the current phase of the semantic analysis or the interpretation, and instead of implementing all these different behaviours associated with each phase directly in methods on the classes themselves, we do so by implementing a \verb|Visitor| interface for each distinct traversal. 
 The visitor pattern is meant to help us achieve openness for extension and separation of responsibility by seperating the storage of data from the use of that data.  
@@ -76,6 +76,7 @@ Now, we delegate the responsibility of the concrete implementation to a \textit{
 
 This utilizes a \textit{double dispatch} where the operation executed depends on both the type of visitor class and within that visitor, the type of node to call \verb|accept| upon.
 For example, the evaluation of the node \verb|CallExpr| in the visitor class \verb|ScopeAnalyzer| is concerned about the correct binding of variables while another in another visitor class, \verb|TypeAnalyzer|, \verb|CallExpr| is concerned about the correct type of arguments used.
+If we have ran the two semantic phases beforehand, and a statement is without errors e.g \verb|add(multiply(2 2) 4)|, it will then be evaluated by the \verb|Interpreter| visitor (Figure \ref{fig:ast-visitor}).
 
 \begin{figure}[H]
     \makebox[\textwidth][c]{%
