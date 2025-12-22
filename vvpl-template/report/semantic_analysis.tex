@@ -25,27 +25,33 @@ the property of being statically typed means that we perform the semantic analys
 
 % Lyder som om at VVPL bruger symbol tables til at lave context-sensitive checks -> det er vel os der gør det. - Lucas
 % Her og generelt bør "functions" ændres til methods. Følger Java sprog + fjerner alt forvirring mellem implementerede funktioner og "funktion" konceptet i sproget. - Lucas
-VVPL uses lexical scoping (i.e. curly brackets indicate a new scope) and symbol tables to perform context-sensitive checks.
+
+We use symbol tables upon entering a new scope in order to perform context-sensitive checks. VVPL's use of lexical scoping eases the process of identifying a new scope since we can align the construction
+and destruction of symbol tables with the occurrence of curly brackets.
 We chose to implement two separate symbol tables: \code{SymbolTable} for variables and \code{FuncSymbolTable} for functions as the mappings and the functionality for these tables would differ.
-Functionality differs as a function table does not need the attribute \code{outer} due to it only being used in the global scope, and it does not need the \code{assign} function because we do not support assigning a new function declaration to a function identifier.
+Functionality differs as a function table does not need the attribute \code{outer} due to it only being used in the global scope, and it does not need the \code{assign} method because we do not support assigning a new function declaration to a function identifier.
 
 \paragraph{Design choices in Scope Analysis}\mbox{}\\
-Usually, a variable is not allowed to shadow another variable in an outer scope. We implement this by making the \code{define} function look recursively in all outer tables
+Usually, a variable is not allowed to shadow another variable in an outer scope. We implement this by making the \code{define} method look recursively in all outer tables
 to check if the definition is legal.
 In functions however, variables can shadow other variables defined outside of the function. This lead to the design decision of initializing functions with a fresh symbol table that has no outer table
 so that bodies in functions are completely isolated, having no contact to the domain outside of the function.
 
 % Står ikke helt klart for mig hvorfor dette design choice ødelægger noget for at funktioner kun kan defineres i global scope. Men er måske ikke godt nok inde i det - Lucas
+% C-E Svar: det ødelægger ikke noget, det påvirkede blot løsningen. Det ville normalt være muligt at vurdere om et global scope var global ved blot at checke om outer==null, men det er ikke muligt eftersom vi gik med forrige beskrevede løsning for funktioners outer.
+% C-E Svar: Grunden til jeg nævner det er også fordi jeg tror andre grupper sikkert har gået med den forrige løsning, nemlig at global environments identificeres ved at de ikke har et outer environment.
 This design solution impacted the solution to the issue of functions only being able to be defined in the global scope. A solution to this could originally be to 
 check if the current table had an outer table, but due to both the global symbol table as well as function tables having no outer scope, this would no longer be possible.
 Therefore the new symbol table attribute \code{isGlobal} was introduced, and functions defined in other tables than these would lead to an error.
 
 Another key issue was the addressing of \code{ReturnStmt}s whose occurrence is only allowed in a function declaration. One could think that it would suffice to check if the current block 
-was a direct descendant from a FunctionStmt by checking if the symbol table had the attributes \code{isGlobal = false;} and \code{outer = null;}.
+was a direct descendant from a \code{FunctionStmt} by checking if the symbol table had the attributes \code{isGlobal = false;} and \code{outer = null;}.
 This would however not suffice since nested blocks of these blocks also would be allowed to contain \code{ReturnStmt}s.
 % Er der noget der forhindrer os i at tjekke om den bare er en descendent og ikke en direct descendent? Bare nysgerrighed. Enig i is_function_env er cleaner! - Lucas
+% C-E svar: Ja, hvordan skulle man tjekke det? Direct Descendant kan man tjekke ved at isGLobal=false og outer=null som nævnt.
+            % Descendants længere nede vil have isGlobal=false og outer=symbolTable, ligesom helt normale blocks som ikke er i funktioner.
 We therefore introduced the new variable \code{is\_function\_env} that is set before analysing a block in \code{VisitFunctionStmt}. This way,
-\code{VisitReturnStmt} returns an error if this variable is true: % Mener du hvis den er falsk? - Lucas
+\code{VisitReturnStmt} returns an error if this variable is false:
 
 \begin{figure}[H]
 \centering
@@ -73,9 +79,11 @@ We have constructed a separate class for executing the type analysis. This class
 Therefore we build the symbol tables from scratch again in order to build a context-sensitive environment required for the type analysis, but we do not need to error handle scope issues since those have been handled already.
 This results in the usage of a much simpler SymbolTable as well as a new FuncSymbolTable where all error handling is omitted. 
 % All error handling omitted eller all scope relateret error handling omitted? Helt fint hvis det faktisk er all :) - Lucas
+% C-E svar: det er faktisk ALL. Men pointen læner sig jo mest til scope relateret error, det er bare en måde at sige at disse er en meget mere "lightweight" symboltable, også for at argumentere for hvorfor det måske ikke er lige så dyrt at lave dem fra scratch igen.
 
 % Ved ikke om det har nogen implikationer, men man kunne nok godt diskutere om det ikke ville have været bedre med en Type.VOID.
 % Bare for at én enum type ikke kan betyde to ting. - Lucas
+% C-E: helt enig, det ville nok være bedst med en Type.VOID. Men synes ikke det hører diskussionsafsnittet til, jeg tror bare hun tænker "jamen hvad laver i, hvorfor gjorde I ikke bare det?" måske. Ved ikke hvad du tænker
 For the type analysis, an enum \code{Type} class have been implemented. The types are self-explanatory, while \code{Type.UNKNOWN} we use for two different cases:
 \begin{itemize}
     \item Functions that do not have a type declared are assumed to return null. In this context, \code{Type.UNKNOWN} represents the value null
@@ -88,25 +96,24 @@ Having that cleared out, we proceed a particularly challenging issue we encounte
 \end{itemize}
 Enforcing that a function is guaranteed to return the declared type in all cases require extra handling. The requirement can be subdivided into two requirements:
 % Kan man sige 'nevermind' which branch? No matter måske? - Lucas
+% C-E: du har ret, "no matter" er ækvivalenten
 \begin{itemize}
     \item Return statements within a function must all return the declared type
-    \item A function with a declared type must always guarantee to return nevermind which branch it chooses to take
+    \item A function with a declared type must always guarantee to return no matter which branch it chooses to take
 \end{itemize}
 To tackle the first requirement we introduced the global variable \code{currentFuncReturnType} which is set equal to the declared type within the function declaration. This is done in \code{VisitFunctionStmt} before analysing the body:
 % Godt snippet, men kan nok cleanes lidt op -> behøver ikke kommentar f.eks. og else stmt på ny linje er måske ikke nødvendigt for så simpel en metode. - Lucas
 % semikolon ryger ned på næste linje :(( Ved ikke om man kan gøre noget ved det.
 \begin{lstlisting}[language=java, caption={\texttt{VisitFunctionStmt}}]
 if (functionStmt.typeToken != null) {
-    currentFuncReturnType = convertVariableType(functionStmt.typeToken.type);
-}
-else {
-    currentFuncReturnType = Type.UNKNOWN; // function is expected to return null. only "return;" is allowed
-}
+   currentFuncReturnType = convertVariableType(functionStmt.typeToken.type);
+} else { currentFuncReturnType = Type.UNKNOWN; }
 \end{lstlisting}
 This way \code{VisitReturnStmt} enforces the first requirement by comparing \code{currentFuncReturnType} to the type of the returned expression, returning an error upon mismatch.
 
 % Det at det også er enforced i Java er måske ikke så relevant? (i hvert fald ikke hvis vi mangler plads - gør vi måske ikke) - Lucas
-The second requirement of having a function with a declared type always return nevermind which branch it chooses to take is also enforced in the statically typed language Java and is appropiately enforced in VVPL as well.
+% C-E: ser hvad du mener. Det er også for at argumentere for at der er en grund til vi har implementeret det, og det ikke er totalt ude af scope af opgaven.
+The second requirement of having a function with a declared type always return no matter which branch it chooses to take is also enforced in the statically typed language Java and is appropiately enforced in VVPL as well.
 \code{VisitFunctionStmt} uses the helper function \code{alwaysReturns} for the task:
 \begin{lstlisting}[language=java, caption={\texttt{VisitFunctionStmt}}]
 if (functionStmt.typeToken != null && !alwaysReturns(functionStmt.body)) {
@@ -120,14 +127,7 @@ There are four cases to evaluate.
     \begin{itemize}
         \item If the else branch is non-existant, the function can potentially skip the if-branch, therefore not returning.
     \end{itemize}
-    \item A block statement (which also constitutes the body of a function)is only guaranteed to return if any statement within the block are guaranteed to return.
-    \begin{itemize}
-         % Hmm føler alle de her items lidt bare er beskrevet af rekursionen. Altså af de andre cases. Så måske ikke nødvendige her? - Lucas
-         % Føler måske det kan vå block stmt casen til at virke mere avanceret end den er? Altså som om vi tjekker de her ting i block delen
-        \item If a block statement contains a return statement at its' current level, it is guaranteed to return.
-        \item If a block statement contains an if-else statement, this statement has to return if there are no other statements that are guaranteed to return.
-        \item If a block statement contains another block statement, this statement is indeed required to return if there are no other statements that always return.
-    \end{itemize} 
+    \item A block statement (which also constitutes the body of a function) is only guaranteed to return if any statement within the block are guaranteed to return.
     \item Any other kind of statement cannot be guaranteed to return.
 \end{itemize}
 % men niiice forklaret super concise!! - Lucas
