@@ -1,0 +1,22 @@
+\subsection{Shortcomings}
+A shortcoming in our semantic analysis must be stated, as well as the simple solution for this.
+As of now the scopeanalyzer tolerates a name clash between a variable and a function, which should not be allowed.
+The solution for this would simply be to look through the other symbol table before declaring a variable.
+The solution is shown in the two code snippets which would have to be inserted:
+\begin{figure}[H]
+\centering
+    \begin{minipage}[]{0.38\textwidth}
+        \begin{lstlisting}[language=java, caption={\texttt{VisitVarDecl}}]
+if (functionsTable.contains(varDecl.id.lexeme)) {
+    scopeError(...);
+}\end{lstlisting}
+    \end{minipage}
+\hfill
+    \begin{minipage}[]{0.6\textwidth}
+        \begin{lstlisting}[language=java, caption={\texttt{VisitFunctionStmt}}]
+if (currentEnvironment.contains(functionStmt.name.lexeme)) {
+    scopeError(...);
+}\end{lstlisting}
+    \end{minipage}
+\caption{Solution to avoid name-clash between variables and functions}
+\end{figure}

@@ -42,22 +42,21 @@ was a direct descendant from a FunctionStmt by checking if the symbol table had 
 This would however not suffice since nested blocks of these blocks also would be allowed to contain \code{ReturnStmt}s.
 We therefore introduced the new variable \code{is\_function\_env} that is set before analysing a block in \code{VisitFunctionStmt}. This way,
 \code{VisitReturnStmt} returns an error if this variable is true:
-\begin{figure}[ht]
+
+\begin{figure}[H]
 \centering
-    \begin{minipage}[t]{0.38\textwidth}
+    \begin{minipage}[]{0.38\textwidth}
         \begin{lstlisting}[language=java, caption={\texttt{VisitFunctionStmt}}]
 is_function_env = true;
 analyse(functionStmt.body);
-is_function_env = false;
-        \end{lstlisting}
+is_function_env = false;\end{lstlisting}
     \end{minipage}
 \hfill
-    \begin{minipage}[t]{0.6\textwidth}
+    \begin{minipage}[]{0.6\textwidth}
         \begin{lstlisting}[language=java, caption={\texttt{VisitReturnStmt}}]
 if (!is_function_env) {
     VVPLController.error(...);
-}
-        \end{lstlisting}
+}\end{lstlisting}
     \end{minipage}
 \caption{Return-path checking logic}
 \end{figure}
@@ -101,8 +100,7 @@ The second requirement of having a function with a declared type always return n
 \begin{lstlisting}[language=java, caption={\texttt{VisitFunctionStmt}}]
 if (functionStmt.typeToken != null && !alwaysReturns(functionStmt.body)) {
     VVPLController.error(...);
-}
-\end{lstlisting}
+}\end{lstlisting}
 \code{alwaysReturns} is a recursive function that evaluates whether a function with a declared type contains a return statement within all possible paths.
 There are four cases to evaluate.
 \begin{itemize}
