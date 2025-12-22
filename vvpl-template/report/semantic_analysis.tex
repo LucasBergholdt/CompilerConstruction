@@ -42,49 +42,28 @@ was a direct descendant from a FunctionStmt by checking if the symbol table had 
 This would however not suffice since nested blocks of these blocks also would be allowed to contain \code{ReturnStmt}s.
 We therefore introduced the new variable \code{is\_function\_env} that is set before analysing a block in \code{VisitFunctionStmt}. This way,
 \code{VisitReturnStmt} returns an error if this variable is true:
-\begin{lstlisting}[language=java, caption={\texttt{funktion1}}]
+\begin{figure}[ht]
+\centering
+    \begin{minipage}[t]{0.38\textwidth}
+        \begin{lstlisting}[language=java, caption={\texttt{VisitFunctionStmt}}]
 is_function_env = true;
 analyse(functionStmt.body);
 is_function_env = false;
-\end{lstlisting}
-\begin{lstlisting}[language=java, caption={\texttt{funktion2}}]
+        \end{lstlisting}
+    \end{minipage}
+\hfill
+    \begin{minipage}[t]{0.6\textwidth}
+        \begin{lstlisting}[language=java, caption={\texttt{VisitReturnStmt}}]
 if (!is_function_env) {
-    VVPLController.error(returnStmt.returnKeyword.line, ErrorTypeStrings.SCOPE_ERROR, "Return statement cannot occur outside of function.");
+    VVPLController.error(...);
 }
-\end{lstlisting}
+        \end{lstlisting}
+    \end{minipage}
+\caption{Return-path checking logic}
+\end{figure}
+
 % Evt lidt om: No statements can follow a return statement
 % Evt lidt om: Out-of-order declarations and calls are allowed, i.e. a function call can precede its' declaration
-\begin{comment}
-In visitBlockStmt we ensure that no statements follow a return statement by checking that a returnStmt cannot be a non-final statement of its' containing block:
-\begin{lstlisting}[language=java]
-for (int i = 0; i < num_statements; i++) {
-    if (blockStmt.stmts.get(i) instanceof ReturnStmt && i != num_statements - 1 ) {
-        VVPLController.error(((ReturnStmt)blockStmt.stmts.get(i)).returnKeyword.line, ErrorTypeStrings.SCOPE_ERROR, "Return statement must be last statement of block.");
-        return null;
-    }
-}
-\end{lstlisting}
-
-Lastly, we enforce out-of-order declarations and calls by iterating through the list of given statements and analyse function declarations prior to any other statement in ScopeAnalyzer.analyse():
-\begin{lstlisting}[language=java]
-public void analyse() {        
-    ListIterator<Stmt> stmts = program.listIterator();
-
-    while (stmts.hasNext()) {
-        Stmt currentStmt = stmts.next();
-        if(currentStmt instanceof FunctionStmt) {
-            analyse(currentStmt);
-            stmts.remove(); 
-        }
-    }
-    // Analyse rest of program
-    for (Stmt stmt : program) {
-        analyse(stmt);
-    }
-    return;
-}
-\end{lstlisting}
-\end{comment}
 
 \paragraph{Design choices in Type Analysis}\mbox{}\\
 We have constructed a separate class for executing the type analysis. This class could have been merged with the class of ScopeAnalyzer (i.e. a SemanticAnalyzer) but SOLID principles such as the Single Responsibility Principle suggests that responsibilities should be delegated to each their class.
@@ -107,7 +86,7 @@ Enforcing that a function is guaranteed to return the declared type in all cases
     \item A function with a declared type must always guarantee to return nevermind which branch it chooses to take
 \end{itemize}
 To tackle the first requirement we introduced the global variable \code{currentFuncReturnType} which is set equal to the declared type within the function declaration. This is done in \code{VisitFunctionStmt} before analysing the body:
-\begin{lstlisting}[language=java]
+\begin{lstlisting}[language=java, caption={\texttt{VisitFunctionStmt}}]
 if (functionStmt.typeToken != null) {
     currentFuncReturnType = convertVariableType(functionStmt.typeToken.type);
 }
@@ -119,9 +98,9 @@ This way \code{VisitReturnStmt} enforces the first requirement by comparing \cod
 
 The second requirement of having a function with a declared type always return nevermind which branch it chooses to take is also enforced in the statically typed language Java and is appropiately enforced in VVPL as well.
 \code{VisitFunctionStmt} uses the helper function \code{alwaysReturns} for the task:
-\begin{lstlisting}[language=java]
+\begin{lstlisting}[language=java, caption={\texttt{VisitFunctionStmt}}]
 if (functionStmt.typeToken != null && !alwaysReturns(functionStmt.body)) {
-    VVPLController.error(functionStmt.name.line, ErrorTypeStrings.TYPE_ERROR, "Function must return a value in all code paths");
+    VVPLController.error(...);
 }
 \end{lstlisting}
 \code{alwaysReturns} is a recursive function that evaluates whether a function with a declared type contains a return statement within all possible paths.
