@@ -1,5 +1,16 @@
 \subsection{Semantic Analysis}
-% 1. SYMBOL TABLE DONE TWICE. og hvilke værdier som er gemt i disse.
+A challenging part of the semantic analysis was the handling of symbol tables which gave rise to several questions such as
+which values a symbol should be mapped to, and whether we should construct symbol tables from scratch in the type analyzer after having constructed them in the scope analyzer.
+In the scope analyzer we map a symbol to its' token, but as of now we never access this token. In fact, we could have constructed the symbol table for the scope analyzer
+by not mapping the symbol to anything, ending up with not a table, but simply a linked list.
+We chose to map it to something in order to maintain its' credibility as a symbol \textbf{table} where a variable is usually mapped to attributes such as its' type, name, scope level and memory info.
+
+Regarding when to construct the symbol tables a solution could be to construct fullly fetched symbol tables in the ScopeAnalyzer, mapping symbols to information such as their type.
+The ScopeAnalyzer would, if no errors were found, output a list of maps for the TypeAnalyzer to use. As a result, setting a new scope within the type analyzer would be to set \code{currentEnvironment = List[Map].next()}.
+Once blocks were interpreted to the end, these symbol tables would be removed from the list, and \code{currentEnvironment = List[Map].previous()}.
+
+We chose the simpler solution of constructing the symbol tables from scratch in the type analyzer, however this is not as expensive since all error handling related to symbol tables
+have already been completed in the ScopeAnalyzer.
 \begin{comment}
 overvej pros and cons for:
 
@@ -10,10 +21,5 @@ In essence, we are traversing the abstract syntax tree multiple times for each p
 
 (Check om du husker dette korrekt.)
 single pass vs multi-pass analysis. (læs op på alternativ, hvordan python gør)
-
-
-
-C-E:
-    - valget af at gemme tokens i symbol table selvom vi ikke anvender dem.
 
 \end{comment}
