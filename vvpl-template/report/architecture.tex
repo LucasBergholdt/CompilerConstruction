@@ -52,31 +52,32 @@ The controller checks this flag between stages and terminates if any error was d
 Halting the interpreter as soon as a single stage fails is part of a fail fast strategy preventing later stages from operating 
 on invalid data which would otherwise cause a cascade of confusing and possibly misleading errors.
 At the same time each individual stage is designed to detect as many errors as possible before returning
-control to the \texttt{VVPLController} in order to provide the user with as comprehensive a report of their errors as possible.
+control to the \texttt{VVPLController} in order to provide the user with as comprehensive a report of their errors as possible. Only the final \verb|Interpreter| visitor aborts the program immediatly upon an error.
 
 Reported errors are stored as structured \texttt{ErrorMessage} objects rather than plain strings.
 The line number, error type and message is stored in seperate fields which allows for easy post-processing.
 In particular, errors can be sorted by their occurence in the program by having the \texttt{ErrorMessage} class
 implement the \texttt{Comparable} interface, ensuring the user receive feedback in a logical and actionable order.
 
-
-
 \subsubsection{Traversing the AST with the Visitor pattern}
 
 After lexing, the parser outputs an AST as an intermediate representation. 
 Abstractly representing our source code allows us to implement the methods necessary for translating the identified tokens of the grammar into program output.
 Ideally, our AST is abstracting away language specific details and carry just enough information to maintain the semantic meaning of the program allowing us 
-to check for semantic errors, interpret its content or, if necessary in the future, do further optimization.
+to check for semantic errors, interpret its content or, if necessary in the future, do optimization.
  
 The program structure is represented via nodes, which are implemented via their own classes. 
 This allows us to gradually unpack the semantic meaning following the given order and rules of the grammar.
-Doing our traversal, we want to perform specific operations on each node, based on the current phase of the semantic analysis or the interpretation, and instead of implementing all these different behaviours associated with each phase directly in methods on the classes themselves, we do so by implementing a \verb|Visitor| interface for each distinct traversal. 
-The visitor pattern is meant to help us achieve openness for extension and separation of responsibility by seperating the storage of data from the use of that data.  
+Doing our traversal, we want to perform specific operations on each node, based on the current stage of the semantic analysis or the interpretation, and instead of implementing all these different behaviours associated with each stage directly in methods on the classes themselves, we do so by implementing a \verb|Visitor| interface for each distinct traversal. 
+
+The visitor pattern is meant to help us achieve openness for extension and separation of responsibility by seperating the storage of data from the use of that data, allowing our interpreter to scale in size and functionality more easily. 
 Now, we delegate the responsibility of the concrete implementation to a \textit{visitor} of a class, and not the class itself. The key facet is, that we can add one \verb|accept()| method to each class, then use this for as many different implementations of visitors as we want, essentially allowing us to implement different behaviour on different traversals of the tree, depending on our goal with that traversal.
 
 This utilizes a \textit{double dispatch} where the operation executed depends on both the type of visitor class and within that visitor, the type of node to call \verb|accept| upon.
-For example, the evaluation of the node \verb|CallExpr| in the visitor class \verb|ScopeAnalyzer| is concerned about the correct binding of variables while another in another visitor class, \verb|TypeAnalyzer|, \verb|CallExpr| is concerned about the correct type of arguments used.
-If we have ran the two semantic phases beforehand, and a statement is without errors e.g \verb|add(multiply(2 2) 4)|, it will then be evaluated by the \verb|Interpreter| visitor (Figure \ref{fig:ast-visitor}).
+For example, the evaluation of the node \verb|CallExpr| in the visitor class \verb|ScopeAnalyzer| is concerned about the correct binding of variables while in  the \verb|TypeAnalyzer| vistor, \verb|CallExpr| is concerned about the correct type of arguments used.
+If we have ran the the two semantic stages beforehand, and a statement is without errors e.g \verb|add(multiply(2 2) 4);|, the AST will then be evaluated by the \verb|Interpreter| visitor (Figure \ref{fig:ast-visitor}).
+The double dispatch of the visitor pattern does introduce an amount of overhead, but in turn helps us greatly with the modularity, separation of concerns and the open-closed principle.
+
 
 \begin{figure}[H]
     \makebox[\textwidth][c]{%
