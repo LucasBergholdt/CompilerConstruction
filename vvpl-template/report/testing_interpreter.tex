@@ -3,6 +3,87 @@
 % Når vi når dertil ville jeg ændrer det til et mere overordnet blik
 % Og derfor er opremsningen af de ting vi testede lige i interpreter nok ikke så vigtigt.
 % Men tænker vi siger vi også havde et fokus på edge cases vi fint kan komme med f.eks. RuntimeException eksemplet.
-For the interpreter, our additional tests is oriented towards testing cases not already taken care of by the other stages, and not already part of Sandra's test suite. This encompass the \textit{call by value}, casting from a Bool to a String, casting numbers to Bools (including 13), casting Strings to Numbers, division by zero and finally, the remaining untested expression in the form of the \verb|GREATER| binary expression.
-Importantly, we made sure to test the \verb|RuntimeException| behavior when casting an invalid string to a Number to check if it interrupts the program flow as intended. The division by zero was simply to document the behaviour, as we relies on Javas default error handling of this. 
+
+\begin{comment}
+How did you test your interpreter? Which coverage criterion did you apply?\\
+Describe the test setup and the test inputs with their expected outputs.
+If you have documented this in the source code a link and submission of the generated JavaDoc is also fine.
+
+If the provided tests have been changed or do not work, please explain here what tests fail, why and what it would require to fix them.
+\end{comment}
+
+
+Our testing strategy focused on complementing the provided test cases with tests that exercise different branches and edge cases.
+The scanner, parser and semantic analysis is mainly tested using negative tests. That is tests with invalid input that ensure
+errors are detected and handled gracefully.
+In contrast, the testing of the interpretation process is primarily positive tests that confirm
+programs are evaluated as expected. 
+Additionally we made sure to test the \verb|RuntimeException| behavior when casting an invalid string to a Number to check 
+if it interrupts the program flow as intended.
+These interpreter tests also serve as end-to-end tests of the entire pipeline, 
+since correct interpretation depends on the correctness of all preceding stages.
+
+To evaluate our tests we generated a coverage report, which helped identify previously untested cases.
+With the addition of our test cases an instruction coverage of 96\% and a branch coverage of 88\% was reached.
+The remaining uncovered branches primarily stem from unreachable code and simple checks for cascading errors. 
+As such we consider the reached coverage to be sufficient.
+
+The provided \texttt{parse-errors.in} test fails, as the error on line 12 is not reported.
+The relevant sections of the test can be seen in the snippet below.
+This occurs because the missing semicolon on line 10 causes the parser to enter panic mode.
+During synchronization we deliberately do not synchronize on identifiers, since identifiers
+do not gurantee the start of a new statement. As a result the entire assignment on line 12
+is discarded until the semicolon at the end of that line is consumed, which ends the synchronization.
+The problem stems from the exprStmt grammar rule through which expressions can become statements.
+So syntactically an assignment is not a statement itself but becomes a statement when followed by a semicolon.
+
+\begin{lstlisting}[language=Java, firstnumber=10]
+variable a2 of_type Bool is true 	# missing semicolon
+
+a is add(b,c);
+
+if ( ) 							#condition missing
+	a is add(b,c);
+\end{lstlisting}
+
+Adding identifiers as synchronization points would of course not work, as identifiers appear in the middle
+of all sorts of expressions, leading to cascaded errors if we were to synchronize on these.
+We could specifically detect assignment expressions by checking whether an identifier is followed by a token of type assignment.
+However, since assignments can also appear inside expressions this would only be a recovery heuristic and would break the current invariant 
+that synchronization occurs only at grammar-guranteed statement boundaries. 
+Futhermore, it would still not make the test pass, as with this strategy we would also report the similar error on line 15,
+which is not reported in the expected output.
+We decided to stick with a simpler approach where the synchronise method returns when it is a grammar gurantee that a new statement has started.
+The test itself seems to be inconsistent with whether we should synchronize on assignments or not as catching the error on line 12 but not on line 15 indicates.
+Although our recovery strategy may be conservative it ensures we don't resume inside broken expressions.
+
+
+The \texttt{parse-errors.in} test also shows a minor discrepancy in that the missing statement on line 20 
+is reported on line 21 instead.
+This occurs because the parser reports the error when encountering the unexpected \texttt{else} token where a statement was expected.
+We consider this acceptable, as the \texttt{then} statement could equivalenty have appeared on line 21, making the reported error both valid and understandable.
+
+The sample-ast-expected.out file fails on the final 3 lines, since we have a dedicated node for casts in the AST.
+The test would pass by adjusting the expected output to reflect this structure, specifically by simply
+swapping the order of the \texttt{LiteralExpr} and \texttt{Cast\_To} nodes with appropriate indentation.
+
+\begin{comment}
+
+Overall, our testing is characterized by both testing on a smaller and bigger scale. We test the individual ... 
+throughout all stages, and then test whole end-to-end pipeline with the interpreter in \verb|VVPLController|
+
+For the interpreter, our additional tests is oriented towards testing cases not already taken care of by the other stages, 
+and not already part of Sandra's test suite. This encompass the \textit{call by value}, casting from a Bool to a String, 
+casting numbers to Bools (including 13), casting Strings to Numbers, division by zero and finally, the remaining untested 
+expression in the form of the \verb|GREATER| binary expression.
+Importantly, we made sure to test the \verb|RuntimeException| behavior when casting an invalid string to a Number to check 
+if it interrupts the program flow as intended. The division by zero was simply to document the behaviour, as we relies on 
+Javas default error handling of this. 
+\end{comment}
+
+
+%1. overall teststrategy
+%2. coverage
+%3. failed tests (2x in parser, 1x in AST printing)
+
 

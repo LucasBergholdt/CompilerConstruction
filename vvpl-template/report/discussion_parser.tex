@@ -1,4 +1,4 @@
-\subsection{Parser}
+%\subsection{Parser}
 \begin{comment}
 top down vs bottom up etc etc.
 
@@ -15,6 +15,7 @@ LL-parsing, parser generator? (fordele og ulemper ved at have valgt dette i sted
 
 Ambigouos vs deterministic grammars?
 \end{comment}
+\subsection{Handling casts}
 A key challenge during the development of the parser was the handling of casting. The state of being casted is a property of an expression as VVPL supports casting for entire expressions.
 One solution we considered was to give the abstract expression class the field \code{TokenType cast\_to = null;}. This field would be set if an expression were casted
 and upon analyzing and interpreting expressions this field would have to be checked each time.

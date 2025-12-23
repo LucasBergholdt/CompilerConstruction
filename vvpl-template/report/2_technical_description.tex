@@ -1,15 +1,15 @@
 
 \section{Technical Description}
 
+\begin{comment}
 Here you explain the technical work you have carried out. You should present the
 overall architecture of your interpreter. 
 Try to explain the development choices you made taking into account important properties, 
-such as reusability and performance.
-
+such as reusability and performance.\end{comment}
 \subsection{Architecture}
   
-Please provide at least \textbf{one diagram} of the entire 
-architecture and describe it. How do the individual elements of the interpreter (i.e., scanner, parser, etc.) work together to execute a given program? Have you applied specific design patterns?
+%Please provide at least \textbf{one diagram} of the entire 
+%architecture and describe it. How do the individual elements of the interpreter (i.e., scanner, parser, etc.) work together to execute a given program? Have you applied specific design patterns?
 
 \input{architecture.tex}
 
@@ -38,19 +38,19 @@ architecture and describe it. How do the individual elements of the interpreter 
 \input{semantic_analysis.tex}
 \subsubsection{Tree-Walk Interpretation} 
 \input{interpreter_implementation.tex}
-\subsubsection{Monitoring and Logging} 
+%\subsubsection{Monitoring and Logging} 
 %Do you trace the state of the interpreter and its components (i.e., the scanner, parser, etc)?
 % \input{monitoring_and_logging.tex}
 
 \subsection{Testing \& Evaluation}
 
-How did you test your interpreter? Which coverage criterion did you apply?\\
-Describe the test setup and the test inputs with their expected outputs.
-If you have documented this in the source code a link and submission of the generated JavaDoc is also fine.
+%How did you test your interpreter? Which coverage criterion did you apply?\\
+%Describe the test setup and the test inputs with their expected outputs.
+%If you have documented this in the source code a link and submission of the generated JavaDoc is also fine.
+%
+%If the provided tests have been changed or do not work, please explain here what tests fail, why and what it would require to fix them.
 
-If the provided tests have been changed or do not work, please explain here what tests fail, why and what it would require to fix them.
-
-Overall, our testing is characterized by both testing on a smaller and bigger scale. We test the individual ... throughout all stages, and then test whole end-to-end pipeline with the interpreter in \verb|VVPLController|
+%Overall, our testing is characterized by both testing on a smaller and bigger scale. We test the individual ... throughout all stages, and then test whole end-to-end pipeline with the interpreter in \verb|VVPLController|
 
 % Idé til struktur?: /Lasse
 % - Unit test (vi tester de enkelte dele hver for sig, e.g expressions i en parser)
