@@ -40,14 +40,14 @@ so that bodies in functions are completely isolated, having no contact to the do
 % Står ikke helt klart for mig hvorfor dette design choice ødelægger noget for at funktioner kun kan defineres i global scope. Men er måske ikke godt nok inde i det - Lucas
 % C-E Svar: det ødelægger ikke noget, det påvirkede blot løsningen. Det ville normalt være muligt at vurdere om et global scope var global ved blot at checke om outer==null, men det er ikke muligt eftersom vi gik med forrige beskrevede løsning for funktioners outer.
 % C-E Svar: Grunden til jeg nævner det er også fordi jeg tror andre grupper sikkert har gået med den forrige løsning, nemlig at global environments identificeres ved at de ikke har et outer environment.
-This design solution impacted the solution to the issue of functions only being able to be defined in the global scope as we can no longer identify global scope uniquely by checking if \code{outer == null}.
+This design solution impacted how we handle that functions can only be defined in the global scope as we can no longer identify global scope uniquely by checking if \code{outer == null}.
 Therefore the new symbol table attribute \verb|isGlobal| was introduced, and functions defined in other tables than this would lead to an error.
 
 Another key issue was the addressing of \verb|ReturnStmt|s whose occurrence is only allowed in a function declaration. One could think that it would suffice to check if the current block 
 was a direct descendant from a \verb|FunctionStmt| by checking if the symbol table had the attributes \code{isGlobal == false;} and \code{outer == null;}.
 This would however not suffice since nested blocks of these blocks also would be allowed to contain \verb|ReturnStmt|s.
 
-A solution to see whether we were analysing a function declaration would be to traverse all outer tables untill a body of a function declaration was identified by checking \code{isGlobal == false;} and \code{outer == null;}.
+A solution to see whether we were analysing a function declaration would be to traverse all outer tables until a body of a function declaration was identified by checking \code{isGlobal == false;} and \code{outer == null;}.
 This could potentially have a high time complexity and it would be a complex solution to a simple problem. Instead we introduced the global variable \verb|is_function_env| that is set before analysing a block in \verb|VisitFunctionStmt|. 
 This way \verb|VisitReturnStmt| returns an error if this variable is false:
 \begin{figure}[H]
@@ -59,7 +59,7 @@ analyse(functionStmt.body);
 is_function_env = false;\end{lstlisting}
     \end{minipage}
 \hfill
-    \begin{minipage}[]{0.6\textwidth}
+    \begin{minipage}[]{0.5\textwidth}
         \begin{lstlisting}[language=java, caption={\texttt{\code{VisitReturnStmt}}}]
 if (!is_function_env) {
     scopeError(...);
@@ -102,7 +102,9 @@ To tackle the first requirement we introduced the global variable \verb|currentF
 \begin{lstlisting}[language=java, caption={\texttt{\code{VisitFunctionStmt}}}]
 if (functionStmt.typeToken != null) {
    currentFuncReturnType = convertVariableType(functionStmt.typeToken.type);
-} else { currentFuncReturnType = Type.UNKNOWN; }
+} else { 
+    currentFuncReturnType = Type.UNKNOWN; 
+}
 \end{lstlisting}
 This way \verb|VisitReturnStmt| enforces the first requirement by comparing \verb|currentFuncReturnType| to the type of the returned expression, returning an error upon mismatch.
 
@@ -114,7 +116,7 @@ The second requirement of having a function with a declared type always return n
 if (functionStmt.typeToken != null && !alwaysReturns(functionStmt.body)) {
     typeError(...);
 }\end{lstlisting}
-\verb|alwaysReturns| is a recursive function that evaluates whether a function with a declared type contains a return statement within all possible paths.
+The recursive function \verb|alwaysReturns| evaluates whether a function with a declared type contains a return statement within all possible paths.
 There are four cases to evaluate.
 \begin{itemize}
     \item If a return statement occurs in a branch, this branch is guaranteed to return. This is the base case.

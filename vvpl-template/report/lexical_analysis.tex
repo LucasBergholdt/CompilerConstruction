@@ -9,8 +9,8 @@ In each iteration we scan a single token by utilizing the \texttt{scanToken} met
 one big switch statement to inspect a character and match it to the corresponding case.
 
 The switch statement has a series of simple single character cases which
-includes parenthesies, braces, coomas, semicolons, and minuses.
-All of these cases are easy - we simply generate the a token with the corresponding type.
+includes parentheses, braces, commas, semicolons, and minuses.
+All of these cases are easy - we simply generate the token with the corresponding type.
 Other single character lexemes include comments, newlines and whitespaces.
 All of these aren't meaningful to the parser and as such we perform the necessary logic to skip them. 
 
