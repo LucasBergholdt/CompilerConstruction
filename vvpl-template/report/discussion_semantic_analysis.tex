@@ -3,7 +3,8 @@ A challenging part of the semantic analysis was the handling of symbol tables wh
 which values a symbol should be mapped to, and whether we should construct symbol tables from scratch in the type analyzer after having constructed them in the scope analyzer.
 In the scope analyzer we map a symbol to its' token, but as of now we never access this token. In fact, we could have constructed the symbol table for the scope analyzer
 by not mapping the symbol to anything, ending up with not a table, but simply a linked list.
-We chose to map it to something in order to maintain its' credibility as a symbol \textbf{table} where a variable is usually mapped to attributes such as its' type, name, scope level and memory info.
+We decided to keep the symbol table as it is efficient and aligns with standard compiler design while also supporting future extensions without requiring a redesign of the architecture.
+%We chose to map it to something in order to maintain its' credibility as a symbol \textbf{table} where a variable is usually mapped to attributes such as its' type, name, scope level and memory info.
 % Lucas:
 % God pointe, men ved ikke helt om argumentet om at vi valgte at beholde det bare for at den har credibility som symbol table.
 % Altså vi siger lidt bare at vi beholdte den bare for at det virker mere som en symbol table. Men at have en symbol table er vel kun
@@ -16,7 +17,7 @@ The ScopeAnalyzer would, if no errors were found, output a list of maps for the 
 % Kunne måske godt lige smide en sætning med at den ville traverse den her liste så man ikke selv skal forstå det ud fra snippets, 
 % men at de viser hvordan man kunne gøre det.
 As a result, setting a new scope within the type analyzer would be to set \code{currentEnvironment = List[Map].next()}.
-Once blocks were analysed to the end, these symbol tables would be removed from the list, and \code{currentEnvironment = List[Map].previous()}.
+Once blocks were analysed to the end, these symbol tables would be removed from the list, and we could set \code{currentEnvironment = List[Map].previous()}.
 
 We chose the simpler solution of constructing the symbol tables from scratch in the type analyzer, however this is not as expensive since all error handling related to symbol tables
 have already been completed in the ScopeAnalyzer.
