@@ -32,7 +32,7 @@ We chose to implement two separate symbol tables: \verb|SymbolTable| for variabl
 Functionality differs as a function table does not need the attribute \verb|outer| due to it only being used in the global scope, and it does not need the \verb|assign| method because we do not support assigning a new function declaration to a function identifier.
 
 \paragraph{Design choices in Scope Analysis}\mbox{}\\
-Usually, a variable is not allowed to shadow another variable in an outer scope. We implement this by making the \verb|define| method look recursively in all outer tables
+Usually a variable is not allowed to shadow another variable in an outer scope. We implement this by making the \verb|define| method look recursively in all outer tables
 to check if the definition is legal.
 In functions however, variables can shadow other variables defined outside of the function. This lead to the design decision of initializing functions with a fresh symbol table that has no outer table
 so that bodies in functions are completely isolated, having no contact to the domain outside of the function.
