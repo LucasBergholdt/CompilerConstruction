@@ -6,7 +6,7 @@ An overview of the control flow is depicted on figure \ref{fig:architecture}, wh
 components are coordinated during interpretation.
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.5\textwidth]{architecture.png}
+\includegraphics[width=0.7\textwidth]{architecture.png}
 \caption{An illustration of the interpreters control flow}
 \label{fig:architecture}
 \end{figure}
@@ -75,8 +75,10 @@ Så ikke en stor ændring: Bare lige nævne det i forbindelse med vi alligevel s
 
 Så tænker jeg man let lige kan tilføje Expr og Stmt til figuren med streg mellem disse og interfacet.
 Føler at man så både får forklaret det her med double dispatch etc. OG helt konkret viser strukturen af vores program så det er lettere at forstå koden.
+
+Lasse: Jeg har forsøgt at imødekomme dette nu.
 \end{comment}
-The program structure is represented via nodes, which are implemented via their own classes. 
+The program structure is then represented by nodes, each implemented as a polymorphic subclass of the \verb|Expr| or \verb|Stmt| superclass.
 This allows us to gradually unpack the semantic meaning following the given order and rules of the grammar.
 Doing our traversal, we want to perform specific operations on each node, based on the current stage of the semantic analysis or the interpretation, and instead of implementing all these different behaviours associated with each stage directly in methods on the classes themselves, we do so by implementing a \verb|Visitor| interface for each distinct traversal. 
 
@@ -88,12 +90,11 @@ For example, the evaluation of the node \verb|CallExpr| in the visitor class \ve
 If we have ran the the two semantic stages beforehand, and a statement is without errors e.g \verb|add(multiply(2 2) 4);|, the AST will then be evaluated by the \verb|Interpreter| visitor (Figure \ref{fig:ast-visitor}).
 % Måske kan man smide ordet "reusability" ind eftersom hun selv skriver: 
 %Try to explain the development choices you made taking into account important properties, such as reusability and performance.
-The double dispatch of the visitor pattern does introduce an amount of overhead, but in turn helps us greatly with the modularity, separation of concerns and the open-closed principle.
-
+The double dispatch of the visitor pattern does introduce an amount of overhead, but in turn helps us greatly with the reuseability of operations, separation of concerns and the open-closed principle in regards to multiple ways of traversing the tree. Another downside is that if the structure of the tree changes, i.e new node classes are introduced as the language evolves, we would have to update all of the existing visitors.
 
 \begin{figure}[H]
     \makebox[\textwidth][c]{%
-    \includegraphics[width=1.25\textwidth]{udkast_ast_visitor_v3.png}}
+    \includegraphics[width=1.2\textwidth]{udkast_ast_v4.png}}
     \caption{AST with Visitor Pattern}
     \label{fig:ast-visitor}
 \end{figure}
