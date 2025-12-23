@@ -62,7 +62,7 @@ is_function_env = false;\end{lstlisting}
     \begin{minipage}[]{0.6\textwidth}
         \begin{lstlisting}[language=java, caption={\texttt{\code{VisitReturnStmt}}}]
 if (!is_function_env) {
-    VVPLController.error(...);
+    scopeError(...);
 }\end{lstlisting}
     \end{minipage}
 \caption{Usage of \code{is\_function\_env}}
@@ -85,7 +85,7 @@ For the type analysis, an enum \verb|Type| class have been implemented. The type
     \item Upon encountering an error in the type analysis, we return this value, so that calls higher up the call stack knows that an error was made and has already been processed. This way we avoid reporting cascading errors.
 \end{itemize}
 
-Having that cleared out, we proceed a particularly challenging issue we encountered during the development of the type analyzer:
+Having that cleared out, we proceed a particularly challenging issue we encountered during the development of TypeAnalyzer:
 \begin{itemize}
     \item A function declaration must in all cases return the declared type. It cannot miss a return statement or return the wrong type.
 \end{itemize}
@@ -112,7 +112,7 @@ The second requirement of having a function with a declared type always return n
 \verb|VisitFunctionStmt| uses the helper function \verb|alwaysReturns| for the task:
 \begin{lstlisting}[language=java, caption={\texttt{\code{VisitFunctionStmt}}}]
 if (functionStmt.typeToken != null && !alwaysReturns(functionStmt.body)) {
-    VVPLController.error(...);
+    typeError(...);
 }\end{lstlisting}
 \verb|alwaysReturns| is a recursive function that evaluates whether a function with a declared type contains a return statement within all possible paths.
 There are four cases to evaluate.

@@ -31,5 +31,3 @@ By introducing a separate \verb|Expr.Cast| node in the abstract syntax tree we f
 This way we support a separation of concerns where expressions other than \verb|Expr.Cast| do not deal with casts while the \verb|Expr.Cast| object can rely on polymorphism to abstract the specifics of the type of Expression it is holding. 
 The solution reduces the overall complexity and the amount of unnecessary checks.
 % EVT lidt om at vi måtte ændre i testfilen her. Vil lige se hvad Lucas skriver om tests
-
-
