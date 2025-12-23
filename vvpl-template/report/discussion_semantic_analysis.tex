@@ -1,4 +1,4 @@
-\subsection{Semantic Analysis}
+\subsection{Handling symbol tables}
 A challenging part of the semantic analysis was the handling of symbol tables which gave rise to several questions such as
 which values a symbol should be mapped to, and whether we should construct symbol tables from scratch in the type analyzer after having constructed them in the scope analyzer.
 In the scope analyzer we map a symbol to its' token, but as of now we never access this token. In fact, we could have constructed the symbol table for the scope analyzer
