@@ -40,19 +40,16 @@ so that bodies in functions are completely isolated, having no contact to the do
 % Står ikke helt klart for mig hvorfor dette design choice ødelægger noget for at funktioner kun kan defineres i global scope. Men er måske ikke godt nok inde i det - Lucas
 % C-E Svar: det ødelægger ikke noget, det påvirkede blot løsningen. Det ville normalt være muligt at vurdere om et global scope var global ved blot at checke om outer==null, men det er ikke muligt eftersom vi gik med forrige beskrevede løsning for funktioners outer.
 % C-E Svar: Grunden til jeg nævner det er også fordi jeg tror andre grupper sikkert har gået med den forrige løsning, nemlig at global environments identificeres ved at de ikke har et outer environment.
-This design solution impacted the solution to the issue of functions only being able to be defined in the global scope. A solution to this could originally be to 
-check if the current table had an outer table, but due to both the global symbol table as well as function tables having no outer scope, this would no longer be possible.
-Therefore the new symbol table attribute \code{isGlobal} was introduced, and functions defined in other tables than these would lead to an error.
+This design solution impacted the solution to the issue of functions only being able to be defined in the global scope as we can no longer identify global scope uniquely by checking if \code{outer==null}.
+Therefore the new symbol table attribute \code{isGlobal} was introduced, and functions defined in other tables than this would lead to an error.
 
 Another key issue was the addressing of \code{ReturnStmt}s whose occurrence is only allowed in a function declaration. One could think that it would suffice to check if the current block 
 was a direct descendant from a \code{FunctionStmt} by checking if the symbol table had the attributes \code{isGlobal = false;} and \code{outer = null;}.
 This would however not suffice since nested blocks of these blocks also would be allowed to contain \code{ReturnStmt}s.
-% Er der noget der forhindrer os i at tjekke om den bare er en descendent og ikke en direct descendent? Bare nysgerrighed. Enig i is_function_env er cleaner! - Lucas
-% C-E svar: Ja, hvordan skulle man tjekke det? Direct Descendant kan man tjekke ved at isGLobal=false og outer=null som nævnt.
-            % Descendants længere nede vil have isGlobal=false og outer=symbolTable, ligesom helt normale blocks som ikke er i funktioner.
-We therefore introduced the new variable \code{is\_function\_env} that is set before analysing a block in \code{VisitFunctionStmt}. This way,
-\code{VisitReturnStmt} returns an error if this variable is false:
 
+A solution to see whether we were analysing a function declaration would be to traverse all outer tables untill a body of a function declaration was identified by checking \code{isGlobal = false;} and \code{outer = null;}.
+This could potentially have a high time complexity and it would be a complex solution to a simple problem. Instead we introduced the global variable \code{is\_function\_env} that is set before analysing a block in \code{VisitFunctionStmt}. 
+This way \code{VisitReturnStmt} returns an error if this variable is false:
 \begin{figure}[H]
 \centering
     \begin{minipage}[]{0.38\textwidth}

@@ -8,14 +8,15 @@ We chose to map it to something in order to maintain its' credibility as a symbo
 % God pointe, men ved ikke helt om argumentet om at vi valgte at beholde det bare for at den har credibility som symbol table.
 % Altså vi siger lidt bare at vi beholdte den bare for at det virker mere som en symbol table. Men at have en symbol table er vel kun
 % mere komplekst end ikke at have den. Så argumentet falder måske lidt til jorden? 
-% Men ja ved ikke lige hvad argumentet for at beholde den skulle være hehe... 
+% Men ja ved ikke lige hvad argumentet for at beholde den skulle være hehe...
+% C-E: tja du har ret. et argument skal der være :D. men altså det er en studieopgave, så nogenlunde alignmnent med hendes teori er vel god at efterstræbe, også selvom man måske kunne have gjort det mere effektivt. 
 
 Regarding when to construct the symbol tables a solution could be to construct fullly fetched symbol tables in the ScopeAnalyzer, mapping symbols to information such as their type.
-The ScopeAnalyzer would, if no errors were found, output a list of maps for the TypeAnalyzer to use. 
+The ScopeAnalyzer would, if no errors were found, output a list of maps for the TypeAnalyzer to traverse. 
 % Kunne måske godt lige smide en sætning med at den ville traverse den her liste så man ikke selv skal forstå det ud fra snippets, 
 % men at de viser hvordan man kunne gøre det.
 As a result, setting a new scope within the type analyzer would be to set \code{currentEnvironment = List[Map].next()}.
-Once blocks were interpreted to the end, these symbol tables would be removed from the list, and \code{currentEnvironment = List[Map].previous()}.
+Once blocks were analysed to the end, these symbol tables would be removed from the list, and \code{currentEnvironment = List[Map].previous()}.
 
 We chose the simpler solution of constructing the symbol tables from scratch in the type analyzer, however this is not as expensive since all error handling related to symbol tables
 have already been completed in the ScopeAnalyzer.
