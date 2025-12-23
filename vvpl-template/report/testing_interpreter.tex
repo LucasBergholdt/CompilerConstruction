@@ -16,7 +16,7 @@ If the provided tests have been changed or do not work, please explain here what
 Our testing strategy focused on complementing the provided test cases with tests that exercise different branches and edge cases.
 The scanner, parser and semantic analysis is mainly tested using negative tests. That is tests with invalid input that ensure
 errors are detected and handled gracefully.
-In contrast, the testing of the interpretation process is primarily positive tests that confirm
+In contrast, the testing of the interpretation process primarily consist of positive tests that confirm
 programs are evaluated as expected. 
 Additionally we made sure to test the \verb|RuntimeException| behavior when casting an invalid string to a Number to check 
 if it interrupts the program flow as intended.
@@ -30,9 +30,9 @@ As such we consider the reached coverage to be sufficient.
 
 The provided \texttt{parse-errors.in} test fails, as the error on line 12 is not reported.
 The relevant sections of the test can be seen in the snippet below.
-This occurs because the missing semicolon on line 10 causes the parser to enter panic mode.
+This occurs because the error on line 10 causes the parser to enter panic mode.
 During synchronization we deliberately do not synchronize on identifiers, since identifiers
-do not gurantee the start of a new statement. As a result the entire assignment on line 12
+do not guarantee the start of a new statement. As a result the entire assignment on line 12
 is discarded until the semicolon at the end of that line is consumed, which ends the synchronization.
 The problem stems from the exprStmt grammar rule through which expressions can become statements.
 So syntactically an assignment is not a statement itself but becomes a statement when followed by a semicolon.
@@ -50,10 +50,10 @@ Adding identifiers as synchronization points would of course not work, as identi
 of all sorts of expressions, leading to cascaded errors if we were to synchronize on these.
 We could specifically detect assignment expressions by checking whether an identifier is followed by a token of type assignment.
 However, since assignments can also appear inside expressions this would only be a recovery heuristic and would break the current invariant 
-that synchronization occurs only at grammar-guranteed statement boundaries. 
-Futhermore, it would still not make the test pass, as with this strategy we would also report the similar error on line 15,
+that synchronization occurs only at grammar-guaranteed statement boundaries. 
+Furthermore, it would still not make the test pass, as with this strategy we would also report the similar error on line 15,
 which is not reported in the expected output.
-We decided to stick with a simpler approach where the synchronise method returns when it is a grammar gurantee that a new statement has started.
+We decided to stick with a simpler approach where the synchronise method returns when it is a grammar guarantee that a new statement has started.
 The test itself seems to be inconsistent with whether we should synchronize on assignments or not as catching the error on line 12 but not on line 15 indicates.
 Although our recovery strategy may be conservative it ensures we don't resume inside broken expressions.
 
@@ -61,9 +61,9 @@ Although our recovery strategy may be conservative it ensures we don't resume in
 The \texttt{parse-errors.in} test also shows a minor discrepancy in that the missing statement on line 20 
 is reported on line 21 instead.
 This occurs because the parser reports the error when encountering the unexpected \texttt{else} token where a statement was expected.
-We consider this acceptable, as the \texttt{then} statement could equivalenty have appeared on line 21, making the reported error both valid and understandable.
+We consider this acceptable, as the \texttt{then} statement could equivalently have appeared on line 21, making the reported error both valid and understandable.
 
-The sample-ast-expected.out file fails on the final 3 lines, since we have a dedicated node for casts in the AST.
+The \texttt{sample-ast-expected.out} file fails on the final 3 lines, since we have a dedicated node for casts in the AST.
 The test would pass by adjusting the expected output to reflect this structure, specifically by simply
 swapping the order of the \texttt{LiteralExpr} and \texttt{Cast\_To} nodes with appropriate indentation.
 
