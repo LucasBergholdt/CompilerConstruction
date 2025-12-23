@@ -16,8 +16,39 @@ LL-parsing, parser generator? (fordele og ulemper ved at have valgt dette i sted
 Ambigouos vs deterministic grammars?
 \end{comment}
 \subsection{Handling casts}
-A key challenge during the development of the parser was the handling of casting. The state of being casted is a property of an expression as VVPL supports casting for entire expressions.
-One solution we considered was to give the abstract expression class the field \code{TokenType cast\_to = null;}. This field would be set if an expression were casted
+A key challenge during the development of the parser was handling casting.
+Since VVPL allows casts to be applied to expressions, one initial idea was to model
+the cast as a property of an expression by adding the field \code{TokenType cast\_to = null;} to
+the abstract expression class.
+This field would be set if an expression was casted
+and checked each time when analyzing and interpreting expressions.
+This approach was motivated by the provided \verb|sample-ast-expected.out| test
+where a cast is represented as a property of an expression in lines 157-159:
+\begin{lstlisting}[firstnumber=157]
+LiteralExpr
+    Cast_To Number
+    "4"
+\end{lstlisting}
+However, this design would lead to in most cases unnecessary checks and it would further complicate
+the design of an expression node.
+
+We instead came up with another solution that on the contrary makes a casted expression a property of the cast
+by introducing a dedicated \verb|Expr.Cast| node in the AST.
+This approach closely follows the semantics of the grammar where \verb|cast_to| is an optional prefix applied
+to an expression rather than a property of that expression.
+The cast node encapsulates all cast specific behavior and supports a clear separation of concerns
+where expressions remain unaware of casting logic.
+At the same time the \verb|Expr.Cast| object can rely on polymorphism to abstract the specifics of the type of expression it is holding.
+This design reduces overall complexity and fits naturally with our existing use of the visitor pattern.
+
+
+\begin{comment}
+FØR ÆNDRING:
+
+A key challenge during the development of the parser was the handling of casting. 
+The state of being casted is a property of an expression as VVPL supports casting for entire expressions.
+One solution we considered was to give the abstract expression class the field \code{TokenType cast\_to = null;}. 
+This field would be set if an expression were casted
 and upon analyzing and interpreting expressions this field would have to be checked each time.
 This solution was considered due to the premade unit test given in \verb|sample-ast-expected.out| in lines 157-159 where the logic of a cast-value belonging to an expression shows:
 \begin{lstlisting}
@@ -28,7 +59,12 @@ LiteralExpr
 This implementation would lead to in most cases unnecessary checking and it would further complex the design of an expression node.
 
 We came up with another solution that on the contrary implies the logic of an expression belonging to a cast.
-By introducing a separate \verb|Expr.Cast| node in the abstract syntax tree we follow the semantics of the grammar more directly due to \verb|cast_to| being an optional prefix parameter applied to an expression rather than a property of that expression.
-This way we support a separation of concerns where expressions other than \verb|Expr.Cast| do not deal with casts while the \verb|Expr.Cast| object can rely on polymorphism to abstract the specifics of the type of Expression it is holding. 
+By introducing a separate \verb|Expr.Cast| node in the abstract syntax tree we follow the semantics of the grammar 
+more directly due to \verb|cast_to| being an optional prefix parameter applied to an expression rather than a property of that expression.
+
+This way we support a separation of concerns where expressions other than \verb|Expr.Cast| do not deal with casts while 
+the \verb|Expr.Cast| object can rely on polymorphism to abstract the specifics of the type of Expression it is holding. 
 The solution reduces the overall complexity and the amount of unnecessary checks.
 % EVT lidt om at vi måtte ændre i testfilen her. Vil lige se hvad Lucas skriver om tests
+
+\end{comment}
