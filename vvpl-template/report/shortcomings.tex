@@ -5,14 +5,14 @@ The solution for this would simply be to look through the other symbol table bef
 \begin{figure}[H]
 \centering
     \begin{minipage}[]{0.38\textwidth}
-        \begin{lstlisting}[language=java, caption={\texttt{VisitVarDecl}}]
+        \begin{lstlisting}[language=java, caption={\texttt{\code{VisitVarDecl}}}]
 if (functionsTable.contains(varDecl.id.lexeme)) {
     scopeError(...);
 }\end{lstlisting}
     \end{minipage}
 \hfill
     \begin{minipage}[]{0.6\textwidth}
-        \begin{lstlisting}[language=java, caption={\texttt{VisitFunctionStmt}}]
+        \begin{lstlisting}[language=java, caption={\texttt{\code{VisitFunctionStmt}}}]
 if (currentEnvironment.contains(functionStmt.name.lexeme)) {
     scopeError(...); 
 }\end{lstlisting}
