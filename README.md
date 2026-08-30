@@ -2,7 +2,7 @@
 
 This repository contains the final project for DM546: Compiler Construction at the University of Southern Denmark (SDU).
 
-Our group implemented a compiler/interpreter pipeline for a custom educational language called **VVPL** *(Very Verbose Programming Language)*.
+Our group implemented a compiler/interpreter pipeline for a custom educational language called **VVPL** *(Very Verbose Programming Language)* in Java.
 The projct focuses on building the language from the ground up: scanning, parsing, semantic analysis, and interpretation.
 
 ## What We Built
